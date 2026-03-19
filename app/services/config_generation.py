@@ -41,6 +41,14 @@ def _peer_qr_path(peer_name: str) -> Path:
     return path
 
 
+def get_peer_config_path(peer_name: str) -> Path:
+    return _peer_config_path(peer_name)
+
+
+def get_peer_qr_path(peer_name: str) -> Path:
+    return _peer_qr_path(peer_name)
+
+
 def _effective_allowed_ips(peer: Peer) -> list[str]:
     return peer.user.allowed_ips_override or peer.user.group.default_allowed_ips
 
@@ -223,3 +231,37 @@ def generate_server_config(session: Session) -> GeneratedServerArtifacts:
         server_config_path=str(config_path),
         peer_count=len(peers),
     )
+
+
+def get_or_generate_peer_config_text(session: Session, peer_id: int) -> tuple[Peer, str]:
+    peer = session.scalar(
+        select(Peer)
+        .options(joinedload(Peer.user).joinedload(User.group))
+        .where(Peer.id == peer_id)
+    )
+    if peer is None:
+        raise ValueError(f"peer id={peer_id} does not exist")
+    if not peer.is_active:
+        raise ValueError(f"peer id={peer_id} is revoked and cannot be generated")
+
+    config_path = _peer_config_path(peer.name)
+    if not config_path.exists():
+        generate_peer_artifacts(session, peer_id)
+    return peer, config_path.read_text(encoding="utf-8")
+
+
+def get_or_generate_peer_qr_svg(session: Session, peer_id: int) -> tuple[Peer, str]:
+    peer = session.scalar(
+        select(Peer)
+        .options(joinedload(Peer.user).joinedload(User.group))
+        .where(Peer.id == peer_id)
+    )
+    if peer is None:
+        raise ValueError(f"peer id={peer_id} does not exist")
+    if not peer.is_active:
+        raise ValueError(f"peer id={peer_id} is revoked and cannot be generated")
+
+    qr_path = _peer_qr_path(peer.name)
+    if not qr_path.exists():
+        generate_peer_artifacts(session, peer_id)
+    return peer, qr_path.read_text(encoding="utf-8")

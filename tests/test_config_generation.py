@@ -10,6 +10,8 @@ from app.services import (
     create_user,
     generate_peer_artifacts,
     generate_server_config,
+    get_or_generate_peer_config_text,
+    get_or_generate_peer_qr_svg,
     update_initial_settings,
 )
 from app.schemas import InitialSettingsUpdate
@@ -178,6 +180,44 @@ def test_generate_peer_artifacts_uses_updated_initial_settings(tmp_path: Path) -
 
         conf_text = Path(artifacts.config_path).read_text(encoding="utf-8")
         assert "Endpoint = eip.sys-sol.jp:51820" in conf_text
+    finally:
+        settings.artifact_root = previous_root
+        settings.server_endpoint = previous_endpoint
+        settings.server_address = previous_address
+
+
+def test_get_or_generate_peer_config_and_qr(tmp_path: Path) -> None:
+    reset_db()
+    previous_root = settings.artifact_root
+    previous_endpoint = settings.server_endpoint
+    previous_address = settings.server_address
+
+    settings.artifact_root = str(tmp_path)
+    settings.server_endpoint = "vpn.test.local"
+    settings.server_address = "10.99.0.1/24"
+
+    try:
+        with SessionLocal() as session:
+            group = create_group(
+                session,
+                GroupCreate(
+                    name="corp-f",
+                    scope=GroupScope.SINGLE_SITE,
+                    network_cidr="10.62.1.0/24",
+                    default_allowed_ips=["10.62.1.0/24"],
+                ),
+            )
+            user = create_user(session, UserCreate(group_id=group.id, name="foxtrot"))
+            peer = create_peer(session, PeerCreate(user_id=user.id, name="foxtrot-pc"))
+
+            _, conf_text = get_or_generate_peer_config_text(session, peer.id)
+            _, qr_svg = get_or_generate_peer_qr_svg(session, peer.id)
+
+        assert "Address = 10.62.1.1/32" in conf_text
+        assert "Endpoint = vpn.test.local:51820" in conf_text
+        assert "<svg" in qr_svg
+        assert (tmp_path / "peers" / "foxtrot-pc.conf").exists()
+        assert (tmp_path / "peers" / "foxtrot-pc.svg").exists()
     finally:
         settings.artifact_root = previous_root
         settings.server_endpoint = previous_endpoint

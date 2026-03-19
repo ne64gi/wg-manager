@@ -32,6 +32,8 @@ from app.services import (
     generate_peer_artifacts,
     generate_server_config,
     get_initial_settings,
+    get_or_generate_peer_config_text,
+    get_or_generate_peer_qr_svg,
     get_group,
     get_peer,
     get_user,
@@ -232,6 +234,44 @@ def generate_peer_config_endpoint(
         message = str(exc)
         status_code = 404 if "does not exist" in message else 400
         raise HTTPException(status_code=status_code, detail=message) from exc
+
+
+@app.get("/config/peers/{peer_id}", response_class=Response)
+def get_peer_config_endpoint(
+    peer_id: int, session: Session = Depends(get_session)
+) -> Response:
+    try:
+        peer, contents = get_or_generate_peer_config_text(session, peer_id)
+    except ValueError as exc:
+        message = str(exc)
+        status_code = 404 if "does not exist" in message else 400
+        raise HTTPException(status_code=status_code, detail=message) from exc
+    return Response(
+        content=contents,
+        media_type="text/plain; charset=utf-8",
+        headers={
+            "Content-Disposition": f'inline; filename="{peer.name}.conf"',
+        },
+    )
+
+
+@app.get("/config/peers/{peer_id}/qr", response_class=Response)
+def get_peer_qr_endpoint(
+    peer_id: int, session: Session = Depends(get_session)
+) -> Response:
+    try:
+        peer, contents = get_or_generate_peer_qr_svg(session, peer_id)
+    except ValueError as exc:
+        message = str(exc)
+        status_code = 404 if "does not exist" in message else 400
+        raise HTTPException(status_code=status_code, detail=message) from exc
+    return Response(
+        content=contents,
+        media_type="image/svg+xml",
+        headers={
+            "Content-Disposition": f'inline; filename="{peer.name}.svg"',
+        },
+    )
 
 
 @app.post("/config/server/generate", response_model=GeneratedServerArtifacts)

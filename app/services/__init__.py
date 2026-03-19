@@ -1,6 +1,10 @@
 from app.services.apply import apply_server_config
 from app.services.audit import init_log_db, log_operation
 from app.services.config_generation import generate_peer_artifacts, generate_server_config
+from app.services.config_generation import (
+    get_or_generate_peer_config_text,
+    get_or_generate_peer_qr_svg,
+)
 from app.services.domain import (
     _validate_group_allocation_settings,
     create_group,
@@ -35,6 +39,8 @@ __all__ = [
     "delete_user",
     "generate_peer_artifacts",
     "generate_server_config",
+    "get_or_generate_peer_config_text",
+    "get_or_generate_peer_qr_svg",
     "get_initial_settings",
     "get_group",
     "get_peer",
