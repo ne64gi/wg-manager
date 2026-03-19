@@ -4,8 +4,8 @@ from pydantic import BaseModel
 
 
 class Settings(BaseModel):
-    database_url: str = "sqlite:////data/wg-studio.db"
-    log_database_url: str = "sqlite:////data/wg-studio-log.db"
+    database_url: str = "postgresql+psycopg://wgstudio:wgstudio@postgres:5432/wg_studio"
+    log_database_url: str = "postgresql+psycopg://wgstudio:wgstudio@postgres:5432/wg_studio_audit"
     artifact_root: str = "/wg/config"
     api_base_url: str = "http://wg-studio-api:8000"
     server_endpoint: str = "vpn.example.com"
@@ -19,8 +19,14 @@ class Settings(BaseModel):
 
 
 settings = Settings(
-    database_url=os.getenv("DATABASE_URL", "sqlite:////data/wg-studio.db"),
-    log_database_url=os.getenv("LOG_DATABASE_URL", "sqlite:////data/wg-studio-log.db"),
+    database_url=os.getenv(
+        "DATABASE_URL",
+        "postgresql+psycopg://wgstudio:wgstudio@postgres:5432/wg_studio",
+    ),
+    log_database_url=os.getenv(
+        "LOG_DATABASE_URL",
+        "postgresql+psycopg://wgstudio:wgstudio@postgres:5432/wg_studio_audit",
+    ),
     artifact_root=os.getenv("ARTIFACT_ROOT", "/wg/config"),
     api_base_url=os.getenv("WG_STUDIO_API_URL", "http://wg-studio-api:8000"),
     server_endpoint=os.getenv("WG_SERVER_ENDPOINT", "vpn.example.com"),

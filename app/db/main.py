@@ -31,7 +31,7 @@ def ensure_database_file(database_url: str) -> None:
 
 
 def build_engine(database_url: str):
-    engine_kwargs = {"future": True}
+    engine_kwargs = {"future": True, "pool_pre_ping": True}
     if database_url.startswith("sqlite"):
         engine_kwargs["connect_args"] = {"check_same_thread": False}
 

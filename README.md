@@ -4,22 +4,23 @@
 
 `v1.0.0-beta` status:
 
-- SQLite-backed source of truth
+- PostgreSQL-backed source of truth
 - FastAPI API
 - Typer CLI
-- separate audit log database
+- separate audit database
 - group/user/peer lifecycle management
 - policy-aware client config generation
 - `wg0.conf` generation
 - QR generation
 - Docker-based apply flow
+- live WireGuard status API
 - verified WireGuard handshake on a real VPS
 
 ## Overview
 
 `wg-studio` manages desired state outside the WireGuard data plane.
 
-It stores groups, users, peers, allocation policy, and initial endpoint settings in SQLite, then generates and applies WireGuard configuration from that state.
+It stores groups, users, peers, allocation policy, and initial endpoint settings in PostgreSQL, then generates and applies WireGuard configuration from that state.
 
 Current architecture:
 
@@ -124,16 +125,16 @@ Delete policy:
 
 ## Databases
 
-Two SQLite databases are used.
+Two PostgreSQL databases are used in the default compose stack.
 
 Main DB:
 
-- default path: `/data/wg-studio.db`
+- default database: `wg_studio`
 - stores groups, users, peers, server state, and initial settings
 
 Audit DB:
 
-- default path: `/data/wg-studio-log.db`
+- default database: `wg_studio_audit`
 - stores operation logs separately from domain state
 
 Logged operations currently include:
@@ -229,6 +230,8 @@ Available endpoints:
 - `POST /config/server/apply`
 - `GET /initial-settings`
 - `PUT /initial-settings`
+- `GET /status/overview`
+- `GET /status/peers`
 
 ## CLI
 
@@ -257,6 +260,13 @@ Available commands:
 
 The project is intended to run entirely inside Docker.
 
+Default development stack:
+
+- `postgres` for main and audit databases
+- `wg-studio-api`
+- `wg-studio-cli`
+- thin `wireguard` runtime container
+
 Start the stack:
 
 ```bash
@@ -279,6 +289,8 @@ docker compose run --rm \
   --entrypoint pytest \
   wg-studio-cli /app/tests -q
 ```
+
+Tests currently override the database URLs to temporary SQLite files for speed and isolation, while the normal compose stack uses PostgreSQL.
 
 ## Example Flow
 
