@@ -7,6 +7,8 @@ from app.services import (
     create_group,
     create_peer,
     create_user,
+    get_group_traffic_summaries,
+    get_user_traffic_summaries,
     get_wireguard_overview,
     get_wireguard_peer_statuses,
 )
@@ -62,6 +64,8 @@ def test_get_wireguard_peer_statuses_and_overview(monkeypatch) -> None:
 
         statuses = get_wireguard_peer_statuses(session)
         overview = get_wireguard_overview(session)
+        user_summaries = get_user_traffic_summaries(session)
+        group_summaries = get_group_traffic_summaries(session)
 
     assert len(statuses) == 2
     online = next(status for status in statuses if status.peer_name == "alpha-pc")
@@ -85,3 +89,16 @@ def test_get_wireguard_peer_statuses_and_overview(monkeypatch) -> None:
     assert overview.total_received_bytes == 1024
     assert overview.total_sent_bytes == 2048
     assert overview.total_usage_bytes == 3072
+
+    assert len(user_summaries) == 1
+    assert user_summaries[0].user_name == "alpha"
+    assert user_summaries[0].peer_count == 2
+    assert user_summaries[0].online_peer_count == 1
+    assert user_summaries[0].total_usage_bytes == 3072
+
+    assert len(group_summaries) == 1
+    assert group_summaries[0].group_name == "corp-status"
+    assert group_summaries[0].user_count == 1
+    assert group_summaries[0].peer_count == 2
+    assert group_summaries[0].online_peer_count == 1
+    assert group_summaries[0].total_usage_bytes == 3072

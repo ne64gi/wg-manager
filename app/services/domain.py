@@ -116,6 +116,30 @@ def _migrate_gui_settings_table() -> None:
                     "ALTER TABLE gui_settings ADD COLUMN default_locale VARCHAR(16) NOT NULL DEFAULT 'en'"
                 )
             )
+        if "overview_refresh_seconds" not in columns:
+            connection.execute(
+                text(
+                    "ALTER TABLE gui_settings ADD COLUMN overview_refresh_seconds INTEGER NOT NULL DEFAULT 5"
+                )
+            )
+        if "peers_refresh_seconds" not in columns:
+            connection.execute(
+                text(
+                    "ALTER TABLE gui_settings ADD COLUMN peers_refresh_seconds INTEGER NOT NULL DEFAULT 10"
+                )
+            )
+        if "refresh_after_apply" not in columns:
+            connection.execute(
+                text(
+                    "ALTER TABLE gui_settings ADD COLUMN refresh_after_apply BOOLEAN NOT NULL DEFAULT TRUE"
+                )
+            )
+        if "online_threshold_seconds" not in columns:
+            connection.execute(
+                text(
+                    "ALTER TABLE gui_settings ADD COLUMN online_threshold_seconds INTEGER NOT NULL DEFAULT 120"
+                )
+            )
 
 
 def init_db() -> None:

@@ -56,16 +56,9 @@ def get_peer_config_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> Response:
-    try:
-        peer, contents = get_or_generate_peer_config_text(session, peer_id)
-    except ValueError as exc:
-        message = str(exc)
-        status_code = 404 if "does not exist" in message else 400
-        raise HTTPException(status_code=status_code, detail=message) from exc
-    return Response(
-        content=contents,
-        media_type="text/plain; charset=utf-8",
-        headers={"Content-Disposition": f'inline; filename="{peer.name}.conf"'},
+    raise HTTPException(
+        status_code=410,
+        detail="direct peer config retrieval is disabled; use /config/peers/{peer_id}/reveal",
     )
 
 
@@ -75,16 +68,9 @@ def get_peer_qr_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> Response:
-    try:
-        peer, contents = get_or_generate_peer_qr_svg(session, peer_id)
-    except ValueError as exc:
-        message = str(exc)
-        status_code = 404 if "does not exist" in message else 400
-        raise HTTPException(status_code=status_code, detail=message) from exc
-    return Response(
-        content=contents,
-        media_type="image/svg+xml",
-        headers={"Content-Disposition": f'inline; filename="{peer.name}.svg"'},
+    raise HTTPException(
+        status_code=410,
+        detail="direct peer QR retrieval is disabled; use /config/peers/{peer_id}/reveal",
     )
 
 

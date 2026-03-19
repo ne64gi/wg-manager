@@ -104,6 +104,10 @@ def test_login_users_and_gui_settings_are_persisted() -> None:
         gui_settings = get_gui_settings(session)
         assert gui_settings.theme_mode == "system"
         assert gui_settings.default_locale == "en"
+        assert gui_settings.overview_refresh_seconds == 5
+        assert gui_settings.peers_refresh_seconds == 10
+        assert gui_settings.refresh_after_apply is True
+        assert gui_settings.online_threshold_seconds == 120
         assert gui_settings.error_log_level == "warning"
         assert gui_settings.access_log_path == "none"
         assert gui_settings.error_log_path == "none"
@@ -113,6 +117,10 @@ def test_login_users_and_gui_settings_are_persisted() -> None:
             GuiSettingsUpdate(
                 theme_mode="dark",
                 default_locale="ja",
+                overview_refresh_seconds=7,
+                peers_refresh_seconds=15,
+                refresh_after_apply=False,
+                online_threshold_seconds=90,
                 error_log_level="error",
                 access_log_path="/var/log/wg-studio/access.log",
                 error_log_path="none",
@@ -120,6 +128,10 @@ def test_login_users_and_gui_settings_are_persisted() -> None:
         )
         assert gui_settings.theme_mode == "dark"
         assert gui_settings.default_locale == "ja"
+        assert gui_settings.overview_refresh_seconds == 7
+        assert gui_settings.peers_refresh_seconds == 15
+        assert gui_settings.refresh_after_apply is False
+        assert gui_settings.online_threshold_seconds == 90
         assert gui_settings.error_log_level == "error"
         assert gui_settings.access_log_path == "/var/log/wg-studio/access.log"
 

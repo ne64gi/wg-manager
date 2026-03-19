@@ -6,6 +6,7 @@ from app.schemas.domain import (
     AuthRefreshRequest,
     GeneratedPeerArtifacts,
     GeneratedServerArtifacts,
+    GroupTrafficSummaryRead,
     GuiLogRead,
     GuiSettingsRead,
     GuiSettingsUpdate,
@@ -25,6 +26,7 @@ from app.schemas.domain import (
     ServerStateRead,
     TokenPairRead,
     UserCreate,
+    UserTrafficSummaryRead,
     UserRead,
     WireGuardOverviewRead,
 )
@@ -37,6 +39,7 @@ __all__ = [
     "AuthRefreshRequest",
     "GeneratedPeerArtifacts",
     "GeneratedServerArtifacts",
+    "GroupTrafficSummaryRead",
     "GuiLogRead",
     "GuiSettingsRead",
     "GuiSettingsUpdate",
@@ -56,6 +59,7 @@ __all__ = [
     "ServerStateRead",
     "TokenPairRead",
     "UserCreate",
+    "UserTrafficSummaryRead",
     "UserRead",
     "WireGuardOverviewRead",
 ]

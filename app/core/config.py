@@ -21,6 +21,7 @@ class Settings(BaseModel):
     jwt_secret_key: str = "change-me"
     jwt_access_token_ttl_minutes: int = 15
     jwt_refresh_token_ttl_days: int = 30
+    cors_allowed_origins: list[str] = []
 
 
 settings = Settings(
@@ -59,4 +60,9 @@ settings = Settings(
     jwt_refresh_token_ttl_days=int(
         os.getenv("WG_JWT_REFRESH_TOKEN_TTL_DAYS", "30")
     ),
+    cors_allowed_origins=[
+        value.strip()
+        for value in os.getenv("WG_CORS_ALLOWED_ORIGINS", "").split(",")
+        if value.strip()
+    ],
 )

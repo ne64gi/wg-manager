@@ -275,6 +275,10 @@ def _normalize_locale(value: str) -> str:
 class GuiSettingsUpdate(BaseModel):
     theme_mode: str = "system"
     default_locale: str = "en"
+    overview_refresh_seconds: int = 5
+    peers_refresh_seconds: int = 10
+    refresh_after_apply: bool = True
+    online_threshold_seconds: int = 120
     error_log_level: str = "warning"
     access_log_path: str = "none"
     error_log_path: str = "none"
@@ -288,6 +292,20 @@ class GuiSettingsUpdate(BaseModel):
     @classmethod
     def validate_default_locale(cls, value: str) -> str:
         return _normalize_locale(value)
+
+    @field_validator("overview_refresh_seconds", "peers_refresh_seconds")
+    @classmethod
+    def validate_refresh_seconds(cls, value: int) -> int:
+        if value < 1 or value > 3600:
+            raise ValueError("refresh interval seconds must be between 1 and 3600")
+        return value
+
+    @field_validator("online_threshold_seconds")
+    @classmethod
+    def validate_online_threshold_seconds(cls, value: int) -> int:
+        if value < 5 or value > 3600:
+            raise ValueError("online_threshold_seconds must be between 5 and 3600")
+        return value
 
     @field_validator("error_log_level")
     @classmethod
@@ -309,6 +327,10 @@ class GuiSettingsRead(BaseModel):
     id: int
     theme_mode: str
     default_locale: str
+    overview_refresh_seconds: int
+    peers_refresh_seconds: int
+    refresh_after_apply: bool
+    online_threshold_seconds: int
     error_log_level: str
     access_log_path: str
     error_log_path: str
@@ -415,6 +437,32 @@ class WireGuardOverviewRead(BaseModel):
     peer_count: int
     active_peer_count: int
     online_peer_count: int
+
+
+class UserTrafficSummaryRead(BaseModel):
+    user_id: int
+    user_name: str
+    group_id: int
+    group_name: str
+    peer_count: int
+    active_peer_count: int
+    online_peer_count: int
+    total_received_bytes: int
+    total_sent_bytes: int
+    total_usage_bytes: int
+
+
+class GroupTrafficSummaryRead(BaseModel):
+    group_id: int
+    group_name: str
+    group_scope: GroupScope
+    user_count: int
+    peer_count: int
+    active_peer_count: int
+    online_peer_count: int
+    total_received_bytes: int
+    total_sent_bytes: int
+    total_usage_bytes: int
 
 
 class PeerResolvedAccess(BaseModel):

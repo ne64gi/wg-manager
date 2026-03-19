@@ -8,8 +8,14 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.core import settings
 from app.models import Peer, User
-from app.schemas import PeerStatusRead, WireGuardOverviewRead
+from app.schemas import (
+    GroupTrafficSummaryRead,
+    PeerStatusRead,
+    UserTrafficSummaryRead,
+    WireGuardOverviewRead,
+)
 from app.services.docker_runtime import docker_exec
+from app.services.gui import get_gui_settings
 
 
 @dataclass
@@ -52,13 +58,16 @@ def _parse_wg_dump(raw: str) -> list[RuntimePeerStats]:
     return peers
 
 
-def _is_online(latest_handshake_at: datetime | None) -> bool:
+def _is_online(latest_handshake_at: datetime | None, threshold_seconds: int) -> bool:
     if latest_handshake_at is None:
         return False
-    return latest_handshake_at >= datetime.now(timezone.utc) - timedelta(minutes=2)
+    return latest_handshake_at >= datetime.now(timezone.utc) - timedelta(
+        seconds=threshold_seconds
+    )
 
 
 def get_wireguard_peer_statuses(session: Session) -> list[PeerStatusRead]:
+    gui_settings = get_gui_settings(session)
     result = docker_exec(["wg", "show", settings.wireguard_interface_name, "dump"], capture_output=True)
     if result.exit_code != 0:
         stderr = result.stderr.strip() or "wg show dump failed"
@@ -94,7 +103,9 @@ def get_wireguard_peer_statuses(session: Session) -> list[PeerStatusRead]:
                 received_bytes=received_bytes,
                 sent_bytes=sent_bytes,
                 total_bytes=received_bytes + sent_bytes,
-                is_online=_is_online(latest_handshake_at),
+                is_online=_is_online(
+                    latest_handshake_at, gui_settings.online_threshold_seconds
+                ),
                 is_active=peer.is_active,
                 is_revealed=peer.is_revealed,
                 description=peer.description,
@@ -118,3 +129,89 @@ def get_wireguard_overview(session: Session) -> WireGuardOverviewRead:
         active_peer_count=sum(1 for status in statuses if status.is_active),
         online_peer_count=sum(1 for status in statuses if status.is_online),
     )
+
+
+def get_user_traffic_summaries(session: Session) -> list[UserTrafficSummaryRead]:
+    statuses = get_wireguard_peer_statuses(session)
+    grouped: dict[int, UserTrafficSummaryRead] = {}
+    peer_rows = list(
+        session.scalars(
+            select(Peer)
+            .options(joinedload(Peer.user).joinedload(User.group))
+            .order_by(Peer.name)
+        )
+    )
+    peers_by_id = {peer.id: peer for peer in peer_rows}
+
+    for status in statuses:
+        peer = peers_by_id[status.peer_id]
+        current = grouped.get(status.user_id)
+        if current is None:
+            current = UserTrafficSummaryRead(
+                user_id=status.user_id,
+                user_name=status.user_name,
+                group_id=peer.user.group.id,
+                group_name=peer.user.group.name,
+                peer_count=0,
+                active_peer_count=0,
+                online_peer_count=0,
+                total_received_bytes=0,
+                total_sent_bytes=0,
+                total_usage_bytes=0,
+            )
+            grouped[status.user_id] = current
+
+        current.peer_count += 1
+        current.active_peer_count += 1 if status.is_active else 0
+        current.online_peer_count += 1 if status.is_online else 0
+        current.total_received_bytes += status.received_bytes
+        current.total_sent_bytes += status.sent_bytes
+        current.total_usage_bytes += status.total_bytes
+
+    return sorted(grouped.values(), key=lambda item: (item.group_name, item.user_name))
+
+
+def get_group_traffic_summaries(session: Session) -> list[GroupTrafficSummaryRead]:
+    statuses = get_wireguard_peer_statuses(session)
+    peer_rows = list(
+        session.scalars(
+            select(Peer)
+            .options(joinedload(Peer.user).joinedload(User.group))
+            .order_by(Peer.name)
+        )
+    )
+    peers_by_id = {peer.id: peer for peer in peer_rows}
+    grouped: dict[int, GroupTrafficSummaryRead] = {}
+    seen_users: dict[int, set[int]] = {}
+
+    for status in statuses:
+        peer = peers_by_id[status.peer_id]
+        group = peer.user.group
+        current = grouped.get(group.id)
+        if current is None:
+            current = GroupTrafficSummaryRead(
+                group_id=group.id,
+                group_name=group.name,
+                group_scope=group.scope,
+                user_count=0,
+                peer_count=0,
+                active_peer_count=0,
+                online_peer_count=0,
+                total_received_bytes=0,
+                total_sent_bytes=0,
+                total_usage_bytes=0,
+            )
+            grouped[group.id] = current
+            seen_users[group.id] = set()
+
+        current.peer_count += 1
+        current.active_peer_count += 1 if status.is_active else 0
+        current.online_peer_count += 1 if status.is_online else 0
+        current.total_received_bytes += status.received_bytes
+        current.total_sent_bytes += status.sent_bytes
+        current.total_usage_bytes += status.total_bytes
+        if status.user_id not in seen_users[group.id]:
+            seen_users[group.id].add(status.user_id)
+            current.user_count += 1
+
+    return sorted(grouped.values(), key=lambda item: item.group_name)
