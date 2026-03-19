@@ -1,4 +1,11 @@
 from app.services.apply import apply_server_config
+from app.services.auth import (
+    authenticate_access_token,
+    authenticate_login,
+    decode_jwt,
+    logout_login_session,
+    refresh_login_tokens,
+)
 from app.services.audit import init_log_db, list_gui_logs, log_gui_event, log_operation
 from app.services.config_generation import generate_peer_artifacts, generate_server_config
 from app.services.config_generation import (
@@ -42,6 +49,8 @@ from app.services.status import get_wireguard_overview, get_wireguard_peer_statu
 __all__ = [
     "_validate_group_allocation_settings",
     "apply_server_config",
+    "authenticate_access_token",
+    "authenticate_login",
     "bootstrap_login_user",
     "create_group",
     "create_login_user",
@@ -53,6 +62,7 @@ __all__ = [
     "delete_user",
     "generate_peer_artifacts",
     "generate_server_config",
+    "decode_jwt",
     "get_gui_settings",
     "get_login_user",
     "get_or_generate_peer_config_text",
@@ -72,7 +82,9 @@ __all__ = [
     "list_users",
     "log_gui_event",
     "log_operation",
+    "logout_login_session",
     "reveal_peer_artifacts",
+    "refresh_login_tokens",
     "revoke_peer",
     "resolve_peer_access",
     "update_gui_settings",

@@ -3,7 +3,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
+from app.api.deps import require_authenticated_login_user
 from app.db import get_session
+from app.models import LoginUser
 from app.schemas import (
     GuiLogRead,
     GuiSettingsRead,
@@ -28,6 +30,7 @@ router = APIRouter()
 
 @router.get("/gui/settings", response_model=GuiSettingsRead)
 def get_gui_settings_endpoint(
+    current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> GuiSettingsRead:
     return GuiSettingsRead.model_validate(get_gui_settings(session))
@@ -36,6 +39,7 @@ def get_gui_settings_endpoint(
 @router.put("/gui/settings", response_model=GuiSettingsRead)
 def update_gui_settings_endpoint(
     payload: GuiSettingsUpdate,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> GuiSettingsRead:
     return GuiSettingsRead.model_validate(update_gui_settings(session, payload))
@@ -43,6 +47,7 @@ def update_gui_settings_endpoint(
 
 @router.get("/gui/login-users", response_model=list[LoginUserRead])
 def list_login_users_endpoint(
+    current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> list[LoginUserRead]:
     return [
@@ -54,6 +59,7 @@ def list_login_users_endpoint(
 @router.post("/gui/login-users", response_model=LoginUserRead, status_code=201)
 def create_login_user_endpoint(
     payload: LoginUserCreate,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> LoginUserRead:
     try:
@@ -66,6 +72,7 @@ def create_login_user_endpoint(
 @router.get("/gui/login-users/{login_user_id}", response_model=LoginUserRead)
 def get_login_user_endpoint(
     login_user_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> LoginUserRead:
     login_user = get_login_user(session, login_user_id)
@@ -78,6 +85,7 @@ def get_login_user_endpoint(
 def update_login_user_endpoint(
     login_user_id: int,
     payload: LoginUserUpdate,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> LoginUserRead:
     try:
@@ -95,6 +103,7 @@ def update_login_user_endpoint(
 )
 def delete_login_user_endpoint(
     login_user_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ):
     try:
@@ -107,5 +116,6 @@ def delete_login_user_endpoint(
 @router.get("/gui/logs", response_model=list[GuiLogRead])
 def list_gui_logs_endpoint(
     limit: int = Query(default=100, ge=1, le=500),
+    current_user: LoginUser = Depends(require_authenticated_login_user),
 ) -> list[GuiLogRead]:
     return [GuiLogRead.model_validate(entry) for entry in list_gui_logs(limit=limit)]

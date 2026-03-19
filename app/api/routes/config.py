@@ -3,7 +3,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
+from app.api.deps import require_authenticated_login_user
 from app.db import get_session
+from app.models import LoginUser
 from app.schemas import (
     ApplyResult,
     GeneratedPeerArtifacts,
@@ -36,7 +38,9 @@ def generate_peer_config_endpoint(
 
 @router.post("/config/peers/{peer_id}/reveal", response_model=RevealedPeerArtifacts)
 def reveal_peer_artifacts_endpoint(
-    peer_id: int, session: Session = Depends(get_session)
+    peer_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
 ) -> RevealedPeerArtifacts:
     try:
         return reveal_peer_artifacts(session, peer_id)
@@ -48,7 +52,9 @@ def reveal_peer_artifacts_endpoint(
 
 @router.get("/config/peers/{peer_id}", response_class=Response)
 def get_peer_config_endpoint(
-    peer_id: int, session: Session = Depends(get_session)
+    peer_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
 ) -> Response:
     try:
         peer, contents = get_or_generate_peer_config_text(session, peer_id)
@@ -65,7 +71,9 @@ def get_peer_config_endpoint(
 
 @router.get("/config/peers/{peer_id}/qr", response_class=Response)
 def get_peer_qr_endpoint(
-    peer_id: int, session: Session = Depends(get_session)
+    peer_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
 ) -> Response:
     try:
         peer, contents = get_or_generate_peer_qr_svg(session, peer_id)

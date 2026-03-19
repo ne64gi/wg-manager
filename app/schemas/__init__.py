@@ -1,5 +1,9 @@
 from app.schemas.domain import (
     ApplyResult,
+    AuthenticatedLoginUserRead,
+    AuthLoginRequest,
+    AuthLogoutRequest,
+    AuthRefreshRequest,
     GeneratedPeerArtifacts,
     GeneratedServerArtifacts,
     GuiLogRead,
@@ -19,6 +23,7 @@ from app.schemas.domain import (
     PeerStatusRead,
     RevealedPeerArtifacts,
     ServerStateRead,
+    TokenPairRead,
     UserCreate,
     UserRead,
     WireGuardOverviewRead,
@@ -26,6 +31,10 @@ from app.schemas.domain import (
 
 __all__ = [
     "ApplyResult",
+    "AuthenticatedLoginUserRead",
+    "AuthLoginRequest",
+    "AuthLogoutRequest",
+    "AuthRefreshRequest",
     "GeneratedPeerArtifacts",
     "GeneratedServerArtifacts",
     "GuiLogRead",
@@ -45,6 +54,7 @@ __all__ = [
     "PeerStatusRead",
     "RevealedPeerArtifacts",
     "ServerStateRead",
+    "TokenPairRead",
     "UserCreate",
     "UserRead",
     "WireGuardOverviewRead",

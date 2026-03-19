@@ -99,6 +99,38 @@ class LoginUser(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
+    sessions: Mapped[list["LoginSession"]] = relationship(
+        back_populates="login_user",
+        cascade="all, delete-orphan",
+    )
+
+
+class LoginSession(Base):
+    __tablename__ = "login_sessions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    login_user_id: Mapped[int] = mapped_column(ForeignKey("login_users.id"), index=True)
+    refresh_token_hash: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    last_used_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    login_user: Mapped[LoginUser] = relationship(back_populates="sessions")
 
 
 class ServerState(Base):

@@ -18,6 +18,9 @@ class Settings(BaseModel):
     wireguard_config_path: str = "/config/wg_confs/wg0.conf"
     bootstrap_admin_username: str | None = None
     bootstrap_admin_password: str | None = None
+    jwt_secret_key: str = "change-me"
+    jwt_access_token_ttl_minutes: int = 15
+    jwt_refresh_token_ttl_days: int = 30
 
 
 settings = Settings(
@@ -49,4 +52,11 @@ settings = Settings(
     ),
     bootstrap_admin_username=os.getenv("WG_BOOTSTRAP_ADMIN_USERNAME"),
     bootstrap_admin_password=os.getenv("WG_BOOTSTRAP_ADMIN_PASSWORD"),
+    jwt_secret_key=os.getenv("WG_JWT_SECRET_KEY", "change-me"),
+    jwt_access_token_ttl_minutes=int(
+        os.getenv("WG_JWT_ACCESS_TOKEN_TTL_MINUTES", "15")
+    ),
+    jwt_refresh_token_ttl_days=int(
+        os.getenv("WG_JWT_REFRESH_TOKEN_TTL_DAYS", "30")
+    ),
 )
