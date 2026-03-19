@@ -1,10 +1,14 @@
 import ipaddress
 
-from app.audit import AuditBase, audit_engine
-from app.database import Base, SessionLocal, engine
+from app.db import AuditBase, Base, SessionLocal, audit_engine, engine
 from app.models import GroupScope
 from app.schemas import GroupCreate, PeerCreate, UserCreate
-from app.services import _validate_group_allocation_settings, create_group, create_peer, create_user
+from app.services import (
+    _validate_group_allocation_settings,
+    create_group,
+    create_peer,
+    create_user,
+)
 
 
 def reset_db() -> None:

@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from sqlalchemy import DateTime, Integer, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.audit import AuditBase
+from app.db.audit import AuditBase
 
 
 class OperationLog(AuditBase):

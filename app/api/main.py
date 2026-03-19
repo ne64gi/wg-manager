@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.database import get_session
+from app.db import get_session
 from app.schemas import (
     GroupAllocationUpdate,
     GroupCreate,

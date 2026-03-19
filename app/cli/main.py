@@ -4,7 +4,7 @@ import json
 
 import typer
 
-from app.database import SessionLocal
+from app.db import SessionLocal
 from app.models import GroupScope
 from app.schemas import GroupAllocationUpdate, GroupCreate, PeerCreate, UserCreate
 from app.services import (

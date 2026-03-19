@@ -5,7 +5,7 @@ from enum import StrEnum
 from sqlalchemy import Boolean, Enum, ForeignKey, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.database import Base
+from app.db.main import Base
 
 
 class GroupScope(StrEnum):

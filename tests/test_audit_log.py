@@ -1,7 +1,5 @@
-from app.audit import AuditBase, AuditSessionLocal, audit_engine
-from app.audit_models import OperationLog
-from app.database import Base, SessionLocal, engine
-from app.models import GroupScope
+from app.db import AuditBase, AuditSessionLocal, Base, SessionLocal, audit_engine, engine
+from app.models import GroupScope, OperationLog
 from app.schemas import GroupAllocationUpdate, GroupCreate, PeerCreate, UserCreate
 from app.services import create_group, create_peer, create_user, update_group_allocation
 

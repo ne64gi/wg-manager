@@ -4,7 +4,7 @@ services:
       context: .
     container_name: wg-studio-api
     working_dir: /app
-    command: ["uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    command: ["uvicorn", "app.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     environment:
       - DATABASE_URL=sqlite:////data/wg-studio.db
       - LOG_DATABASE_URL=sqlite:////data/wg-studio-log.db
@@ -19,7 +19,7 @@ services:
       context: .
     container_name: wg-studio-cli
     working_dir: /app
-    entrypoint: ["python", "-m", "app.cli"]
+    entrypoint: ["python", "-m", "app.cli.main"]
     environment:
       - DATABASE_URL=sqlite:////data/wg-studio.db
       - LOG_DATABASE_URL=sqlite:////data/wg-studio-log.db

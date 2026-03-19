@@ -1,7 +1,7 @@
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-from app.config import settings
-from app.database import build_engine
+from app.core import settings
+from app.db.main import build_engine
 
 
 class AuditBase(DeclarativeBase):

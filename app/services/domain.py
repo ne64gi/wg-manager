@@ -5,8 +5,7 @@ import ipaddress
 from sqlalchemy import inspect, select, text
 from sqlalchemy.orm import Session, joinedload
 
-from app.audit_service import init_log_db, log_operation
-from app.database import Base, engine
+from app.db import Base, engine
 from app.models import Group, Peer, User
 from app.schemas import (
     GroupAllocationUpdate,
@@ -15,6 +14,7 @@ from app.schemas import (
     PeerResolvedAccess,
     UserCreate,
 )
+from app.services.audit import init_log_db, log_operation
 
 
 def _migrate_groups_table() -> None:

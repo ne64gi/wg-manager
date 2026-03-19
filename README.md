@@ -26,6 +26,18 @@ Not implemented yet:
 - status collection from `wg show`
 - GUI
 
+## Package Layout
+
+Current application code is split like this:
+
+- `app/api`: FastAPI entrypoint
+- `app/cli`: Typer entrypoint
+- `app/core`: settings and core configuration
+- `app/db`: main DB and audit DB wiring
+- `app/models`: SQLAlchemy models
+- `app/schemas`: Pydantic schemas
+- `app/services`: domain logic and audit logging
+
 ## Core Model
 
 ### Group

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from app.audit import AuditBase, AuditSessionLocal, audit_engine
-from app.audit_models import OperationLog
+from app.db import AuditBase, AuditSessionLocal, audit_engine
+from app.models import OperationLog
 
 
 def init_log_db() -> None:
