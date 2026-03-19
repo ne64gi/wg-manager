@@ -160,6 +160,9 @@ Implemented artifacts:
 - peer config: `/wg/config/peers/<peer>.conf`
 - peer QR: `/wg/config/peers/<peer>.svg`
 
+In the default compose stack, these artifacts live in the shared Docker named volume
+`wg_config`, not in a host bind-mounted `./config` directory.
+
 Peer config behavior:
 
 - `[Interface] DNS` is omitted when `Group.dns_servers` is `NULL`
@@ -266,9 +269,11 @@ Default development stack:
 - `wg-studio-api`
 - `wg-studio-cli`
 - thin `wireguard` runtime container
+- shared `wg_config` Docker volume for generated WireGuard artifacts
 - internal Docker network for API / CLI / PostgreSQL
 
 Runtime defaults are provided through `.env`.
+Use `.env.example` as the checked-in template and keep the real `.env` local-only.
 
 Notable defaults:
 

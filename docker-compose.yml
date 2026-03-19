@@ -28,7 +28,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./config:/config
+      - wg_config:/config
       - /lib/modules:/lib/modules:ro
     restart: unless-stopped
 
@@ -45,7 +45,7 @@ services:
       - .env
     volumes:
       - ./app:/app/app
-      - ./config:/wg/config
+      - wg_config:/wg/config
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - wg-studio-internal
@@ -63,13 +63,14 @@ services:
       - .env
     volumes:
       - ./app:/app/app
-      - ./config:/wg/config
+      - wg_config:/wg/config
       - ./tests:/app/tests
     networks:
       - wg-studio-internal
 
 volumes:
   postgres_data:
+  wg_config:
 
 networks:
   wg-studio-internal:
