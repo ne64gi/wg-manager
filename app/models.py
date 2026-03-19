@@ -1,0 +1,71 @@
+from __future__ import annotations
+
+from enum import StrEnum
+
+from sqlalchemy import Boolean, Enum, ForeignKey, JSON, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database import Base
+
+
+class GroupScope(StrEnum):
+    ADMIN = "admin"
+    MULTI_SITE = "multi_site"
+    SINGLE_SITE = "single_site"
+
+    @property
+    def required_prefix(self) -> int:
+        return {
+            GroupScope.ADMIN: 8,
+            GroupScope.MULTI_SITE: 16,
+            GroupScope.SINGLE_SITE: 24,
+        }[self]
+
+
+class Group(Base):
+    __tablename__ = "groups"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    scope: Mapped[GroupScope] = mapped_column(Enum(GroupScope), index=True)
+    network_cidr: Mapped[str] = mapped_column(String(32), unique=True)
+    default_allowed_ips: Mapped[list[str]] = mapped_column(JSON, default=list)
+    allocation_start_host: Mapped[int] = mapped_column(default=1)
+    reserved_ips: Mapped[list[str]] = mapped_column(JSON, default=list)
+    description: Mapped[str] = mapped_column(Text, default="")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    users: Mapped[list["User"]] = relationship(
+        back_populates="group",
+        cascade="all, delete-orphan",
+    )
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    group_id: Mapped[int] = mapped_column(ForeignKey("groups.id"), index=True)
+    name: Mapped[str] = mapped_column(String(100), index=True)
+    allowed_ips_override: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    description: Mapped[str] = mapped_column(Text, default="")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    group: Mapped[Group] = relationship(back_populates="users")
+    peers: Mapped[list["Peer"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+
+class Peer(Base):
+    __tablename__ = "peers"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    name: Mapped[str] = mapped_column(String(100), index=True)
+    assigned_ip: Mapped[str] = mapped_column(String(45), unique=True, index=True)
+    description: Mapped[str] = mapped_column(Text, default="")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    user: Mapped[User] = relationship(back_populates="peers")
