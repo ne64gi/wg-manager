@@ -61,6 +61,49 @@ export function DashboardPage() {
       </div>
 
       <div className="two-column-grid">
+        <Panel title="Traffic timeline (24h)">
+          <div className="chart-placeholder">
+            <div className="chart-grid" />
+            <div className="chart-line chart-line-primary" />
+            <div className="chart-line chart-line-secondary" />
+            <div className="chart-overlay">
+              <div className="chart-overlay-title">History pipeline not enabled yet</div>
+              <div className="muted-text">
+                This area is reserved for RX/TX history once periodic status snapshots are
+                stored in the database.
+              </div>
+            </div>
+          </div>
+        </Panel>
+        <Panel title="Online peers by group">
+          <div className="bar-list">
+            {(groupsQuery.data ?? []).map((item) => {
+              const width =
+                item.peer_count > 0
+                  ? Math.max(8, Math.round((item.online_peer_count / item.peer_count) * 100))
+                  : 0;
+              return (
+                <div className="bar-row" key={item.group_id}>
+                  <div className="bar-row-header">
+                    <span>{item.group_name}</span>
+                    <span>
+                      {item.online_peer_count}/{item.peer_count}
+                    </span>
+                  </div>
+                  <div className="bar-track">
+                    <div className="bar-fill" style={{ width: `${width}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+            {groupsQuery.data?.length ? null : (
+              <div className="muted-text">No group summary data yet.</div>
+            )}
+          </div>
+        </Panel>
+      </div>
+
+      <div className="two-column-grid">
         <Panel title="User traffic">
           <DataTable headers={["User", "Group", "Peers", "Online", "Traffic"]}>
             {(usersQuery.data ?? []).map((item) => (

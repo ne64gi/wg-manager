@@ -3,10 +3,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   applyServerConfig,
+  createPeer,
   deletePeer,
   getPeerStatuses,
   revealPeerArtifacts,
   revokePeer,
+  listUsers,
 } from "../lib/api";
 import { formatBytes, formatRelativeTime } from "../lib/format";
 import { useAuth } from "../modules/auth/AuthContext";
@@ -21,6 +23,10 @@ export function PeersPage() {
   const auth = useAuth();
   const queryClient = useQueryClient();
   const [revealed, setRevealed] = useState<RevealedPeerArtifacts | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [userId, setUserId] = useState("");
+  const [name, setName] = useState("");
+  const [assignedIp, setAssignedIp] = useState("");
   const guiSettingsQuery = useGuiSettingsQuery();
   const peersRefreshMs =
     (guiSettingsQuery.data?.peers_refresh_seconds ?? 10) * 1000;
@@ -29,6 +35,28 @@ export function PeersPage() {
     queryKey: queryKeys.peerStatuses,
     queryFn: async () => getPeerStatuses((await auth.getValidAccessToken()) ?? ""),
     refetchInterval: peersRefreshMs,
+  });
+  const usersQuery = useQuery({
+    queryKey: queryKeys.users,
+    queryFn: async () => listUsers((await auth.getValidAccessToken()) ?? ""),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async () =>
+      createPeer((await auth.getValidAccessToken()) ?? "", {
+        user_id: Number(userId),
+        name,
+        assigned_ip: assignedIp || undefined,
+      }),
+    onSuccess: async () => {
+      setIsCreateOpen(false);
+      setUserId("");
+      setName("");
+      setAssignedIp("");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.peers });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.peerStatuses });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.overview });
+    },
   });
 
   const revealMutation = useMutation({
@@ -82,7 +110,12 @@ export function PeersPage() {
           <div className="eyebrow">Peers</div>
           <h1>Peer management</h1>
         </div>
-        <button className="primary-button" onClick={() => applyMutation.mutate()}>
+      </div>
+      <div className="toolbar-card toolbar-row">
+        <button className="success-button" onClick={() => setIsCreateOpen(true)}>
+          + Add peer
+        </button>
+        <button className="secondary-button" onClick={() => applyMutation.mutate()}>
           {applyMutation.isPending ? "Applying..." : "Apply config"}
         </button>
       </div>
@@ -152,6 +185,48 @@ export function PeersPage() {
 
       {revealed ? (
         <RevealModal artifacts={revealed} onClose={() => setRevealed(null)} />
+      ) : null}
+      {isCreateOpen ? (
+        <div className="modal-backdrop" onClick={() => setIsCreateOpen(false)}>
+          <div className="modal-card modal-compact" onClick={(event) => event.stopPropagation()}>
+            <div className="panel-header">
+              <h2>Add peer</h2>
+              <button className="ghost-button" onClick={() => setIsCreateOpen(false)}>
+                Close
+              </button>
+            </div>
+            <div className="form-grid">
+              <label className="field">
+                <span>User</span>
+                <select value={userId} onChange={(event) => setUserId(event.target.value)}>
+                  <option value="">Select user</option>
+                  {(usersQuery.data ?? []).map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                <span>Name</span>
+                <input value={name} onChange={(event) => setName(event.target.value)} />
+              </label>
+              <label className="field">
+                <span>Assigned IP</span>
+                <input
+                  value={assignedIp}
+                  onChange={(event) => setAssignedIp(event.target.value)}
+                  placeholder="optional"
+                />
+              </label>
+            </div>
+            <div className="modal-actions">
+              <button className="primary-button" onClick={() => createMutation.mutate()}>
+                {createMutation.isPending ? "Creating..." : "Create peer"}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </div>
   );

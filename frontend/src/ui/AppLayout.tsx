@@ -5,9 +5,9 @@ import { useAuth } from "../modules/auth/AuthContext";
 
 const navItems = [
   { to: "/", label: "Dashboard" },
-  { to: "/peers", label: "Peers" },
   { to: "/groups", label: "Groups" },
   { to: "/users", label: "Users" },
+  { to: "/peers", label: "Peers" },
   { to: "/settings", label: "Settings" },
   { to: "/logs", label: "Logs" },
 ];

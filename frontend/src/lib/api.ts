@@ -6,6 +6,7 @@ import type {
   GeneratedPeerArtifacts,
   GeneratedServerArtifacts,
   Group,
+  GroupCreateInput,
   GroupTrafficSummary,
   GuiLog,
   GuiSettings,
@@ -20,8 +21,10 @@ import type {
   RevealedPeerArtifacts,
   TokenPair,
   User,
+  UserCreateInput,
   UserTrafficSummary,
   WireGuardOverview,
+  PeerCreateInput,
 } from "../types";
 
 type ApiOptions = {
@@ -123,12 +126,45 @@ export function listGroups(accessToken: string): Promise<Group[]> {
   return request<Group[]>("/groups", { accessToken });
 }
 
+export function createGroup(
+  accessToken: string,
+  payload: GroupCreateInput,
+): Promise<Group> {
+  return request<Group>("/groups", {
+    method: "POST",
+    accessToken,
+    body: payload,
+  });
+}
+
 export function listUsers(accessToken: string): Promise<User[]> {
   return request<User[]>("/users", { accessToken });
 }
 
+export function createUser(
+  accessToken: string,
+  payload: UserCreateInput,
+): Promise<User> {
+  return request<User>("/users", {
+    method: "POST",
+    accessToken,
+    body: payload,
+  });
+}
+
 export function listPeers(accessToken: string): Promise<Peer[]> {
   return request<Peer[]>("/peers", { accessToken });
+}
+
+export function createPeer(
+  accessToken: string,
+  payload: PeerCreateInput,
+): Promise<Peer> {
+  return request<Peer>("/peers", {
+    method: "POST",
+    accessToken,
+    body: payload,
+  });
 }
 
 export function deletePeer(peerId: number, accessToken: string): Promise<void> {

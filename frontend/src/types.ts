@@ -89,11 +89,31 @@ export type Group = {
   is_active?: boolean;
 };
 
+export type GroupCreateInput = {
+  name: string;
+  scope: string;
+  network_cidr: string;
+  default_allowed_ips: string[];
+  dns_servers?: string[] | null;
+  allocation_start_host?: number;
+  reserved_ips?: string[];
+  description?: string;
+  is_active?: boolean;
+};
+
 export type User = {
   id: number;
   group_id: number;
   name: string;
   allowed_ips_override: string[] | null;
+  is_active?: boolean;
+};
+
+export type UserCreateInput = {
+  group_id: number;
+  name: string;
+  allowed_ips_override?: string[] | null;
+  description?: string;
   is_active?: boolean;
 };
 
@@ -106,6 +126,14 @@ export type Peer = {
   created_at: string;
   updated_at: string;
   revoked_at: string | null;
+};
+
+export type PeerCreateInput = {
+  user_id: number;
+  name: string;
+  assigned_ip?: string | null;
+  description?: string;
+  is_active?: boolean;
 };
 
 export type GuiSettings = {
