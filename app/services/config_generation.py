@@ -14,7 +14,7 @@ from app.core import settings
 from app.models import Peer, User
 from app.schemas import GeneratedPeerArtifacts, GeneratedServerArtifacts
 from app.services.audit import log_operation
-from app.services.domain import ensure_peer_keys, get_server_state
+from app.services.domain import ensure_peer_keys, get_initial_settings, get_server_state
 
 
 def _artifact_root() -> Path:
@@ -45,15 +45,20 @@ def _effective_allowed_ips(peer: Peer) -> list[str]:
     return peer.user.allowed_ips_override or peer.user.group.default_allowed_ips
 
 
-def _render_peer_config(peer: Peer, server_endpoint: str, server_port: int, server_public_key: str, dns: list[str]) -> str:
+def _render_peer_config(
+    peer: Peer,
+    server_endpoint: str,
+    server_port: int,
+    server_public_key: str,
+) -> str:
     allowed_ips = ", ".join(_effective_allowed_ips(peer))
     lines = [
         "[Interface]",
         f"Address = {peer.assigned_ip}/32",
         f"PrivateKey = {peer.private_key}",
     ]
-    if dns:
-        lines.append(f"DNS = {', '.join(dns)}")
+    if peer.user.group.dns_servers:
+        lines.append(f"DNS = {', '.join(peer.user.group.dns_servers)}")
     lines.extend(
         [
             "",
@@ -140,14 +145,14 @@ def generate_peer_artifacts(session: Session, peer_id: int) -> GeneratedPeerArti
         raise ValueError(f"peer id={peer_id} is revoked and cannot be generated")
 
     ensure_peer_keys(session, peer)
+    initial_settings = get_initial_settings(session)
     server = get_server_state(session)
 
     config_contents = _render_peer_config(
         peer,
-        server.endpoint,
-        server.listen_port,
+        initial_settings.endpoint_address,
+        initial_settings.endpoint_port,
         server.public_key,
-        server.dns,
     )
     config_path = _peer_config_path(peer.name)
     qr_path = _peer_qr_path(peer.name)

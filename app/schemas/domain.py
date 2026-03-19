@@ -38,6 +38,7 @@ class GroupCreate(BaseModel):
     scope: GroupScope
     network_cidr: str
     default_allowed_ips: list[str]
+    dns_servers: list[str] | None = None
     allocation_start_host: int = 1
     reserved_ips: list[str] = Field(default_factory=list)
     description: str = ""
@@ -58,6 +59,15 @@ class GroupCreate(BaseModel):
     @field_validator("reserved_ips")
     @classmethod
     def validate_reserved_ips(cls, value: list[str]) -> list[str]:
+        return normalize_address_list(value)
+
+    @field_validator("dns_servers")
+    @classmethod
+    def validate_dns_servers(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
+        if not value:
+            raise ValueError("dns_servers cannot be empty")
         return normalize_address_list(value)
 
     @field_validator("allocation_start_host")
@@ -113,6 +123,7 @@ class GroupRead(BaseModel):
     scope: GroupScope
     network_cidr: str
     default_allowed_ips: list[str]
+    dns_servers: list[str] | None
     allocation_start_host: int
     reserved_ips: list[str]
     description: str

@@ -25,12 +25,10 @@ def test_generate_peer_artifacts_writes_conf_and_qr(tmp_path: Path) -> None:
     previous_root = settings.artifact_root
     previous_endpoint = settings.server_endpoint
     previous_address = settings.server_address
-    previous_dns = settings.server_dns
 
     settings.artifact_root = str(tmp_path)
     settings.server_endpoint = "vpn.test.local"
     settings.server_address = "10.99.0.1/24"
-    settings.server_dns = ["1.1.1.1"]
 
     try:
         with SessionLocal() as session:
@@ -41,6 +39,7 @@ def test_generate_peer_artifacts_writes_conf_and_qr(tmp_path: Path) -> None:
                     scope=GroupScope.SINGLE_SITE,
                     network_cidr="10.50.1.0/24",
                     default_allowed_ips=["10.50.1.0/24"],
+                    dns_servers=["1.1.1.1", "8.8.8.8"],
                 ),
             )
             user = create_user(
@@ -60,15 +59,49 @@ def test_generate_peer_artifacts_writes_conf_and_qr(tmp_path: Path) -> None:
         qr_text = Path(artifacts.qr_path).read_text(encoding="utf-8")
 
         assert "Address = 10.50.1.1/32" in conf_text
+        assert "DNS = 1.1.1.1, 8.8.8.8" in conf_text
         assert "AllowedIPs = 10.50.1.254/32" in conf_text
         assert "Endpoint = vpn.test.local:51820" in conf_text
+        assert "PersistentKeepalive = 25" in conf_text
         assert "<svg" in qr_text
         assert peer.last_config_generated_at is not None
     finally:
         settings.artifact_root = previous_root
         settings.server_endpoint = previous_endpoint
         settings.server_address = previous_address
-        settings.server_dns = previous_dns
+
+
+def test_generate_peer_artifacts_omits_dns_when_group_dns_is_null(tmp_path: Path) -> None:
+    reset_db()
+    previous_root = settings.artifact_root
+    previous_endpoint = settings.server_endpoint
+    previous_address = settings.server_address
+
+    settings.artifact_root = str(tmp_path)
+    settings.server_endpoint = "vpn.test.local"
+    settings.server_address = "10.99.0.1/24"
+
+    try:
+        with SessionLocal() as session:
+            group = create_group(
+                session,
+                GroupCreate(
+                    name="corp-d",
+                    scope=GroupScope.SINGLE_SITE,
+                    network_cidr="10.51.1.0/24",
+                    default_allowed_ips=["10.51.1.0/24"],
+                ),
+            )
+            user = create_user(session, UserCreate(group_id=group.id, name="delta"))
+            peer = create_peer(session, PeerCreate(user_id=user.id, name="delta-pc"))
+            artifacts = generate_peer_artifacts(session, peer.id)
+
+        conf_text = Path(artifacts.config_path).read_text(encoding="utf-8")
+        assert "DNS =" not in conf_text
+    finally:
+        settings.artifact_root = previous_root
+        settings.server_endpoint = previous_endpoint
+        settings.server_address = previous_address
 
 
 def test_generate_server_config_includes_only_active_peers(tmp_path: Path) -> None:

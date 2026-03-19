@@ -31,6 +31,7 @@ class Group(Base):
     scope: Mapped[GroupScope] = mapped_column(Enum(GroupScope), index=True)
     network_cidr: Mapped[str] = mapped_column(String(32), unique=True)
     default_allowed_ips: Mapped[list[str]] = mapped_column(JSON, default=list)
+    dns_servers: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
     allocation_start_host: Mapped[int] = mapped_column(default=1)
     reserved_ips: Mapped[list[str]] = mapped_column(JSON, default=list)
     description: Mapped[str] = mapped_column(Text, default="")
@@ -39,6 +40,23 @@ class Group(Base):
     users: Mapped[list["User"]] = relationship(
         back_populates="group",
         cascade="all, delete-orphan",
+    )
+
+
+class InitialSettings(Base):
+    __tablename__ = "initial_settings"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    endpoint_address: Mapped[str] = mapped_column(String(255))
+    endpoint_port: Mapped[int]
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
 

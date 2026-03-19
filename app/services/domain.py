@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.core import settings
 from app.db import Base, engine
-from app.models import Group, Peer, ServerState, User
+from app.models import Group, InitialSettings, Peer, ServerState, User
 from app.schemas import (
     GroupAllocationUpdate,
     GroupCreate,
@@ -38,6 +38,8 @@ def _migrate_groups_table() -> None:
             )
         if "reserved_ips" not in columns:
             connection.execute(text("ALTER TABLE groups ADD COLUMN reserved_ips JSON"))
+        if "dns_servers" not in columns:
+            connection.execute(text("ALTER TABLE groups ADD COLUMN dns_servers JSON"))
 
         connection.execute(
             text(
@@ -133,6 +135,20 @@ def get_server_state(session: Session) -> ServerState:
     return server
 
 
+def get_initial_settings(session: Session) -> InitialSettings:
+    initial_settings = session.get(InitialSettings, 1)
+    if initial_settings is None:
+        initial_settings = InitialSettings(
+            id=1,
+            endpoint_address=settings.server_endpoint,
+            endpoint_port=settings.server_listen_port,
+        )
+        session.add(initial_settings)
+        session.commit()
+        session.refresh(initial_settings)
+    return initial_settings
+
+
 def ensure_peer_keys(session: Session, peer: Peer) -> Peer:
     if peer.private_key and peer.public_key and peer.preshared_key:
         return peer
@@ -214,6 +230,7 @@ def create_group(session: Session, payload: GroupCreate) -> Group:
             "name": group.name,
             "scope": group.scope,
             "network_cidr": group.network_cidr,
+            "dns_servers": group.dns_servers,
             "allocation_start_host": group.allocation_start_host,
             "reserved_ips": group.reserved_ips,
         },
