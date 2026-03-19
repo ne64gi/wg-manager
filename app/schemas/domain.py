@@ -171,12 +171,45 @@ class PeerRead(BaseModel):
     user_id: int
     name: str
     assigned_ip: str
+    public_key: str | None
     description: str
     is_active: bool
     created_at: datetime
     updated_at: datetime
     revoked_at: datetime | None
     last_config_generated_at: datetime | None
+
+
+class GeneratedPeerArtifacts(BaseModel):
+    peer_id: int
+    peer_name: str
+    config_path: str
+    qr_path: str
+    last_config_generated_at: datetime
+
+
+class GeneratedServerArtifacts(BaseModel):
+    server_config_path: str
+    peer_count: int
+
+
+class ApplyResult(BaseModel):
+    server_config_path: str
+    peer_count: int
+    container_name: str
+    interface_name: str
+    applied_at: datetime
+
+
+class ServerStateRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    endpoint: str
+    listen_port: int
+    server_address: str
+    dns: list[str]
+    public_key: str
 
 
 class PeerResolvedAccess(BaseModel):

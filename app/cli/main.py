@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import json
+from urllib import error, request
 
 import typer
 
+from app.core import settings
 from app.db import SessionLocal
 from app.models import GroupScope
 from app.schemas import GroupAllocationUpdate, GroupCreate, PeerCreate, UserCreate
@@ -27,10 +29,12 @@ app = typer.Typer(help="WireGuard control plane CLI")
 group_app = typer.Typer()
 user_app = typer.Typer()
 peer_app = typer.Typer()
+config_app = typer.Typer()
 
 app.add_typer(group_app, name="group")
 app.add_typer(user_app, name="user")
 app.add_typer(peer_app, name="peer")
+app.add_typer(config_app, name="config")
 
 
 @app.callback()
@@ -40,6 +44,31 @@ def main() -> None:
 
 def print_json(payload: object) -> None:
     typer.echo(json.dumps(payload, indent=2, ensure_ascii=False, default=str))
+
+
+def api_request(method: str, path: str) -> object:
+    target = f"{settings.api_base_url.rstrip('/')}{path}"
+    http_request = request.Request(
+        target,
+        method=method,
+        headers={"Accept": "application/json"},
+    )
+    try:
+        with request.urlopen(http_request) as response:
+            raw = response.read().decode("utf-8")
+    except error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise typer.BadParameter(
+            f"API request failed ({exc.code}): {detail}"
+        ) from exc
+    except error.URLError as exc:
+        raise typer.BadParameter(
+            f"could not reach API at {settings.api_base_url}: {exc.reason}"
+        ) from exc
+
+    if not raw:
+        return {}
+    return json.loads(raw)
 
 
 @app.command("init-db")
@@ -260,6 +289,21 @@ def peer_delete_command(peer_id: int = typer.Option(..., "--peer-id")) -> None:
     with SessionLocal() as session:
         delete_peer(session, peer_id)
         typer.echo(f"peer {peer_id} deleted")
+
+
+@config_app.command("generate-peer")
+def config_generate_peer_command(peer_id: int = typer.Option(..., "--peer-id")) -> None:
+    print_json(api_request("POST", f"/config/peers/{peer_id}/generate"))
+
+
+@config_app.command("generate-server")
+def config_generate_server_command() -> None:
+    print_json(api_request("POST", "/config/server/generate"))
+
+
+@config_app.command("apply")
+def config_apply_command() -> None:
+    print_json(api_request("POST", "/config/server/apply"))
 
 
 if __name__ == "__main__":

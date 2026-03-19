@@ -1,4 +1,25 @@
 services:
+  wireguard:
+    image: lscr.io/linuxserver/wireguard:latest
+    container_name: wg-studio-wireguard
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Tokyo
+    volumes:
+      - ./config:/config
+      - ./data:/data
+      - /lib/modules:/lib/modules:ro
+    ports:
+      - "51820:51820/udp"
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
+
   wg-studio-api:
     build:
       context: .
@@ -8,9 +29,15 @@ services:
     environment:
       - DATABASE_URL=sqlite:////data/wg-studio.db
       - LOG_DATABASE_URL=sqlite:////data/wg-studio-log.db
+      - ARTIFACT_ROOT=/wg/config
+      - WG_CONTAINER_NAME=wg-studio-wireguard
+      - WG_INTERFACE_NAME=wg0
+      - WG_CONTAINER_CONFIG_PATH=/config/wg_confs/wg0.conf
     volumes:
       - ./app:/app/app
       - ./data:/data
+      - ./config:/wg/config
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8000:8000"
 
@@ -23,7 +50,10 @@ services:
     environment:
       - DATABASE_URL=sqlite:////data/wg-studio.db
       - LOG_DATABASE_URL=sqlite:////data/wg-studio-log.db
+      - ARTIFACT_ROOT=/wg/config
+      - WG_STUDIO_API_URL=http://wg-studio-api:8000
     volumes:
       - ./app:/app/app
       - ./data:/data
+      - ./config:/wg/config
       - ./tests:/app/tests

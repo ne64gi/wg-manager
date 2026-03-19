@@ -42,6 +42,27 @@ class Group(Base):
     )
 
 
+class ServerState(Base):
+    __tablename__ = "server_state"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    endpoint: Mapped[str] = mapped_column(String(255))
+    listen_port: Mapped[int]
+    server_address: Mapped[str] = mapped_column(String(45))
+    dns: Mapped[list[str]] = mapped_column(JSON, default=list)
+    private_key: Mapped[str] = mapped_column(String(128))
+    public_key: Mapped[str] = mapped_column(String(128))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -66,6 +87,9 @@ class Peer(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     name: Mapped[str] = mapped_column(String(100), index=True)
     assigned_ip: Mapped[str] = mapped_column(String(45), unique=True, index=True)
+    private_key: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    public_key: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    preshared_key: Mapped[str | None] = mapped_column(String(128), nullable=True)
     description: Mapped[str] = mapped_column(Text, default="")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(
