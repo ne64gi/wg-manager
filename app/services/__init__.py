@@ -22,6 +22,7 @@ from app.services.domain import (
     update_initial_settings,
     update_group_allocation,
 )
+from app.services.status import get_wireguard_overview, get_wireguard_peer_statuses
 
 __all__ = [
     "_validate_group_allocation_settings",
@@ -38,6 +39,8 @@ __all__ = [
     "get_group",
     "get_peer",
     "get_user",
+    "get_wireguard_overview",
+    "get_wireguard_peer_statuses",
     "init_db",
     "init_log_db",
     "list_groups",

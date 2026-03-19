@@ -10,9 +10,11 @@ from app.schemas.domain import (
     PeerCreate,
     PeerRead,
     PeerResolvedAccess,
+    PeerStatusRead,
     ServerStateRead,
     UserCreate,
     UserRead,
+    WireGuardOverviewRead,
 )
 
 __all__ = [
@@ -27,7 +29,9 @@ __all__ = [
     "PeerCreate",
     "PeerRead",
     "PeerResolvedAccess",
+    "PeerStatusRead",
     "ServerStateRead",
     "UserCreate",
     "UserRead",
+    "WireGuardOverviewRead",
 ]

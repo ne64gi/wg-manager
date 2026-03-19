@@ -16,8 +16,10 @@ from app.schemas import (
     PeerCreate,
     PeerRead,
     PeerResolvedAccess,
+    PeerStatusRead,
     UserCreate,
     UserRead,
+    WireGuardOverviewRead,
 )
 from app.services import (
     apply_server_config,
@@ -33,6 +35,8 @@ from app.services import (
     get_group,
     get_peer,
     get_user,
+    get_wireguard_overview,
+    get_wireguard_peer_statuses,
     init_db,
     list_groups,
     list_peers,
@@ -260,3 +264,23 @@ def update_initial_settings_endpoint(
     session: Session = Depends(get_session),
 ) -> InitialSettingsRead:
     return InitialSettingsRead.model_validate(update_initial_settings(session, payload))
+
+
+@app.get("/status/overview", response_model=WireGuardOverviewRead)
+def get_wireguard_overview_endpoint(
+    session: Session = Depends(get_session),
+) -> WireGuardOverviewRead:
+    try:
+        return get_wireguard_overview(session)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/status/peers", response_model=list[PeerStatusRead])
+def get_wireguard_peer_statuses_endpoint(
+    session: Session = Depends(get_session),
+) -> list[PeerStatusRead]:
+    try:
+        return get_wireguard_peer_statuses(session)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
