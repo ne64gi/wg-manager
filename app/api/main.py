@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
 from app.db import get_session
 from app.schemas import (
+    ApplyResult,
+    GeneratedPeerArtifacts,
+    GeneratedServerArtifacts,
     GroupAllocationUpdate,
     GroupCreate,
     GroupRead,
@@ -15,9 +18,15 @@ from app.schemas import (
     UserRead,
 )
 from app.services import (
+    apply_server_config,
     create_group,
     create_peer,
     create_user,
+    delete_group,
+    delete_peer,
+    delete_user,
+    generate_peer_artifacts,
+    generate_server_config,
     get_group,
     get_peer,
     get_user,
@@ -25,6 +34,7 @@ from app.services import (
     list_groups,
     list_peers,
     list_users,
+    revoke_peer,
     resolve_peer_access,
     update_group_allocation,
 )
@@ -83,6 +93,20 @@ def get_group_endpoint(
     return GroupRead.model_validate(group)
 
 
+@app.delete(
+    "/groups/{group_id}",
+    status_code=204,
+    response_class=Response,
+    response_model=None,
+)
+def delete_group_endpoint(group_id: int, session: Session = Depends(get_session)):
+    try:
+        delete_group(session, group_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return Response(status_code=204)
+
+
 @app.post("/users", response_model=UserRead, status_code=201)
 def create_user_endpoint(
     payload: UserCreate, session: Session = Depends(get_session)
@@ -111,6 +135,20 @@ def get_user_endpoint(user_id: int, session: Session = Depends(get_session)) -> 
     if user is None:
         raise HTTPException(status_code=404, detail="user not found")
     return UserRead.model_validate(user)
+
+
+@app.delete(
+    "/users/{user_id}",
+    status_code=204,
+    response_class=Response,
+    response_model=None,
+)
+def delete_user_endpoint(user_id: int, session: Session = Depends(get_session)):
+    try:
+        delete_user(session, user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return Response(status_code=204)
 
 
 @app.post("/peers", response_model=PeerRead, status_code=201)
@@ -143,6 +181,29 @@ def get_peer_endpoint(peer_id: int, session: Session = Depends(get_session)) -> 
     return PeerRead.model_validate(peer)
 
 
+@app.post("/peers/{peer_id}/revoke", response_model=PeerRead)
+def revoke_peer_endpoint(peer_id: int, session: Session = Depends(get_session)) -> PeerRead:
+    try:
+        peer = revoke_peer(session, peer_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return PeerRead.model_validate(peer)
+
+
+@app.delete(
+    "/peers/{peer_id}",
+    status_code=204,
+    response_class=Response,
+    response_model=None,
+)
+def delete_peer_endpoint(peer_id: int, session: Session = Depends(get_session)):
+    try:
+        delete_peer(session, peer_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return Response(status_code=204)
+
+
 @app.get("/peers/{peer_id}/resolved-access", response_model=PeerResolvedAccess)
 def get_peer_resolved_access_endpoint(
     peer_id: int, session: Session = Depends(get_session)
@@ -151,3 +212,32 @@ def get_peer_resolved_access_endpoint(
         return resolve_peer_access(session, peer_id)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/config/peers/{peer_id}/generate", response_model=GeneratedPeerArtifacts)
+def generate_peer_config_endpoint(
+    peer_id: int, session: Session = Depends(get_session)
+) -> GeneratedPeerArtifacts:
+    try:
+        return generate_peer_artifacts(session, peer_id)
+    except ValueError as exc:
+        message = str(exc)
+        status_code = 404 if "does not exist" in message else 400
+        raise HTTPException(status_code=status_code, detail=message) from exc
+
+
+@app.post("/config/server/generate", response_model=GeneratedServerArtifacts)
+def generate_server_config_endpoint(
+    session: Session = Depends(get_session),
+) -> GeneratedServerArtifacts:
+    return generate_server_config(session)
+
+
+@app.post("/config/server/apply", response_model=ApplyResult)
+def apply_server_config_endpoint(
+    session: Session = Depends(get_session),
+) -> ApplyResult:
+    try:
+        return apply_server_config(session)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc

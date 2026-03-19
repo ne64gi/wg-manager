@@ -1,12 +1,18 @@
 from __future__ import annotations
 
+import base64
 import ipaddress
+import os
+from datetime import datetime, timezone
 
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import x25519
 from sqlalchemy import inspect, select, text
 from sqlalchemy.orm import Session, joinedload
 
+from app.core import settings
 from app.db import Base, engine
-from app.models import Group, Peer, User
+from app.models import Group, Peer, ServerState, User
 from app.schemas import (
     GroupAllocationUpdate,
     GroupCreate,
@@ -43,10 +49,102 @@ def _migrate_groups_table() -> None:
         )
 
 
+def _migrate_peers_table() -> None:
+    inspector = inspect(engine)
+    if "peers" not in inspector.get_table_names():
+        return
+
+    columns = {column["name"] for column in inspector.get_columns("peers")}
+    with engine.begin() as connection:
+        if "created_at" not in columns:
+            connection.execute(text("ALTER TABLE peers ADD COLUMN created_at DATETIME"))
+        if "updated_at" not in columns:
+            connection.execute(text("ALTER TABLE peers ADD COLUMN updated_at DATETIME"))
+        if "revoked_at" not in columns:
+            connection.execute(text("ALTER TABLE peers ADD COLUMN revoked_at DATETIME"))
+        if "last_config_generated_at" not in columns:
+            connection.execute(
+                text("ALTER TABLE peers ADD COLUMN last_config_generated_at DATETIME")
+            )
+        if "private_key" not in columns:
+            connection.execute(text("ALTER TABLE peers ADD COLUMN private_key VARCHAR(128)"))
+        if "public_key" not in columns:
+            connection.execute(text("ALTER TABLE peers ADD COLUMN public_key VARCHAR(128)"))
+        if "preshared_key" not in columns:
+            connection.execute(text("ALTER TABLE peers ADD COLUMN preshared_key VARCHAR(128)"))
+
+        connection.execute(
+            text(
+                "UPDATE peers SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL"
+            )
+        )
+        connection.execute(
+            text(
+                "UPDATE peers SET updated_at = CURRENT_TIMESTAMP WHERE updated_at IS NULL"
+            )
+        )
+
+
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
     _migrate_groups_table()
+    _migrate_peers_table()
     init_log_db()
+
+
+def _b64key(num_bytes: int = 32) -> str:
+    return base64.b64encode(os.urandom(num_bytes)).decode("ascii")
+
+
+def generate_keypair() -> tuple[str, str]:
+    private_key = x25519.X25519PrivateKey.generate()
+    public_key = private_key.public_key()
+    private_bytes = private_key.private_bytes(
+        encoding=serialization.Encoding.Raw,
+        format=serialization.PrivateFormat.Raw,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+    public_bytes = public_key.public_bytes(
+        encoding=serialization.Encoding.Raw,
+        format=serialization.PublicFormat.Raw,
+    )
+    return (
+        base64.b64encode(private_bytes).decode("ascii"),
+        base64.b64encode(public_bytes).decode("ascii"),
+    )
+
+
+def get_server_state(session: Session) -> ServerState:
+    server = session.get(ServerState, 1)
+    if server is None:
+        private_key, public_key = generate_keypair()
+        server = ServerState(
+            id=1,
+            endpoint=settings.server_endpoint,
+            listen_port=settings.server_listen_port,
+            server_address=settings.server_address,
+            dns=settings.server_dns,
+            private_key=private_key,
+            public_key=public_key,
+        )
+        session.add(server)
+        session.commit()
+        session.refresh(server)
+    return server
+
+
+def ensure_peer_keys(session: Session, peer: Peer) -> Peer:
+    if peer.private_key and peer.public_key and peer.preshared_key:
+        return peer
+
+    private_key, public_key = generate_keypair()
+    peer.private_key = private_key
+    peer.public_key = public_key
+    peer.preshared_key = _b64key()
+    peer.updated_at = datetime.now(timezone.utc)
+    session.commit()
+    session.refresh(peer)
+    return peer
 
 
 def _host_capacity(network: ipaddress.IPv4Network | ipaddress.IPv6Network) -> int:
@@ -200,6 +298,34 @@ def create_user(session: Session, payload: UserCreate) -> User:
     return user
 
 
+def delete_user(session: Session, user_id: int) -> None:
+    user = session.scalar(
+        select(User)
+        .options(joinedload(User.peers))
+        .where(User.id == user_id)
+    )
+    if user is None:
+        raise ValueError(f"user id={user_id} does not exist")
+
+    peer_ids = [peer.id for peer in user.peers]
+    details = {
+        "group_id": user.group_id,
+        "name": user.name,
+        "deleted_peer_ids": peer_ids,
+    }
+    entity_id = user.id
+
+    session.delete(user)
+    session.commit()
+    log_operation(
+        "user.delete",
+        "user",
+        entity_id,
+        source="service",
+        details=details,
+    )
+
+
 def list_peers(session: Session, user_id: int | None = None) -> list[Peer]:
     query = select(Peer).order_by(Peer.name)
     if user_id is not None:
@@ -209,6 +335,55 @@ def list_peers(session: Session, user_id: int | None = None) -> list[Peer]:
 
 def get_peer(session: Session, peer_id: int) -> Peer | None:
     return session.get(Peer, peer_id)
+
+
+def revoke_peer(session: Session, peer_id: int) -> Peer:
+    peer = session.get(Peer, peer_id)
+    if peer is None:
+        raise ValueError(f"peer id={peer_id} does not exist")
+
+    now = datetime.now(timezone.utc)
+    peer.is_active = False
+    peer.revoked_at = now
+    peer.updated_at = now
+    session.commit()
+    session.refresh(peer)
+    log_operation(
+        "peer.revoke",
+        "peer",
+        peer.id,
+        source="service",
+        details={
+            "user_id": peer.user_id,
+            "name": peer.name,
+            "assigned_ip": peer.assigned_ip,
+            "revoked_at": peer.revoked_at.isoformat() if peer.revoked_at else None,
+        },
+    )
+    return peer
+
+
+def delete_peer(session: Session, peer_id: int) -> None:
+    peer = session.get(Peer, peer_id)
+    if peer is None:
+        raise ValueError(f"peer id={peer_id} does not exist")
+
+    details = {
+        "user_id": peer.user_id,
+        "name": peer.name,
+        "assigned_ip": peer.assigned_ip,
+        "is_active": peer.is_active,
+    }
+    entity_id = peer.id
+    session.delete(peer)
+    session.commit()
+    log_operation(
+        "peer.delete",
+        "peer",
+        entity_id,
+        source="service",
+        details=details,
+    )
 
 
 def _reserved_ip_set(group: Group) -> set[ipaddress.IPv4Address | ipaddress.IPv6Address]:
@@ -296,12 +471,16 @@ def create_peer(session: Session, payload: PeerCreate) -> Peer:
         user_id=payload.user_id,
         name=payload.name,
         assigned_ip=assigned_ip,
+        private_key=None,
+        public_key=None,
+        preshared_key=None,
         description=payload.description,
         is_active=payload.is_active,
     )
     session.add(peer)
     session.commit()
     session.refresh(peer)
+    ensure_peer_keys(session, peer)
     log_operation(
         "peer.create",
         "peer",
@@ -314,6 +493,35 @@ def create_peer(session: Session, payload: PeerCreate) -> Peer:
         },
     )
     return peer
+
+
+def delete_group(session: Session, group_id: int) -> None:
+    group = session.scalar(
+        select(Group)
+        .options(joinedload(Group.users).joinedload(User.peers))
+        .where(Group.id == group_id)
+    )
+    if group is None:
+        raise ValueError(f"group id={group_id} does not exist")
+
+    user_ids = [user.id for user in group.users]
+    peer_ids = [peer.id for user in group.users for peer in user.peers]
+    details = {
+        "name": group.name,
+        "deleted_user_ids": user_ids,
+        "deleted_peer_ids": peer_ids,
+    }
+    entity_id = group.id
+
+    session.delete(group)
+    session.commit()
+    log_operation(
+        "group.delete",
+        "group",
+        entity_id,
+        source="service",
+        details=details,
+    )
 
 
 def resolve_peer_access(session: Session, peer_id: int) -> PeerResolvedAccess:

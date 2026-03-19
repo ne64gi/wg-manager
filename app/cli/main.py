@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import json
+from urllib import error, request
 
 import typer
 
+from app.core import settings
 from app.db import SessionLocal
 from app.models import GroupScope
 from app.schemas import GroupAllocationUpdate, GroupCreate, PeerCreate, UserCreate
@@ -11,10 +13,14 @@ from app.services import (
     create_group,
     create_peer,
     create_user,
+    delete_group,
+    delete_peer,
+    delete_user,
     init_db,
     list_groups,
     list_peers,
     list_users,
+    revoke_peer,
     resolve_peer_access,
     update_group_allocation,
 )
@@ -23,10 +29,12 @@ app = typer.Typer(help="WireGuard control plane CLI")
 group_app = typer.Typer()
 user_app = typer.Typer()
 peer_app = typer.Typer()
+config_app = typer.Typer()
 
 app.add_typer(group_app, name="group")
 app.add_typer(user_app, name="user")
 app.add_typer(peer_app, name="peer")
+app.add_typer(config_app, name="config")
 
 
 @app.callback()
@@ -36,6 +44,31 @@ def main() -> None:
 
 def print_json(payload: object) -> None:
     typer.echo(json.dumps(payload, indent=2, ensure_ascii=False, default=str))
+
+
+def api_request(method: str, path: str) -> object:
+    target = f"{settings.api_base_url.rstrip('/')}{path}"
+    http_request = request.Request(
+        target,
+        method=method,
+        headers={"Accept": "application/json"},
+    )
+    try:
+        with request.urlopen(http_request) as response:
+            raw = response.read().decode("utf-8")
+    except error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise typer.BadParameter(
+            f"API request failed ({exc.code}): {detail}"
+        ) from exc
+    except error.URLError as exc:
+        raise typer.BadParameter(
+            f"could not reach API at {settings.api_base_url}: {exc.reason}"
+        ) from exc
+
+    if not raw:
+        return {}
+    return json.loads(raw)
 
 
 @app.command("init-db")
@@ -121,6 +154,13 @@ def group_list_command() -> None:
         )
 
 
+@group_app.command("delete")
+def group_delete_command(group_id: int = typer.Option(..., "--group-id")) -> None:
+    with SessionLocal() as session:
+        delete_group(session, group_id)
+        typer.echo(f"group {group_id} deleted")
+
+
 @user_app.command("create")
 def user_create_command(
     group_id: int = typer.Option(..., "--group-id"),
@@ -164,6 +204,13 @@ def user_list_command(group_id: int | None = typer.Option(None, "--group-id")) -
         )
 
 
+@user_app.command("delete")
+def user_delete_command(user_id: int = typer.Option(..., "--user-id")) -> None:
+    with SessionLocal() as session:
+        delete_user(session, user_id)
+        typer.echo(f"user {user_id} deleted")
+
+
 @peer_app.command("create")
 def peer_create_command(
     user_id: int = typer.Option(..., "--user-id"),
@@ -186,6 +233,9 @@ def peer_create_command(
                 "name": peer.name,
                 "assigned_ip": peer.assigned_ip,
                 "is_active": peer.is_active,
+                "created_at": peer.created_at,
+                "updated_at": peer.updated_at,
+                "revoked_at": peer.revoked_at,
             }
         )
 
@@ -202,6 +252,9 @@ def peer_list_command(user_id: int | None = typer.Option(None, "--user-id")) -> 
                     "name": peer.name,
                     "assigned_ip": peer.assigned_ip,
                     "is_active": peer.is_active,
+                    "created_at": peer.created_at,
+                    "updated_at": peer.updated_at,
+                    "revoked_at": peer.revoked_at,
                 }
                 for peer in peers
             ]
@@ -213,6 +266,44 @@ def peer_resolved_access_command(peer_id: int = typer.Option(..., "--peer-id")) 
     with SessionLocal() as session:
         resolved = resolve_peer_access(session, peer_id)
         print_json(resolved.model_dump())
+
+
+@peer_app.command("revoke")
+def peer_revoke_command(peer_id: int = typer.Option(..., "--peer-id")) -> None:
+    with SessionLocal() as session:
+        peer = revoke_peer(session, peer_id)
+        print_json(
+            {
+                "id": peer.id,
+                "user_id": peer.user_id,
+                "name": peer.name,
+                "assigned_ip": peer.assigned_ip,
+                "is_active": peer.is_active,
+                "revoked_at": peer.revoked_at,
+            }
+        )
+
+
+@peer_app.command("delete")
+def peer_delete_command(peer_id: int = typer.Option(..., "--peer-id")) -> None:
+    with SessionLocal() as session:
+        delete_peer(session, peer_id)
+        typer.echo(f"peer {peer_id} deleted")
+
+
+@config_app.command("generate-peer")
+def config_generate_peer_command(peer_id: int = typer.Option(..., "--peer-id")) -> None:
+    print_json(api_request("POST", f"/config/peers/{peer_id}/generate"))
+
+
+@config_app.command("generate-server")
+def config_generate_server_command() -> None:
+    print_json(api_request("POST", "/config/server/generate"))
+
+
+@config_app.command("apply")
+def config_apply_command() -> None:
+    print_json(api_request("POST", "/config/server/apply"))
 
 
 if __name__ == "__main__":

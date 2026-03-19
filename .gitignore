@@ -1,4 +1,12 @@
 data/*
 !data/.gitkeep
+config/*
+!config/.gitkeep
+!config/peers/
+config/peers/*
+!config/peers/.gitkeep
+!config/wg_confs/
+config/wg_confs/*
+!config/wg_confs/.gitkeep
 __pycache__/
 .ruff_cache/

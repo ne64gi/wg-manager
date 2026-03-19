@@ -6,9 +6,37 @@ from pydantic import BaseModel
 class Settings(BaseModel):
     database_url: str = "sqlite:////data/wg-studio.db"
     log_database_url: str = "sqlite:////data/wg-studio-log.db"
+    artifact_root: str = "/wg/config"
+    api_base_url: str = "http://wg-studio-api:8000"
+    server_endpoint: str = "vpn.example.com"
+    server_listen_port: int = 51820
+    server_address: str = "10.255.255.1/32"
+    server_dns: list[str] = ["1.1.1.1"]
+    docker_socket_path: str = "/var/run/docker.sock"
+    wireguard_container_name: str = "wg-studio-wireguard"
+    wireguard_interface_name: str = "wg0"
+    wireguard_config_path: str = "/config/wg_confs/wg0.conf"
 
 
 settings = Settings(
     database_url=os.getenv("DATABASE_URL", "sqlite:////data/wg-studio.db"),
     log_database_url=os.getenv("LOG_DATABASE_URL", "sqlite:////data/wg-studio-log.db"),
+    artifact_root=os.getenv("ARTIFACT_ROOT", "/wg/config"),
+    api_base_url=os.getenv("WG_STUDIO_API_URL", "http://wg-studio-api:8000"),
+    server_endpoint=os.getenv("WG_SERVER_ENDPOINT", "vpn.example.com"),
+    server_listen_port=int(os.getenv("WG_SERVER_LISTEN_PORT", "51820")),
+    server_address=os.getenv("WG_SERVER_ADDRESS", "10.255.255.1/32"),
+    server_dns=[
+        value.strip()
+        for value in os.getenv("WG_SERVER_DNS", "1.1.1.1").split(",")
+        if value.strip()
+    ],
+    docker_socket_path=os.getenv("DOCKER_SOCKET_PATH", "/var/run/docker.sock"),
+    wireguard_container_name=os.getenv(
+        "WG_CONTAINER_NAME", "wg-studio-wireguard"
+    ),
+    wireguard_interface_name=os.getenv("WG_INTERFACE_NAME", "wg0"),
+    wireguard_config_path=os.getenv(
+        "WG_CONTAINER_CONFIG_PATH", "/config/wg_confs/wg0.conf"
+    ),
 )
