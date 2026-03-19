@@ -97,10 +97,32 @@ def _migrate_peers_table() -> None:
         )
 
 
+def _migrate_gui_settings_table() -> None:
+    inspector = inspect(engine)
+    if "gui_settings" not in inspector.get_table_names():
+        return
+
+    columns = {column["name"] for column in inspector.get_columns("gui_settings")}
+    with engine.begin() as connection:
+        if "theme_mode" not in columns:
+            connection.execute(
+                text(
+                    "ALTER TABLE gui_settings ADD COLUMN theme_mode VARCHAR(16) NOT NULL DEFAULT 'system'"
+                )
+            )
+        if "default_locale" not in columns:
+            connection.execute(
+                text(
+                    "ALTER TABLE gui_settings ADD COLUMN default_locale VARCHAR(16) NOT NULL DEFAULT 'en'"
+                )
+            )
+
+
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
     _migrate_groups_table()
     _migrate_peers_table()
+    _migrate_gui_settings_table()
     init_log_db()
 
 

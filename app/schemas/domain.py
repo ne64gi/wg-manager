@@ -256,10 +256,38 @@ def _normalize_log_level(value: str) -> str:
     return normalized
 
 
+def _normalize_theme_mode(value: str) -> str:
+    normalized = value.strip().lower()
+    allowed = {"light", "dark", "system"}
+    if normalized not in allowed:
+        raise ValueError(f"theme_mode must be one of: {', '.join(sorted(allowed))}")
+    return normalized
+
+
+def _normalize_locale(value: str) -> str:
+    normalized = value.strip().lower()
+    allowed = {"en", "ja"}
+    if normalized not in allowed:
+        raise ValueError(f"default_locale must be one of: {', '.join(sorted(allowed))}")
+    return normalized
+
+
 class GuiSettingsUpdate(BaseModel):
+    theme_mode: str = "system"
+    default_locale: str = "en"
     error_log_level: str = "warning"
     access_log_path: str = "none"
     error_log_path: str = "none"
+
+    @field_validator("theme_mode")
+    @classmethod
+    def validate_theme_mode(cls, value: str) -> str:
+        return _normalize_theme_mode(value)
+
+    @field_validator("default_locale")
+    @classmethod
+    def validate_default_locale(cls, value: str) -> str:
+        return _normalize_locale(value)
 
     @field_validator("error_log_level")
     @classmethod
@@ -279,6 +307,8 @@ class GuiSettingsRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    theme_mode: str
+    default_locale: str
     error_log_level: str
     access_log_path: str
     error_log_path: str

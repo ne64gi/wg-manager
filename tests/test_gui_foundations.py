@@ -102,6 +102,8 @@ def test_login_users_and_gui_settings_are_persisted() -> None:
         assert verify_password("newsecret123", updated_login_user.password_hash) is True
 
         gui_settings = get_gui_settings(session)
+        assert gui_settings.theme_mode == "system"
+        assert gui_settings.default_locale == "en"
         assert gui_settings.error_log_level == "warning"
         assert gui_settings.access_log_path == "none"
         assert gui_settings.error_log_path == "none"
@@ -109,11 +111,15 @@ def test_login_users_and_gui_settings_are_persisted() -> None:
         gui_settings = update_gui_settings(
             session,
             GuiSettingsUpdate(
+                theme_mode="dark",
+                default_locale="ja",
                 error_log_level="error",
                 access_log_path="/var/log/wg-studio/access.log",
                 error_log_path="none",
             ),
         )
+        assert gui_settings.theme_mode == "dark"
+        assert gui_settings.default_locale == "ja"
         assert gui_settings.error_log_level == "error"
         assert gui_settings.access_log_path == "/var/log/wg-studio/access.log"
 

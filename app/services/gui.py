@@ -48,6 +48,8 @@ def get_gui_settings(session: Session) -> GuiSettings:
 
 def update_gui_settings(session: Session, payload: GuiSettingsUpdate) -> GuiSettings:
     gui_settings = get_gui_settings(session)
+    gui_settings.theme_mode = payload.theme_mode
+    gui_settings.default_locale = payload.default_locale
     gui_settings.error_log_level = payload.error_log_level
     gui_settings.access_log_path = payload.access_log_path
     gui_settings.error_log_path = payload.error_log_path
@@ -60,6 +62,8 @@ def update_gui_settings(session: Session, payload: GuiSettingsUpdate) -> GuiSett
         gui_settings.id,
         source="service",
         details={
+            "theme_mode": gui_settings.theme_mode,
+            "default_locale": gui_settings.default_locale,
             "error_log_level": gui_settings.error_log_level,
             "access_log_path": gui_settings.access_log_path,
             "error_log_path": gui_settings.error_log_path,
@@ -70,6 +74,8 @@ def update_gui_settings(session: Session, payload: GuiSettingsUpdate) -> GuiSett
         "settings",
         "GUI settings updated",
         details={
+            "theme_mode": gui_settings.theme_mode,
+            "default_locale": gui_settings.default_locale,
             "error_log_level": gui_settings.error_log_level,
             "access_log_path": gui_settings.access_log_path,
             "error_log_path": gui_settings.error_log_path,

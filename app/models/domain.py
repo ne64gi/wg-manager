@@ -64,6 +64,8 @@ class GuiSettings(Base):
     __tablename__ = "gui_settings"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    theme_mode: Mapped[str] = mapped_column(String(16), default="system")
+    default_locale: Mapped[str] = mapped_column(String(16), default="en")
     error_log_level: Mapped[str] = mapped_column(String(32), default="warning")
     access_log_path: Mapped[str] = mapped_column(String(255), default="none")
     error_log_path: Mapped[str] = mapped_column(String(255), default="none")
