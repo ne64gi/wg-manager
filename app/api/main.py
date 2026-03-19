@@ -18,6 +18,9 @@ from app.services import (
     create_group,
     create_peer,
     create_user,
+    delete_group,
+    delete_peer,
+    delete_user,
     get_group,
     get_peer,
     get_user,
@@ -25,6 +28,7 @@ from app.services import (
     list_groups,
     list_peers,
     list_users,
+    revoke_peer,
     resolve_peer_access,
     update_group_allocation,
 )
@@ -83,6 +87,14 @@ def get_group_endpoint(
     return GroupRead.model_validate(group)
 
 
+@app.delete("/groups/{group_id}", status_code=204)
+def delete_group_endpoint(group_id: int, session: Session = Depends(get_session)) -> None:
+    try:
+        delete_group(session, group_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
 @app.post("/users", response_model=UserRead, status_code=201)
 def create_user_endpoint(
     payload: UserCreate, session: Session = Depends(get_session)
@@ -113,6 +125,14 @@ def get_user_endpoint(user_id: int, session: Session = Depends(get_session)) -> 
     return UserRead.model_validate(user)
 
 
+@app.delete("/users/{user_id}", status_code=204)
+def delete_user_endpoint(user_id: int, session: Session = Depends(get_session)) -> None:
+    try:
+        delete_user(session, user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
 @app.post("/peers", response_model=PeerRead, status_code=201)
 def create_peer_endpoint(
     payload: PeerCreate, session: Session = Depends(get_session)
@@ -141,6 +161,23 @@ def get_peer_endpoint(peer_id: int, session: Session = Depends(get_session)) -> 
     if peer is None:
         raise HTTPException(status_code=404, detail="peer not found")
     return PeerRead.model_validate(peer)
+
+
+@app.post("/peers/{peer_id}/revoke", response_model=PeerRead)
+def revoke_peer_endpoint(peer_id: int, session: Session = Depends(get_session)) -> PeerRead:
+    try:
+        peer = revoke_peer(session, peer_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return PeerRead.model_validate(peer)
+
+
+@app.delete("/peers/{peer_id}", status_code=204)
+def delete_peer_endpoint(peer_id: int, session: Session = Depends(get_session)) -> None:
+    try:
+        delete_peer(session, peer_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @app.get("/peers/{peer_id}/resolved-access", response_model=PeerResolvedAccess)

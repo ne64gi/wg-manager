@@ -11,10 +11,14 @@ from app.services import (
     create_group,
     create_peer,
     create_user,
+    delete_group,
+    delete_peer,
+    delete_user,
     init_db,
     list_groups,
     list_peers,
     list_users,
+    revoke_peer,
     resolve_peer_access,
     update_group_allocation,
 )
@@ -121,6 +125,13 @@ def group_list_command() -> None:
         )
 
 
+@group_app.command("delete")
+def group_delete_command(group_id: int = typer.Option(..., "--group-id")) -> None:
+    with SessionLocal() as session:
+        delete_group(session, group_id)
+        typer.echo(f"group {group_id} deleted")
+
+
 @user_app.command("create")
 def user_create_command(
     group_id: int = typer.Option(..., "--group-id"),
@@ -164,6 +175,13 @@ def user_list_command(group_id: int | None = typer.Option(None, "--group-id")) -
         )
 
 
+@user_app.command("delete")
+def user_delete_command(user_id: int = typer.Option(..., "--user-id")) -> None:
+    with SessionLocal() as session:
+        delete_user(session, user_id)
+        typer.echo(f"user {user_id} deleted")
+
+
 @peer_app.command("create")
 def peer_create_command(
     user_id: int = typer.Option(..., "--user-id"),
@@ -186,6 +204,9 @@ def peer_create_command(
                 "name": peer.name,
                 "assigned_ip": peer.assigned_ip,
                 "is_active": peer.is_active,
+                "created_at": peer.created_at,
+                "updated_at": peer.updated_at,
+                "revoked_at": peer.revoked_at,
             }
         )
 
@@ -202,6 +223,9 @@ def peer_list_command(user_id: int | None = typer.Option(None, "--user-id")) -> 
                     "name": peer.name,
                     "assigned_ip": peer.assigned_ip,
                     "is_active": peer.is_active,
+                    "created_at": peer.created_at,
+                    "updated_at": peer.updated_at,
+                    "revoked_at": peer.revoked_at,
                 }
                 for peer in peers
             ]
@@ -213,6 +237,29 @@ def peer_resolved_access_command(peer_id: int = typer.Option(..., "--peer-id")) 
     with SessionLocal() as session:
         resolved = resolve_peer_access(session, peer_id)
         print_json(resolved.model_dump())
+
+
+@peer_app.command("revoke")
+def peer_revoke_command(peer_id: int = typer.Option(..., "--peer-id")) -> None:
+    with SessionLocal() as session:
+        peer = revoke_peer(session, peer_id)
+        print_json(
+            {
+                "id": peer.id,
+                "user_id": peer.user_id,
+                "name": peer.name,
+                "assigned_ip": peer.assigned_ip,
+                "is_active": peer.is_active,
+                "revoked_at": peer.revoked_at,
+            }
+        )
+
+
+@peer_app.command("delete")
+def peer_delete_command(peer_id: int = typer.Option(..., "--peer-id")) -> None:
+    with SessionLocal() as session:
+        delete_peer(session, peer_id)
+        typer.echo(f"peer {peer_id} deleted")
 
 
 if __name__ == "__main__":

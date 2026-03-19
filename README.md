@@ -14,6 +14,7 @@ Current implementation focus:
 - Group / User / Peer management
 - Group-based routing defaults and User overrides
 - Peer IP allocation policy
+- Peer lifecycle and cascade delete behavior
 - SQLite-backed state
 - FastAPI + Typer entrypoints
 - Separate audit log database
@@ -60,6 +61,40 @@ Current application code is split like this:
 - Belongs to a User
 - Has an assigned VPN IP
 - Uses the effective access resolved from `User override -> Group default`
+- Tracks lifecycle timestamps such as create / update / revoke / last config generation
+
+## Lifecycle Model
+
+Peer lifecycle is now tracked explicitly.
+
+### Peer lifecycle fields
+
+- `created_at`
+- `updated_at`
+- `revoked_at`
+- `last_config_generated_at`
+- `is_active`
+
+### Current lifecycle operations
+
+- `peer create`
+- `peer revoke`
+- `peer delete`
+- `user delete`
+- `group delete`
+
+### Delete policy
+
+- `peer delete`: physical delete
+- `user delete`: physical delete with peer cascade
+- `group delete`: physical delete with user and peer cascade
+- `peer revoke`: keep the record, mark it inactive, and set `revoked_at`
+
+This is intentional:
+
+- revoke keeps history
+- delete removes unwanted entities quickly
+- audit logs preserve the operation trail separately
 
 ## Scope Model
 
@@ -124,8 +159,12 @@ Current logged operations:
 
 - `group.create`
 - `group.update_allocation`
+- `group.delete`
 - `user.create`
+- `user.delete`
 - `peer.create`
+- `peer.revoke`
+- `peer.delete`
 
 This split is intentional so deletion-heavy workflows and future observability can rely on audit data without coupling it to the main state DB.
 
@@ -140,12 +179,16 @@ FastAPI is available through:
 - `PATCH /groups/{group_id}/allocation`
 - `GET /groups`
 - `GET /groups/{group_id}`
+- `DELETE /groups/{group_id}`
 - `POST /users`
 - `GET /users`
 - `GET /users/{user_id}`
+- `DELETE /users/{user_id}`
 - `POST /peers`
 - `GET /peers`
 - `GET /peers/{peer_id}`
+- `POST /peers/{peer_id}/revoke`
+- `DELETE /peers/{peer_id}`
 - `GET /peers/{peer_id}/resolved-access`
 
 ### CLI
@@ -155,10 +198,14 @@ Typer CLI is available through:
 - `group create`
 - `group update-allocation`
 - `group list`
+- `group delete`
 - `user create`
 - `user list`
+- `user delete`
 - `peer create`
 - `peer list`
+- `peer revoke`
+- `peer delete`
 - `peer resolved-access`
 - `init-db`
 
@@ -235,10 +282,10 @@ docker compose run --rm wg-studio-cli peer resolved-access --peer-id 1
 
 The next implementation steps are:
 
-1. Peer lifecycle fields and deletion behavior
-2. Config generation for `wg0.conf` and per-peer config
-3. Safe apply flow
-4. Runtime status collection and reconciliation
+1. Config generation for `wg0.conf` and per-peer config
+2. Safe apply flow
+3. Runtime status collection and reconciliation
+4. Key management and reissue flow
 
 ## Design Notes
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ipaddress
+from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -172,6 +173,10 @@ class PeerRead(BaseModel):
     assigned_ip: str
     description: str
     is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    revoked_at: datetime | None
+    last_config_generated_at: datetime | None
 
 
 class PeerResolvedAccess(BaseModel):
