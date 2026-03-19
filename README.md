@@ -44,6 +44,12 @@ Start the stack:
 docker compose up -d --build
 ```
 
+Open the GUI:
+
+```text
+http://localhost:3900/wg-studio/
+```
+
 Check API health from inside the stack:
 
 ```bash
@@ -59,6 +65,7 @@ docker compose run --rm wg-studio-cli group list
 ## Security Notes
 
 - The API is not published on a host port by default.
+- The GUI is published through `nginx` on port `3900`.
 - Generated artifacts live in the Docker named volume `wg_config`.
 - Keep the real `.env` local-only and commit changes only to `.env.example`.
 

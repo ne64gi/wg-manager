@@ -24,6 +24,12 @@ from app.schemas import (
 from app.services.audit import init_log_db, log_operation
 
 
+def _datetime_sql_type() -> str:
+    if engine.dialect.name == "postgresql":
+        return "TIMESTAMP WITH TIME ZONE"
+    return "DATETIME"
+
+
 def _migrate_groups_table() -> None:
     inspector = inspect(engine)
     if "groups" not in inspector.get_table_names():
@@ -58,23 +64,34 @@ def _migrate_peers_table() -> None:
         return
 
     columns = {column["name"] for column in inspector.get_columns("peers")}
+    datetime_type = _datetime_sql_type()
     with engine.begin() as connection:
         if "created_at" not in columns:
-            connection.execute(text("ALTER TABLE peers ADD COLUMN created_at DATETIME"))
+            connection.execute(
+                text(f"ALTER TABLE peers ADD COLUMN created_at {datetime_type}")
+            )
         if "updated_at" not in columns:
-            connection.execute(text("ALTER TABLE peers ADD COLUMN updated_at DATETIME"))
+            connection.execute(
+                text(f"ALTER TABLE peers ADD COLUMN updated_at {datetime_type}")
+            )
         if "revoked_at" not in columns:
-            connection.execute(text("ALTER TABLE peers ADD COLUMN revoked_at DATETIME"))
+            connection.execute(
+                text(f"ALTER TABLE peers ADD COLUMN revoked_at {datetime_type}")
+            )
         if "last_config_generated_at" not in columns:
             connection.execute(
-                text("ALTER TABLE peers ADD COLUMN last_config_generated_at DATETIME")
+                text(
+                    f"ALTER TABLE peers ADD COLUMN last_config_generated_at {datetime_type}"
+                )
             )
         if "is_revealed" not in columns:
             connection.execute(
                 text("ALTER TABLE peers ADD COLUMN is_revealed BOOLEAN NOT NULL DEFAULT FALSE")
             )
         if "revealed_at" not in columns:
-            connection.execute(text("ALTER TABLE peers ADD COLUMN revealed_at DATETIME"))
+            connection.execute(
+                text(f"ALTER TABLE peers ADD COLUMN revealed_at {datetime_type}")
+            )
         if "private_key" not in columns:
             connection.execute(text("ALTER TABLE peers ADD COLUMN private_key VARCHAR(128)"))
         if "public_key" not in columns:

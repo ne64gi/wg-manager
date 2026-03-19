@@ -3,7 +3,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
+from app.api.deps import require_authenticated_login_user
 from app.db import get_session
+from app.models import LoginUser
 from app.schemas import (
     GroupAllocationUpdate,
     GroupCreate,
@@ -46,7 +48,9 @@ def healthcheck() -> dict[str, str]:
 
 @router.post("/groups", response_model=GroupRead, status_code=201)
 def create_group_endpoint(
-    payload: GroupCreate, session: Session = Depends(get_session)
+    payload: GroupCreate,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
 ) -> GroupRead:
     try:
         group = create_group(session, payload)
@@ -59,6 +63,7 @@ def create_group_endpoint(
 def update_group_allocation_endpoint(
     group_id: int,
     payload: GroupAllocationUpdate,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> GroupRead:
     try:
@@ -71,13 +76,18 @@ def update_group_allocation_endpoint(
 
 
 @router.get("/groups", response_model=list[GroupRead])
-def list_groups_endpoint(session: Session = Depends(get_session)) -> list[GroupRead]:
+def list_groups_endpoint(
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> list[GroupRead]:
     return [GroupRead.model_validate(group) for group in list_groups(session)]
 
 
 @router.get("/groups/{group_id}", response_model=GroupRead)
 def get_group_endpoint(
-    group_id: int, session: Session = Depends(get_session)
+    group_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
 ) -> GroupRead:
     group = get_group(session, group_id)
     if group is None:
@@ -91,7 +101,11 @@ def get_group_endpoint(
     response_class=Response,
     response_model=None,
 )
-def delete_group_endpoint(group_id: int, session: Session = Depends(get_session)):
+def delete_group_endpoint(
+    group_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+):
     try:
         delete_group(session, group_id)
     except ValueError as exc:
@@ -101,7 +115,9 @@ def delete_group_endpoint(group_id: int, session: Session = Depends(get_session)
 
 @router.post("/users", response_model=UserRead, status_code=201)
 def create_user_endpoint(
-    payload: UserCreate, session: Session = Depends(get_session)
+    payload: UserCreate,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
 ) -> UserRead:
     try:
         user = create_user(session, payload)
@@ -113,6 +129,7 @@ def create_user_endpoint(
 @router.get("/users", response_model=list[UserRead])
 def list_users_endpoint(
     group_id: int | None = Query(default=None),
+    current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> list[UserRead]:
     return [
@@ -122,7 +139,11 @@ def list_users_endpoint(
 
 
 @router.get("/users/{user_id}", response_model=UserRead)
-def get_user_endpoint(user_id: int, session: Session = Depends(get_session)) -> UserRead:
+def get_user_endpoint(
+    user_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> UserRead:
     user = get_user(session, user_id)
     if user is None:
         raise HTTPException(status_code=404, detail="user not found")
@@ -135,7 +156,11 @@ def get_user_endpoint(user_id: int, session: Session = Depends(get_session)) -> 
     response_class=Response,
     response_model=None,
 )
-def delete_user_endpoint(user_id: int, session: Session = Depends(get_session)):
+def delete_user_endpoint(
+    user_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+):
     try:
         delete_user(session, user_id)
     except ValueError as exc:
@@ -145,7 +170,9 @@ def delete_user_endpoint(user_id: int, session: Session = Depends(get_session)):
 
 @router.post("/peers", response_model=PeerRead, status_code=201)
 def create_peer_endpoint(
-    payload: PeerCreate, session: Session = Depends(get_session)
+    payload: PeerCreate,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
 ) -> PeerRead:
     try:
         peer = create_peer(session, payload)
@@ -157,6 +184,7 @@ def create_peer_endpoint(
 @router.get("/peers", response_model=list[PeerRead])
 def list_peers_endpoint(
     user_id: int | None = Query(default=None),
+    current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> list[PeerRead]:
     return [
@@ -166,7 +194,11 @@ def list_peers_endpoint(
 
 
 @router.get("/peers/{peer_id}", response_model=PeerRead)
-def get_peer_endpoint(peer_id: int, session: Session = Depends(get_session)) -> PeerRead:
+def get_peer_endpoint(
+    peer_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> PeerRead:
     peer = get_peer(session, peer_id)
     if peer is None:
         raise HTTPException(status_code=404, detail="peer not found")
@@ -174,7 +206,11 @@ def get_peer_endpoint(peer_id: int, session: Session = Depends(get_session)) -> 
 
 
 @router.post("/peers/{peer_id}/revoke", response_model=PeerRead)
-def revoke_peer_endpoint(peer_id: int, session: Session = Depends(get_session)) -> PeerRead:
+def revoke_peer_endpoint(
+    peer_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> PeerRead:
     try:
         peer = revoke_peer(session, peer_id)
     except ValueError as exc:
@@ -188,7 +224,11 @@ def revoke_peer_endpoint(peer_id: int, session: Session = Depends(get_session)) 
     response_class=Response,
     response_model=None,
 )
-def delete_peer_endpoint(peer_id: int, session: Session = Depends(get_session)):
+def delete_peer_endpoint(
+    peer_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+):
     try:
         delete_peer(session, peer_id)
     except ValueError as exc:
@@ -198,7 +238,9 @@ def delete_peer_endpoint(peer_id: int, session: Session = Depends(get_session)):
 
 @router.get("/peers/{peer_id}/resolved-access", response_model=PeerResolvedAccess)
 def get_peer_resolved_access_endpoint(
-    peer_id: int, session: Session = Depends(get_session)
+    peer_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
 ) -> PeerResolvedAccess:
     try:
         return resolve_peer_access(session, peer_id)
@@ -208,6 +250,7 @@ def get_peer_resolved_access_endpoint(
 
 @router.get("/initial-settings", response_model=InitialSettingsRead)
 def get_initial_settings_endpoint(
+    current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> InitialSettingsRead:
     return InitialSettingsRead.model_validate(get_initial_settings(session))
@@ -216,6 +259,7 @@ def get_initial_settings_endpoint(
 @router.put("/initial-settings", response_model=InitialSettingsRead)
 def update_initial_settings_endpoint(
     payload: InitialSettingsUpdate,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> InitialSettingsRead:
     return InitialSettingsRead.model_validate(update_initial_settings(session, payload))

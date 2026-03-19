@@ -26,7 +26,9 @@ router = APIRouter()
 
 @router.post("/config/peers/{peer_id}/generate", response_model=GeneratedPeerArtifacts)
 def generate_peer_config_endpoint(
-    peer_id: int, session: Session = Depends(get_session)
+    peer_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
 ) -> GeneratedPeerArtifacts:
     try:
         return generate_peer_artifacts(session, peer_id)
@@ -76,6 +78,7 @@ def get_peer_qr_endpoint(
 
 @router.post("/config/server/generate", response_model=GeneratedServerArtifacts)
 def generate_server_config_endpoint(
+    current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> GeneratedServerArtifacts:
     return generate_server_config(session)
@@ -83,6 +86,7 @@ def generate_server_config_endpoint(
 
 @router.post("/config/server/apply", response_model=ApplyResult)
 def apply_server_config_endpoint(
+    current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> ApplyResult:
     try:
