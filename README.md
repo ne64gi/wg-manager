@@ -1,100 +1,58 @@
 # wg-studio
 
-WireGuard control plane prototype for managing `Group -> User -> Peer` with SQLite, API, CLI, and audit logging.
+`wg-studio` is a WireGuard control plane built around `Group -> User -> Peer`.
+
+`v1.0.0-beta` status:
+
+- SQLite-backed source of truth
+- FastAPI API
+- Typer CLI
+- separate audit log database
+- group/user/peer lifecycle management
+- policy-aware client config generation
+- `wg0.conf` generation
+- QR generation
+- Docker-based apply flow
+- verified WireGuard handshake on a real VPS
 
 ## Overview
 
-`wg-studio` is a lightweight management layer around WireGuard.
+`wg-studio` manages desired state outside the WireGuard data plane.
 
-It does not replace WireGuard itself.
-Instead, it manages desired state outside the data plane and will eventually generate and apply WireGuard configuration from that state.
+It stores groups, users, peers, allocation policy, and initial endpoint settings in SQLite, then generates and applies WireGuard configuration from that state.
 
-Current implementation focus:
-
-- Group / User / Peer management
-- Group-based routing defaults and User overrides
-- Peer IP allocation policy
-- Peer lifecycle and cascade delete behavior
-- SQLite-backed state
-- FastAPI + Typer entrypoints
-- Separate audit log database
-
-Not implemented yet:
-
-- `wg0.conf` generation
-- client config generation
-- `wg syncconf` apply flow
-- status collection from `wg show`
-- GUI
-
-## Package Layout
-
-Current application code is split like this:
+Current architecture:
 
 - `app/api`: FastAPI entrypoint
 - `app/cli`: Typer entrypoint
-- `app/core`: settings and core configuration
-- `app/db`: main DB and audit DB wiring
+- `app/core`: runtime settings
+- `app/db`: main and audit database wiring
 - `app/models`: SQLAlchemy models
 - `app/schemas`: Pydantic schemas
-- `app/services`: domain logic and audit logging
+- `app/services`: domain, generation, apply, and audit logic
 
 ## Core Model
 
 ### Group
 
-- Represents an organizational segment
-- Owns a parent network such as `/8`, `/16`, `/24`
-- Has default `AllowedIPs`
-- Has allocation policy for automatic peer IP assignment
+- organizational segment
+- owns a parent network such as `/8`, `/16`, `/24`
+- defines default `AllowedIPs`
+- can define `dns_servers`
+- owns allocation policy through `allocation_start_host` and `reserved_ips`
 
 ### User
 
-- Represents a person or logical owner
-- Belongs to a Group
-- Can override `AllowedIPs`
-- Owns multiple Peers
+- person or logical owner inside a group
+- can inherit group access or override it
+- owns multiple peers
 
 ### Peer
 
-- Represents one concrete device / connection endpoint
-- Belongs to a User
-- Has an assigned VPN IP
-- Uses the effective access resolved from `User override -> Group default`
-- Tracks lifecycle timestamps such as create / update / revoke / last config generation
-
-## Lifecycle Model
-
-Peer lifecycle is now tracked explicitly.
-
-### Peer lifecycle fields
-
-- `created_at`
-- `updated_at`
-- `revoked_at`
-- `last_config_generated_at`
-- `is_active`
-
-### Current lifecycle operations
-
-- `peer create`
-- `peer revoke`
-- `peer delete`
-- `user delete`
-- `group delete`
-
-### Delete policy
-
-- `peer delete`: physical delete
-- `user delete`: physical delete with peer cascade
-- `group delete`: physical delete with user and peer cascade
-- `peer revoke`: keep the record, mark it inactive, and set `revoked_at`
-
-This is intentional:
-
-- revoke keeps history
-- delete removes unwanted entities quickly
-- audit logs preserve the operation trail separately
+- one concrete device / connection endpoint
+- gets an assigned VPN IP
+- owns WireGuard key material
+- tracks lifecycle and generation timestamps
 
 ## Scope Model
 
@@ -104,15 +62,30 @@ Group scope currently follows this rule:
 - `multi_site`: `/16`
 - `single_site`: `/24`
 
+## Access Resolution
+
+Effective access resolves like this:
+
+1. `User.allowed_ips_override` if present
+2. otherwise `Group.default_allowed_ips`
+
+Example:
+
+- Group `upazawagroup`: `10.10.1.0/24`
+- User `upa`: inherits `10.10.1.0/24`
+- User `upah`: overrides to `10.10.1.254/32`
+
+This effective result is used when generating peer client configuration.
+
 ## Allocation Policy
 
 Automatic peer IP allocation is group-based.
 
 - `allocation_start_host` is the search start position
-- `reserved_ips` are permanently excluded from automatic allocation
-- network address and broadcast address are always excluded
+- `reserved_ips` are permanently excluded
+- network and broadcast addresses are always excluded
 - manual `assigned_ip` uses the same validation rules
-- assignable addresses are usable hosts inside `group.network_cidr`
+- allocation is integer-based and scales for `/8`, `/16`, and `/24`
 
 Example:
 
@@ -120,42 +93,50 @@ Example:
 - `allocation_start_host = 2`
 - `reserved_ips = ["10.10.1.1"]`
 
-Then automatic assignment starts from `.2`, skips reserved or already-used IPs, and picks the next usable host.
+Then auto allocation starts at `.2`, skips reserved and in-use IPs, and chooses the next usable host.
 
-## Access Resolution
+## Lifecycle
 
-Effective access is resolved like this:
+Peer lifecycle is tracked explicitly.
 
-1. If `User.allowed_ips_override` exists, use it
-2. Otherwise use `Group.default_allowed_ips`
+Fields:
 
-Example:
+- `created_at`
+- `updated_at`
+- `revoked_at`
+- `last_config_generated_at`
+- `is_active`
 
-- Group `upazawagroup`: `10.10.1.0/24`
-- User `upa`: inherits `10.10.1.0/24`
-- User `upah`: override to `10.10.1.254/32`
+Operations:
+
+- `peer create`
+- `peer revoke`
+- `peer delete`
+- `user delete`
+- `group delete`
+
+Delete policy:
+
+- `peer delete`: physical delete
+- `user delete`: physical delete with peer cascade
+- `group delete`: physical delete with user and peer cascade
+- `peer revoke`: keep record, mark inactive, exclude from generated server config
 
 ## Databases
 
 Two SQLite databases are used.
 
-### Main DB
+Main DB:
 
-Default path:
+- default path: `/data/wg-studio.db`
+- stores groups, users, peers, server state, and initial settings
 
-`/data/wg-studio.db`
+Audit DB:
 
-Stores Groups, Users, Peers, and allocation policy.
+- default path: `/data/wg-studio-log.db`
+- stores operation logs separately from domain state
 
-### Audit Log DB
-
-Default path:
-
-`/data/wg-studio-log.db`
-
-Stores operation logs separately from domain state.
-
-Current logged operations:
+Logged operations currently include:
 
 - `group.create`
 - `group.update_allocation`
@@ -165,14 +146,67 @@ Current logged operations:
 - `peer.create`
 - `peer.revoke`
 - `peer.delete`
+- `peer.generate_config`
+- `server.generate_config`
+- `server.apply_config`
+- `initial_settings.update`
 
-This split is intentional so deletion-heavy workflows and future observability can rely on audit data without coupling it to the main state DB.
+## Configuration Generation
 
-## Current API / CLI
+Implemented artifacts:
 
-### API
+- server config: `/wg/config/wg_confs/wg0.conf`
+- peer config: `/wg/config/peers/<peer>.conf`
+- peer QR: `/wg/config/peers/<peer>.svg`
 
-FastAPI is available through:
+Peer config behavior:
+
+- `[Interface] DNS` is omitted when `Group.dns_servers` is `NULL`
+- `[Interface] DNS` is emitted when group DNS exists
+- `[Peer] PersistentKeepalive = 25` is always emitted
+- endpoint address and port come from the `initial_settings` table
+
+Server config behavior:
+
+- only active peers are included
+- each peer gets `AllowedIPs = <assigned_ip>/32`
+
+Writes are atomic via temporary file + replace.
+
+## Apply Flow
+
+`wg-studio` applies generated server configuration through Docker.
+
+Current flow:
+
+1. generate fresh `wg0.conf`
+2. if `wg0` does not exist, run `wg-quick up`
+3. if `wg0` already exists, run `wg-quick strip ... | wg syncconf ...`
+
+The current compose setup uses a thin WireGuard container intended to be controlled by `wg-studio`, not the LinuxServer WireGuard image.
+
+## Initial Settings
+
+The `initial_settings` singleton currently stores:
+
+- endpoint address
+- endpoint port
+
+These values are used when generating peer configs.
+
+CLI:
+
+- `settings show`
+- `settings set-endpoint --address <host> --port <port>`
+
+API:
+
+- `GET /initial-settings`
+- `PUT /initial-settings`
+
+## API
+
+Available endpoints:
 
 - `GET /health`
 - `POST /groups`
@@ -190,10 +224,15 @@ FastAPI is available through:
 - `POST /peers/{peer_id}/revoke`
 - `DELETE /peers/{peer_id}`
 - `GET /peers/{peer_id}/resolved-access`
+- `POST /config/peers/{peer_id}/generate`
+- `POST /config/server/generate`
+- `POST /config/server/apply`
+- `GET /initial-settings`
+- `PUT /initial-settings`
 
-### CLI
+## CLI
 
-Typer CLI is available through:
+Available commands:
 
 - `group create`
 - `group update-allocation`
@@ -207,93 +246,102 @@ Typer CLI is available through:
 - `peer revoke`
 - `peer delete`
 - `peer resolved-access`
+- `config generate-peer`
+- `config generate-server`
+- `config apply`
+- `settings show`
+- `settings set-endpoint`
 - `init-db`
 
 ## Development
 
-This project is intended to run inside Docker so the host environment stays clean.
+The project is intended to run entirely inside Docker.
 
-### Start API
+Start the stack:
 
 ```bash
-docker compose up wg-studio-api
+docker compose up -d --build
 ```
 
-### Run CLI
+Run a CLI command:
 
 ```bash
 docker compose run --rm wg-studio-cli group list
 ```
 
-### Run Tests
+Run tests:
 
 ```bash
 docker compose run --rm \
   -e DATABASE_URL=sqlite:////tmp/wg-studio-test.db \
   -e LOG_DATABASE_URL=sqlite:////tmp/wg-studio-log-test.db \
+  -e ARTIFACT_ROOT=/tmp/generated \
   --entrypoint pytest \
   wg-studio-cli /app/tests -q
 ```
 
 ## Example Flow
 
-Create a group:
+Create a group with DNS:
 
 ```bash
 docker compose run --rm wg-studio-cli group create \
   --name upazawagroup \
   --scope single_site \
   --network 10.10.1.0/24 \
-  --allowed-ip 10.10.1.0/24
+  --allowed-ip 10.10.1.0/24 \
+  --dns 1.1.1.1 \
+  --dns 8.8.8.8
 ```
 
-Create a user:
+Set endpoint:
+
+```bash
+docker compose run --rm wg-studio-cli settings set-endpoint \
+  --address 153.126.140.201 \
+  --port 51820
+```
+
+Create user and peer:
 
 ```bash
 docker compose run --rm wg-studio-cli user create \
   --group-id 1 \
   --name upa
-```
 
-Create a user with restricted access:
-
-```bash
-docker compose run --rm wg-studio-cli user create \
-  --group-id 1 \
-  --name upah \
-  --allowed-ip 10.10.1.254/32
-```
-
-Create a peer with automatic IP allocation:
-
-```bash
 docker compose run --rm wg-studio-cli peer create \
-  --user-id 2 \
-  --name Upah-PC
+  --user-id 1 \
+  --name Upa-PC \
+  --assigned-ip 10.10.1.1
 ```
 
-Inspect resolved access:
+Generate and apply:
 
 ```bash
-docker compose run --rm wg-studio-cli peer resolved-access --peer-id 1
+docker compose run --rm wg-studio-cli config generate-peer --peer-id 1
+docker compose run --rm wg-studio-cli config generate-server
+docker compose run --rm wg-studio-cli config apply
 ```
 
-## Near-Term Roadmap
+## Verified Beta State
 
-The next implementation steps are:
+The current beta has been verified with:
 
-1. Config generation for `wg0.conf` and per-peer config
-2. Safe apply flow
-3. Runtime status collection and reconciliation
-4. Key management and reissue flow
+- local Docker-based test suite
+- generated peer config and QR output
+- generated server config
+- live `config apply`
+- successful WireGuard handshake on a VPS
 
-## Design Notes
+## Known Next Steps
 
-- WireGuard itself remains the data plane
-- `wg-studio` is the control plane
-- The database is the source of truth
-- Generated config files are artifacts, not primary state
-- Audit logs are stored separately from domain state
+High-value follow-up work:
+
+- firewall / nftables plugin model
+- richer initial settings and server settings management
+- runtime status collection beyond `wg show`
+- GUI
+- documentation split / localization
 
 ## License
 
