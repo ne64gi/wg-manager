@@ -69,6 +69,12 @@ def _migrate_peers_table() -> None:
             connection.execute(
                 text("ALTER TABLE peers ADD COLUMN last_config_generated_at DATETIME")
             )
+        if "is_revealed" not in columns:
+            connection.execute(
+                text("ALTER TABLE peers ADD COLUMN is_revealed BOOLEAN NOT NULL DEFAULT FALSE")
+            )
+        if "revealed_at" not in columns:
+            connection.execute(text("ALTER TABLE peers ADD COLUMN revealed_at DATETIME"))
         if "private_key" not in columns:
             connection.execute(text("ALTER TABLE peers ADD COLUMN private_key VARCHAR(128)"))
         if "public_key" not in columns:
@@ -85,6 +91,9 @@ def _migrate_peers_table() -> None:
             text(
                 "UPDATE peers SET updated_at = CURRENT_TIMESTAMP WHERE updated_at IS NULL"
             )
+        )
+        connection.execute(
+            text("UPDATE peers SET is_revealed = FALSE WHERE is_revealed IS NULL")
         )
 
 

@@ -1,9 +1,10 @@
 from app.services.apply import apply_server_config
-from app.services.audit import init_log_db, log_operation
+from app.services.audit import init_log_db, list_gui_logs, log_gui_event, log_operation
 from app.services.config_generation import generate_peer_artifacts, generate_server_config
 from app.services.config_generation import (
     get_or_generate_peer_config_text,
     get_or_generate_peer_qr_svg,
+    reveal_peer_artifacts,
 )
 from app.services.domain import (
     _validate_group_allocation_settings,
@@ -26,19 +27,34 @@ from app.services.domain import (
     update_initial_settings,
     update_group_allocation,
 )
+from app.services.gui import (
+    bootstrap_login_user,
+    create_login_user,
+    delete_login_user,
+    get_gui_settings,
+    get_login_user,
+    list_login_users,
+    update_gui_settings,
+    update_login_user,
+)
 from app.services.status import get_wireguard_overview, get_wireguard_peer_statuses
 
 __all__ = [
     "_validate_group_allocation_settings",
     "apply_server_config",
+    "bootstrap_login_user",
     "create_group",
+    "create_login_user",
     "create_peer",
     "create_user",
     "delete_group",
+    "delete_login_user",
     "delete_peer",
     "delete_user",
     "generate_peer_artifacts",
     "generate_server_config",
+    "get_gui_settings",
+    "get_login_user",
     "get_or_generate_peer_config_text",
     "get_or_generate_peer_qr_svg",
     "get_initial_settings",
@@ -49,12 +65,18 @@ __all__ = [
     "get_wireguard_peer_statuses",
     "init_db",
     "init_log_db",
+    "list_gui_logs",
     "list_groups",
+    "list_login_users",
     "list_peers",
     "list_users",
+    "log_gui_event",
     "log_operation",
+    "reveal_peer_artifacts",
     "revoke_peer",
     "resolve_peer_access",
+    "update_gui_settings",
     "update_initial_settings",
+    "update_login_user",
     "update_group_allocation",
 ]

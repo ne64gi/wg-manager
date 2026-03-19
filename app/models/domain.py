@@ -60,6 +60,47 @@ class InitialSettings(Base):
     )
 
 
+class GuiSettings(Base):
+    __tablename__ = "gui_settings"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    error_log_level: Mapped[str] = mapped_column(String(32), default="warning")
+    access_log_path: Mapped[str] = mapped_column(String(255), default="none")
+    error_log_path: Mapped[str] = mapped_column(String(255), default="none")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+
+class LoginUser(Base):
+    __tablename__ = "login_users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    password_hash: Mapped[str] = mapped_column(String(512))
+    description: Mapped[str] = mapped_column(Text, default="")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    last_login_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+
 class ServerState(Base):
     __tablename__ = "server_state"
 
@@ -124,6 +165,11 @@ class Peer(Base):
         nullable=True,
     )
     last_config_generated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    is_revealed: Mapped[bool] = mapped_column(Boolean, default=False)
+    revealed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )

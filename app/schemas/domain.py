@@ -189,6 +189,8 @@ class PeerRead(BaseModel):
     updated_at: datetime
     revoked_at: datetime | None
     last_config_generated_at: datetime | None
+    is_revealed: bool
+    revealed_at: datetime | None
 
 
 class GeneratedPeerArtifacts(BaseModel):
@@ -197,6 +199,14 @@ class GeneratedPeerArtifacts(BaseModel):
     config_path: str
     qr_path: str
     last_config_generated_at: datetime
+
+
+class RevealedPeerArtifacts(BaseModel):
+    peer_id: int
+    peer_name: str
+    config_text: str
+    qr_svg: str
+    revealed_at: datetime
 
 
 class GeneratedServerArtifacts(BaseModel):
@@ -238,6 +248,85 @@ class InitialSettingsRead(BaseModel):
     updated_at: datetime
 
 
+def _normalize_log_level(value: str) -> str:
+    normalized = value.strip().lower()
+    allowed = {"debug", "info", "warning", "error", "critical"}
+    if normalized not in allowed:
+        raise ValueError(f"log level must be one of: {', '.join(sorted(allowed))}")
+    return normalized
+
+
+class GuiSettingsUpdate(BaseModel):
+    error_log_level: str = "warning"
+    access_log_path: str = "none"
+    error_log_path: str = "none"
+
+    @field_validator("error_log_level")
+    @classmethod
+    def validate_error_log_level(cls, value: str) -> str:
+        return _normalize_log_level(value)
+
+    @field_validator("access_log_path", "error_log_path")
+    @classmethod
+    def validate_log_path(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("log path cannot be empty")
+        return normalized
+
+
+class GuiSettingsRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    error_log_level: str
+    access_log_path: str
+    error_log_path: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class LoginUserCreate(BaseModel):
+    username: str = Field(min_length=1, max_length=100)
+    password: str = Field(min_length=8, max_length=255)
+    description: str = ""
+    is_active: bool = True
+
+
+class LoginUserUpdate(BaseModel):
+    password: str | None = Field(default=None, min_length=8, max_length=255)
+    description: str | None = None
+    is_active: bool | None = None
+
+
+class LoginUserRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    username: str
+    description: str
+    is_active: bool
+    last_login_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class GuiLogRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    occurred_at: datetime
+    level: str
+    category: str
+    message: str
+    login_user_id: int | None
+    username: str | None
+    request_path: str | None
+    request_method: str | None
+    status_code: int | None
+    details: dict
+
+
 class PeerStatusRead(BaseModel):
     peer_id: int
     peer_name: str
@@ -252,6 +341,7 @@ class PeerStatusRead(BaseModel):
     total_bytes: int
     is_online: bool
     is_active: bool
+    is_revealed: bool
     description: str
     effective_allowed_ips: list[str]
 

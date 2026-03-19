@@ -96,6 +96,7 @@ def get_wireguard_peer_statuses(session: Session) -> list[PeerStatusRead]:
                 total_bytes=received_bytes + sent_bytes,
                 is_online=_is_online(latest_handshake_at),
                 is_active=peer.is_active,
+                is_revealed=peer.is_revealed,
                 description=peer.description,
                 effective_allowed_ips=peer.user.allowed_ips_override
                 or peer.user.group.default_allowed_ips,

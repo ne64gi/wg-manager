@@ -12,8 +12,12 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.core import settings
 from app.models import Peer, User
-from app.schemas import GeneratedPeerArtifacts, GeneratedServerArtifacts
-from app.services.audit import log_operation
+from app.schemas import (
+    GeneratedPeerArtifacts,
+    GeneratedServerArtifacts,
+    RevealedPeerArtifacts,
+)
+from app.services.audit import log_gui_event, log_operation
 from app.services.domain import ensure_peer_keys, get_initial_settings, get_server_state
 
 
@@ -265,3 +269,55 @@ def get_or_generate_peer_qr_svg(session: Session, peer_id: int) -> tuple[Peer, s
     if not qr_path.exists():
         generate_peer_artifacts(session, peer_id)
     return peer, qr_path.read_text(encoding="utf-8")
+
+
+def reveal_peer_artifacts(session: Session, peer_id: int) -> RevealedPeerArtifacts:
+    peer = session.scalar(
+        select(Peer)
+        .options(joinedload(Peer.user).joinedload(User.group))
+        .where(Peer.id == peer_id)
+    )
+    if peer is None:
+        raise ValueError(f"peer id={peer_id} does not exist")
+    if not peer.is_active:
+        raise ValueError(f"peer id={peer_id} is revoked and cannot be revealed")
+    if peer.is_revealed:
+        raise ValueError(f"peer id={peer_id} has already been revealed")
+
+    config_path = _peer_config_path(peer.name)
+    qr_path = _peer_qr_path(peer.name)
+    if not config_path.exists() or not qr_path.exists():
+        generate_peer_artifacts(session, peer_id)
+
+    revealed_at = datetime.now(timezone.utc)
+    peer.is_revealed = True
+    peer.revealed_at = revealed_at
+    peer.updated_at = revealed_at
+    session.commit()
+    session.refresh(peer)
+
+    log_operation(
+        "peer.reveal_artifacts",
+        "peer",
+        peer.id,
+        source="service",
+        details={"revealed_at": revealed_at.isoformat()},
+    )
+    log_gui_event(
+        "warning",
+        "secret",
+        "Peer artifacts revealed",
+        details={
+            "peer_id": peer.id,
+            "peer_name": peer.name,
+            "revealed_at": revealed_at.isoformat(),
+        },
+    )
+
+    return RevealedPeerArtifacts(
+        peer_id=peer.id,
+        peer_name=peer.name,
+        config_text=config_path.read_text(encoding="utf-8"),
+        qr_svg=qr_path.read_text(encoding="utf-8"),
+        revealed_at=revealed_at,
+    )
