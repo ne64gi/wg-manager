@@ -266,6 +266,18 @@ Default development stack:
 - `wg-studio-api`
 - `wg-studio-cli`
 - thin `wireguard` runtime container
+- internal Docker network for API / CLI / PostgreSQL
+
+Runtime defaults are provided through `.env`.
+
+Notable defaults:
+
+- initial endpoint address and port for newly bootstrapped `initial_settings`
+- PostgreSQL connection URLs
+- WireGuard container/runtime wiring
+
+The API is not published on a host port by default.
+Use the CLI, `docker compose exec`, or a future reverse proxy / GUI container inside the internal network.
 
 Start the stack:
 
@@ -277,6 +289,12 @@ Run a CLI command:
 
 ```bash
 docker compose run --rm wg-studio-cli group list
+```
+
+Check API health from inside the stack:
+
+```bash
+docker compose exec wg-studio-api python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/health').read().decode())"
 ```
 
 Run tests:
