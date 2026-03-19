@@ -29,6 +29,7 @@ from app.schemas.domain import (
     UserTrafficSummaryRead,
     UserRead,
     WireGuardOverviewRead,
+    WireGuardOverviewHistoryPointRead,
 )
 
 __all__ = [
@@ -62,4 +63,5 @@ __all__ = [
     "UserTrafficSummaryRead",
     "UserRead",
     "WireGuardOverviewRead",
+    "WireGuardOverviewHistoryPointRead",
 ]

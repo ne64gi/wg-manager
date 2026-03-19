@@ -1,6 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { getGroupSummaries, getOverview, getUserSummaries } from "../lib/api";
+import {
+  getGroupSummaries,
+  getOverview,
+  getOverviewHistory,
+  getUserSummaries,
+} from "../lib/api";
 import { formatBytes } from "../lib/format";
 import { useAuth } from "../modules/auth/AuthContext";
 import { useGuiSettingsQuery } from "../modules/gui/useGuiSettingsQuery";
@@ -29,8 +34,14 @@ export function DashboardPage() {
     queryFn: async () => getGroupSummaries((await auth.getValidAccessToken()) ?? ""),
     refetchInterval: overviewRefreshMs,
   });
+  const historyQuery = useQuery({
+    queryKey: queryKeys.overviewHistory(24),
+    queryFn: async () => getOverviewHistory((await auth.getValidAccessToken()) ?? "", 24),
+    refetchInterval: overviewRefreshMs,
+  });
 
   const overview = overviewQuery.data;
+  const historyPoints = historyQuery.data ?? [];
 
   return (
     <div className="page-stack">
@@ -67,10 +78,17 @@ export function DashboardPage() {
             <div className="chart-line chart-line-primary" />
             <div className="chart-line chart-line-secondary" />
             <div className="chart-overlay">
-              <div className="chart-overlay-title">History pipeline not enabled yet</div>
+              <div className="chart-overlay-title">
+                {historyPoints.length > 0
+                  ? `${historyPoints.length} traffic snapshots recorded`
+                  : "History collection warming up"}
+              </div>
               <div className="muted-text">
-                This area is reserved for RX/TX history once periodic status snapshots are
-                stored in the database.
+                {historyPoints.length > 0
+                  ? `Latest total usage: ${formatBytes(
+                      historyPoints[historyPoints.length - 1]?.total_usage_bytes ?? 0,
+                    )}`
+                  : "The chart area is ready and will populate as snapshot points accumulate."}
               </div>
             </div>
           </div>

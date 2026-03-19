@@ -23,6 +23,7 @@ import type {
   User,
   UserCreateInput,
   UserTrafficSummary,
+  WireGuardOverviewHistoryPoint,
   WireGuardOverview,
   PeerCreateInput,
 } from "../types";
@@ -106,6 +107,16 @@ export function getAuthMe(accessToken: string): Promise<AuthenticatedLoginUser> 
 
 export function getOverview(accessToken: string): Promise<WireGuardOverview> {
   return request<WireGuardOverview>("/status/overview", { accessToken });
+}
+
+export function getOverviewHistory(
+  accessToken: string,
+  hours = 24,
+): Promise<WireGuardOverviewHistoryPoint[]> {
+  return request<WireGuardOverviewHistoryPoint[]>(
+    `/status/overview-history?hours=${hours}`,
+    { accessToken },
+  );
 }
 
 export function getPeerStatuses(accessToken: string): Promise<PeerStatus[]> {

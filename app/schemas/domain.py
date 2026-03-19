@@ -277,6 +277,7 @@ class GuiSettingsUpdate(BaseModel):
     default_locale: str = "en"
     overview_refresh_seconds: int = 5
     peers_refresh_seconds: int = 10
+    traffic_snapshot_interval_seconds: int = 300
     refresh_after_apply: bool = True
     online_threshold_seconds: int = 120
     error_log_level: str = "warning"
@@ -298,6 +299,15 @@ class GuiSettingsUpdate(BaseModel):
     def validate_refresh_seconds(cls, value: int) -> int:
         if value < 1 or value > 3600:
             raise ValueError("refresh interval seconds must be between 1 and 3600")
+        return value
+
+    @field_validator("traffic_snapshot_interval_seconds")
+    @classmethod
+    def validate_snapshot_interval_seconds(cls, value: int) -> int:
+        if value < 10 or value > 86400:
+            raise ValueError(
+                "traffic_snapshot_interval_seconds must be between 10 and 86400"
+            )
         return value
 
     @field_validator("online_threshold_seconds")
@@ -329,6 +339,7 @@ class GuiSettingsRead(BaseModel):
     default_locale: str
     overview_refresh_seconds: int
     peers_refresh_seconds: int
+    traffic_snapshot_interval_seconds: int
     refresh_after_apply: bool
     online_threshold_seconds: int
     error_log_level: str
@@ -436,6 +447,14 @@ class WireGuardOverviewRead(BaseModel):
     total_usage_bytes: int
     peer_count: int
     active_peer_count: int
+    online_peer_count: int
+
+
+class WireGuardOverviewHistoryPointRead(BaseModel):
+    captured_at: datetime
+    total_received_bytes: int
+    total_sent_bytes: int
+    total_usage_bytes: int
     online_peer_count: int
 
 

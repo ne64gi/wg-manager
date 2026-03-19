@@ -10,8 +10,10 @@ from app.services import (
     get_group_traffic_summaries,
     get_user_traffic_summaries,
     get_wireguard_overview,
+    get_wireguard_overview_history,
     get_wireguard_peer_statuses,
 )
+from app.services.gui import get_gui_settings
 from app.services.docker_runtime import ExecResult
 
 
@@ -102,3 +104,58 @@ def test_get_wireguard_peer_statuses_and_overview(monkeypatch) -> None:
     assert group_summaries[0].peer_count == 2
     assert group_summaries[0].online_peer_count == 1
     assert group_summaries[0].total_usage_bytes == 3072
+
+
+def test_capture_and_read_overview_history(monkeypatch) -> None:
+    reset_db()
+
+    now = int(datetime.now(timezone.utc).timestamp())
+    dump_output = (
+        "private\tpublic\t51820\tfwmark\n"
+        f"pub-alpha\t(psk)\t198.51.100.10:51820\t10.10.1.1/32\t{now}\t200\t300\t25\n"
+        f"pub-beta\t(psk)\t198.51.100.11:51820\t10.10.1.2/32\t{now}\t400\t500\t25\n"
+    )
+
+    def fake_docker_exec(command: list[str], *, capture_output: bool = False) -> ExecResult:
+        assert command == ["wg", "show", "wg0", "dump"]
+        assert capture_output is True
+        return ExecResult(exit_code=0, stdout=dump_output, stderr="")
+
+    monkeypatch.setattr("app.services.status.docker_exec", fake_docker_exec)
+
+    with SessionLocal() as session:
+        gui_settings = get_gui_settings(session)
+        gui_settings.traffic_snapshot_interval_seconds = 10
+        session.commit()
+
+        group = create_group(
+            session,
+            GroupCreate(
+                name="corp-history",
+                scope=GroupScope.SINGLE_SITE,
+                network_cidr="10.30.1.0/24",
+                default_allowed_ips=["10.30.1.0/24"],
+            ),
+        )
+        user = create_user(session, UserCreate(group_id=group.id, name="bravo"))
+        peer_one = create_peer(
+            session,
+            PeerCreate(user_id=user.id, name="bravo-pc", assigned_ip="10.30.1.1"),
+        )
+        peer_two = create_peer(
+            session,
+            PeerCreate(user_id=user.id, name="bravo-phone", assigned_ip="10.30.1.2"),
+        )
+        peer_one.public_key = "pub-alpha"
+        peer_two.public_key = "pub-beta"
+        session.commit()
+
+        statuses = get_wireguard_peer_statuses(session)
+        history = get_wireguard_overview_history(session, hours=24)
+
+    assert len(statuses) == 2
+    assert len(history) == 1
+    assert history[0].total_received_bytes == 600
+    assert history[0].total_sent_bytes == 800
+    assert history[0].total_usage_bytes == 1400
+    assert history[0].online_peer_count == 2

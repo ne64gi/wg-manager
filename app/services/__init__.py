@@ -45,7 +45,11 @@ from app.services.gui import (
     update_login_user,
 )
 from app.services.status import get_wireguard_overview, get_wireguard_peer_statuses
-from app.services.status import get_group_traffic_summaries, get_user_traffic_summaries
+from app.services.status import (
+    get_group_traffic_summaries,
+    get_user_traffic_summaries,
+    get_wireguard_overview_history,
+)
 
 __all__ = [
     "_validate_group_allocation_settings",
@@ -74,6 +78,7 @@ __all__ = [
     "get_peer",
     "get_user",
     "get_wireguard_overview",
+    "get_wireguard_overview_history",
     "get_wireguard_peer_statuses",
     "get_user_traffic_summaries",
     "init_db",

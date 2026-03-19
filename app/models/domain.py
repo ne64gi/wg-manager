@@ -68,6 +68,7 @@ class GuiSettings(Base):
     default_locale: Mapped[str] = mapped_column(String(16), default="en")
     overview_refresh_seconds: Mapped[int] = mapped_column(default=5)
     peers_refresh_seconds: Mapped[int] = mapped_column(default=10)
+    traffic_snapshot_interval_seconds: Mapped[int] = mapped_column(default=300)
     refresh_after_apply: Mapped[bool] = mapped_column(Boolean, default=True)
     online_threshold_seconds: Mapped[int] = mapped_column(default=120)
     error_log_level: Mapped[str] = mapped_column(String(32), default="warning")
@@ -213,3 +214,29 @@ class Peer(Base):
     )
 
     user: Mapped[User] = relationship(back_populates="peers")
+    traffic_snapshots: Mapped[list["PeerTrafficSnapshot"]] = relationship(
+        back_populates="peer",
+        cascade="all, delete-orphan",
+    )
+
+
+class PeerTrafficSnapshot(Base):
+    __tablename__ = "peer_traffic_snapshots"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    peer_id: Mapped[int] = mapped_column(ForeignKey("peers.id"), index=True)
+    captured_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
+    received_bytes: Mapped[int] = mapped_column(default=0)
+    sent_bytes: Mapped[int] = mapped_column(default=0)
+    total_bytes: Mapped[int] = mapped_column(default=0)
+    is_online: Mapped[bool] = mapped_column(Boolean, default=False)
+    latest_handshake_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    peer: Mapped[Peer] = relationship(back_populates="traffic_snapshots")

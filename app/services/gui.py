@@ -52,6 +52,9 @@ def update_gui_settings(session: Session, payload: GuiSettingsUpdate) -> GuiSett
     gui_settings.default_locale = payload.default_locale
     gui_settings.overview_refresh_seconds = payload.overview_refresh_seconds
     gui_settings.peers_refresh_seconds = payload.peers_refresh_seconds
+    gui_settings.traffic_snapshot_interval_seconds = (
+        payload.traffic_snapshot_interval_seconds
+    )
     gui_settings.refresh_after_apply = payload.refresh_after_apply
     gui_settings.online_threshold_seconds = payload.online_threshold_seconds
     gui_settings.error_log_level = payload.error_log_level
@@ -70,6 +73,7 @@ def update_gui_settings(session: Session, payload: GuiSettingsUpdate) -> GuiSett
             "default_locale": gui_settings.default_locale,
             "overview_refresh_seconds": gui_settings.overview_refresh_seconds,
             "peers_refresh_seconds": gui_settings.peers_refresh_seconds,
+            "traffic_snapshot_interval_seconds": gui_settings.traffic_snapshot_interval_seconds,
             "refresh_after_apply": gui_settings.refresh_after_apply,
             "online_threshold_seconds": gui_settings.online_threshold_seconds,
             "error_log_level": gui_settings.error_log_level,
@@ -86,6 +90,7 @@ def update_gui_settings(session: Session, payload: GuiSettingsUpdate) -> GuiSett
             "default_locale": gui_settings.default_locale,
             "overview_refresh_seconds": gui_settings.overview_refresh_seconds,
             "peers_refresh_seconds": gui_settings.peers_refresh_seconds,
+            "traffic_snapshot_interval_seconds": gui_settings.traffic_snapshot_interval_seconds,
             "refresh_after_apply": gui_settings.refresh_after_apply,
             "online_threshold_seconds": gui_settings.online_threshold_seconds,
             "error_log_level": gui_settings.error_log_level,

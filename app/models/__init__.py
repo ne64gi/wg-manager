@@ -7,6 +7,7 @@ from app.models.domain import (
     LoginSession,
     LoginUser,
     Peer,
+    PeerTrafficSnapshot,
     ServerState,
     User,
 )
@@ -21,6 +22,7 @@ __all__ = [
     "LoginUser",
     "OperationLog",
     "Peer",
+    "PeerTrafficSnapshot",
     "ServerState",
     "User",
 ]

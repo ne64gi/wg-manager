@@ -32,6 +32,14 @@ export type WireGuardOverview = {
   online_peer_count: number;
 };
 
+export type WireGuardOverviewHistoryPoint = {
+  captured_at: string;
+  total_received_bytes: number;
+  total_sent_bytes: number;
+  total_usage_bytes: number;
+  online_peer_count: number;
+};
+
 export type PeerStatus = {
   peer_id: number;
   peer_name: string;

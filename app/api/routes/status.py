@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_authenticated_login_user
@@ -10,12 +10,14 @@ from app.schemas import (
     GroupTrafficSummaryRead,
     PeerStatusRead,
     UserTrafficSummaryRead,
+    WireGuardOverviewHistoryPointRead,
     WireGuardOverviewRead,
 )
 from app.services import (
     get_group_traffic_summaries,
     get_user_traffic_summaries,
     get_wireguard_overview,
+    get_wireguard_overview_history,
     get_wireguard_peer_statuses,
 )
 
@@ -29,6 +31,21 @@ def get_wireguard_overview_endpoint(
 ) -> WireGuardOverviewRead:
     try:
         return get_wireguard_overview(session)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get(
+    "/status/overview-history",
+    response_model=list[WireGuardOverviewHistoryPointRead],
+)
+def get_wireguard_overview_history_endpoint(
+    hours: int = Query(default=24, ge=1, le=168),
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> list[WireGuardOverviewHistoryPointRead]:
+    try:
+        return get_wireguard_overview_history(session, hours=hours)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

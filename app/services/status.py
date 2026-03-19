@@ -3,15 +3,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
+from sqlalchemy import Integer, cast, func, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.core import settings
-from app.models import Peer, User
+from app.models import Peer, PeerTrafficSnapshot, User
 from app.schemas import (
     GroupTrafficSummaryRead,
     PeerStatusRead,
     UserTrafficSummaryRead,
+    WireGuardOverviewHistoryPointRead,
     WireGuardOverviewRead,
 )
 from app.services.docker_runtime import docker_exec
@@ -66,6 +67,39 @@ def _is_online(latest_handshake_at: datetime | None, threshold_seconds: int) -> 
     )
 
 
+def _should_capture_snapshot(session: Session, interval_seconds: int) -> bool:
+    last_captured_at = session.scalar(select(func.max(PeerTrafficSnapshot.captured_at)))
+    if last_captured_at is None:
+        return True
+    if last_captured_at.tzinfo is None:
+        last_captured_at = last_captured_at.replace(tzinfo=timezone.utc)
+    return last_captured_at <= datetime.now(timezone.utc) - timedelta(
+        seconds=interval_seconds
+    )
+
+
+def _capture_peer_snapshots(
+    session: Session, statuses: list[PeerStatusRead], interval_seconds: int
+) -> None:
+    if not statuses or not _should_capture_snapshot(session, interval_seconds):
+        return
+
+    captured_at = datetime.now(timezone.utc)
+    for status in statuses:
+        session.add(
+            PeerTrafficSnapshot(
+                peer_id=status.peer_id,
+                captured_at=captured_at,
+                received_bytes=status.received_bytes,
+                sent_bytes=status.sent_bytes,
+                total_bytes=status.total_bytes,
+                is_online=status.is_online,
+                latest_handshake_at=status.latest_handshake_at,
+            )
+        )
+    session.commit()
+
+
 def get_wireguard_peer_statuses(session: Session) -> list[PeerStatusRead]:
     gui_settings = get_gui_settings(session)
     result = docker_exec(["wg", "show", settings.wireguard_interface_name, "dump"], capture_output=True)
@@ -113,6 +147,9 @@ def get_wireguard_peer_statuses(session: Session) -> list[PeerStatusRead]:
                 or peer.user.group.default_allowed_ips,
             )
         )
+    _capture_peer_snapshots(
+        session, statuses, gui_settings.traffic_snapshot_interval_seconds
+    )
     return statuses
 
 
@@ -215,3 +252,34 @@ def get_group_traffic_summaries(session: Session) -> list[GroupTrafficSummaryRea
             current.user_count += 1
 
     return sorted(grouped.values(), key=lambda item: item.group_name)
+
+
+def get_wireguard_overview_history(
+    session: Session, *, hours: int = 24
+) -> list[WireGuardOverviewHistoryPointRead]:
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+    rows = session.execute(
+        select(
+            PeerTrafficSnapshot.captured_at,
+            func.sum(PeerTrafficSnapshot.received_bytes),
+            func.sum(PeerTrafficSnapshot.sent_bytes),
+            func.sum(PeerTrafficSnapshot.total_bytes),
+            func.sum(cast(PeerTrafficSnapshot.is_online, Integer)),
+        )
+        .where(PeerTrafficSnapshot.captured_at >= cutoff)
+        .group_by(PeerTrafficSnapshot.captured_at)
+        .order_by(PeerTrafficSnapshot.captured_at.asc())
+    ).all()
+
+    history: list[WireGuardOverviewHistoryPointRead] = []
+    for captured_at, total_received, total_sent, total_usage, online_count in rows:
+        history.append(
+            WireGuardOverviewHistoryPointRead(
+                captured_at=captured_at,
+                total_received_bytes=int(total_received or 0),
+                total_sent_bytes=int(total_sent or 0),
+                total_usage_bytes=int(total_usage or 0),
+                online_peer_count=int(online_count or 0),
+            )
+        )
+    return history
