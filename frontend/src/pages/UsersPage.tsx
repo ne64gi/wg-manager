@@ -11,9 +11,11 @@ export function UsersPage() {
   const auth = useAuth();
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [filterGroupId, setFilterGroupId] = useState("all");
   const [groupId, setGroupId] = useState("");
   const [name, setName] = useState("");
   const [overrideRoutes, setOverrideRoutes] = useState("");
+  const [createError, setCreateError] = useState<string | null>(null);
   const usersQuery = useQuery({
     queryKey: queryKeys.users,
     queryFn: async () => listUsers((await auth.getValidAccessToken()) ?? ""),
@@ -35,11 +37,18 @@ export function UsersPage() {
           : undefined,
       }),
     onSuccess: async () => {
+      setCreateError(null);
       setIsCreateOpen(false);
       setGroupId("");
       setName("");
       setOverrideRoutes("");
       await queryClient.invalidateQueries({ queryKey: queryKeys.users });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.peers });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.userSummaries });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groupSummaries });
+    },
+    onError: (error) => {
+      setCreateError(error instanceof Error ? error.message : "Failed to create user");
     },
   });
 
@@ -48,6 +57,13 @@ export function UsersPage() {
       new Map((groupsQuery.data ?? []).map((group) => [group.id, group.name] as const)),
     [groupsQuery.data],
   );
+  const filteredUsers = useMemo(() => {
+    const users = usersQuery.data ?? [];
+    if (filterGroupId === "all") {
+      return users;
+    }
+    return users.filter((user) => String(user.group_id) === filterGroupId);
+  }, [filterGroupId, usersQuery.data]);
 
   return (
     <div className="page-stack">
@@ -61,10 +77,24 @@ export function UsersPage() {
         <button className="success-button" onClick={() => setIsCreateOpen(true)}>
           + Add user
         </button>
+        <label className="toolbar-field">
+          <span>Group filter</span>
+          <select
+            value={filterGroupId}
+            onChange={(event) => setFilterGroupId(event.target.value)}
+          >
+            <option value="all">All groups</option>
+            {(groupsQuery.data ?? []).map((group) => (
+              <option key={group.id} value={group.id}>
+                {group.name}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
       <Panel title="Users">
         <DataTable headers={["Name", "Group", "Override routes", "Status"]}>
-          {(usersQuery.data ?? []).map((user) => (
+          {filteredUsers.map((user) => (
             <tr key={user.id}>
               <td>{user.name}</td>
               <td>{groupNames.get(user.group_id) ?? `Group ${user.group_id}`}</td>
@@ -108,8 +138,13 @@ export function UsersPage() {
                 />
               </label>
             </div>
+            {createError ? <div className="error-banner">{createError}</div> : null}
             <div className="modal-actions">
-              <button className="primary-button" onClick={() => createMutation.mutate()}>
+              <button
+                className="primary-button"
+                disabled={!groupId || !name || createMutation.isPending}
+                onClick={() => createMutation.mutate()}
+              >
                 {createMutation.isPending ? "Creating..." : "Create user"}
               </button>
             </div>

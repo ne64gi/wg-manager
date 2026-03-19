@@ -24,9 +24,11 @@ export function PeersPage() {
   const queryClient = useQueryClient();
   const [revealed, setRevealed] = useState<RevealedPeerArtifacts | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [searchText, setSearchText] = useState("");
   const [userId, setUserId] = useState("");
   const [name, setName] = useState("");
   const [assignedIp, setAssignedIp] = useState("");
+  const [createError, setCreateError] = useState<string | null>(null);
   const guiSettingsQuery = useGuiSettingsQuery();
   const peersRefreshMs =
     (guiSettingsQuery.data?.peers_refresh_seconds ?? 10) * 1000;
@@ -49,6 +51,10 @@ export function PeersPage() {
         assigned_ip: assignedIp || undefined,
       }),
     onSuccess: async () => {
+      setCreateError(null);
+      if (guiSettingsQuery.data?.refresh_after_apply) {
+        await applyServerConfig((await auth.getValidAccessToken()) ?? "");
+      }
       setIsCreateOpen(false);
       setUserId("");
       setName("");
@@ -56,6 +62,12 @@ export function PeersPage() {
       await queryClient.invalidateQueries({ queryKey: queryKeys.peers });
       await queryClient.invalidateQueries({ queryKey: queryKeys.peerStatuses });
       await queryClient.invalidateQueries({ queryKey: queryKeys.overview });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.overviewHistory(24) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.userSummaries });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groupSummaries });
+    },
+    onError: (error) => {
+      setCreateError(error instanceof Error ? error.message : "Failed to create peer");
     },
   });
 
@@ -101,6 +113,23 @@ export function PeersPage() {
   });
 
   const peers = peerStatusesQuery.data ?? [];
+  const filteredPeers = peers.filter((peer) => {
+    const needle = searchText.trim().toLowerCase();
+    if (!needle) {
+      return true;
+    }
+
+    return [
+      peer.peer_name,
+      peer.user_name,
+      peer.assigned_ip,
+      peer.endpoint ?? "",
+      peer.effective_allowed_ips.join(" "),
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(needle);
+  });
   const onlineCount = peers.filter((peer) => peer.is_online).length;
 
   return (
@@ -115,6 +144,14 @@ export function PeersPage() {
         <button className="success-button" onClick={() => setIsCreateOpen(true)}>
           + Add peer
         </button>
+        <label className="toolbar-search">
+          <span>Search</span>
+          <input
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            placeholder="Peer, user, IP, route..."
+          />
+        </label>
         <button className="secondary-button" onClick={() => applyMutation.mutate()}>
           {applyMutation.isPending ? "Applying..." : "Apply config"}
         </button>
@@ -143,7 +180,7 @@ export function PeersPage() {
             "Actions",
           ]}
         >
-          {peers.map((peer) => (
+          {filteredPeers.map((peer) => (
             <tr key={peer.peer_id}>
               <td>
                 <span className={`status-pill ${peer.is_online ? "status-online" : ""}`}>
@@ -220,9 +257,18 @@ export function PeersPage() {
                 />
               </label>
             </div>
+            {createError ? <div className="error-banner">{createError}</div> : null}
             <div className="modal-actions">
-              <button className="primary-button" onClick={() => createMutation.mutate()}>
-                {createMutation.isPending ? "Creating..." : "Create peer"}
+              <button
+                className="primary-button"
+                disabled={!userId || !name || createMutation.isPending}
+                onClick={() => createMutation.mutate()}
+              >
+                {createMutation.isPending
+                  ? "Creating..."
+                  : guiSettingsQuery.data?.refresh_after_apply
+                    ? "Create and apply"
+                    : "Create peer"}
               </button>
             </div>
           </div>

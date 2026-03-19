@@ -121,6 +121,35 @@ a {
   flex-wrap: wrap;
 }
 
+.toolbar-field,
+.toolbar-search {
+  display: grid;
+  gap: 6px;
+  min-width: 220px;
+}
+
+.toolbar-field span,
+.toolbar-search span {
+  color: #b6c6eb;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.toolbar-field select,
+.toolbar-search input {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(127, 153, 214, 0.16);
+  background: rgba(7, 13, 26, 0.72);
+  color: #eff4ff;
+  padding: 12px 14px;
+}
+
+.toolbar-search {
+  flex: 1 1 280px;
+}
+
 .eyebrow {
   color: #8aa0d6;
   font-size: 0.82rem;

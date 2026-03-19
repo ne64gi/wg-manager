@@ -236,4 +236,5 @@ def bootstrap_login_user(session: Session) -> LoginUser | None:
         login_user_id=login_user.id,
         username=login_user.username,
     )
+    session.commit()
     return login_user

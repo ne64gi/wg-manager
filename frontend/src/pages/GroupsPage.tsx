@@ -16,6 +16,7 @@ export function GroupsPage() {
   const [networkCidr, setNetworkCidr] = useState("");
   const [allowedIps, setAllowedIps] = useState("");
   const [dnsServers, setDnsServers] = useState("");
+  const [createError, setCreateError] = useState<string | null>(null);
   const groupsQuery = useQuery({
     queryKey: queryKeys.groups,
     queryFn: async () => listGroups((await auth.getValidAccessToken()) ?? ""),
@@ -38,6 +39,7 @@ export function GroupsPage() {
           : undefined,
       }),
     onSuccess: async () => {
+      setCreateError(null);
       setIsCreateOpen(false);
       setName("");
       setScope("single_site");
@@ -45,6 +47,11 @@ export function GroupsPage() {
       setAllowedIps("");
       setDnsServers("");
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.users });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groupSummaries });
+    },
+    onError: (error) => {
+      setCreateError(error instanceof Error ? error.message : "Failed to create group");
     },
   });
 
@@ -124,8 +131,13 @@ export function GroupsPage() {
                 />
               </label>
             </div>
+            {createError ? <div className="error-banner">{createError}</div> : null}
             <div className="modal-actions">
-              <button className="primary-button" onClick={() => createMutation.mutate()}>
+              <button
+                className="primary-button"
+                disabled={!name || !networkCidr || !allowedIps || createMutation.isPending}
+                onClick={() => createMutation.mutate()}
+              >
                 {createMutation.isPending ? "Creating..." : "Create group"}
               </button>
             </div>
