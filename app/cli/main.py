@@ -30,11 +30,13 @@ group_app = typer.Typer()
 user_app = typer.Typer()
 peer_app = typer.Typer()
 config_app = typer.Typer()
+settings_app = typer.Typer()
 
 app.add_typer(group_app, name="group")
 app.add_typer(user_app, name="user")
 app.add_typer(peer_app, name="peer")
 app.add_typer(config_app, name="config")
+app.add_typer(settings_app, name="settings")
 
 
 @app.callback()
@@ -308,6 +310,44 @@ def config_generate_server_command() -> None:
 @config_app.command("apply")
 def config_apply_command() -> None:
     print_json(api_request("POST", "/config/server/apply"))
+
+
+@settings_app.command("show")
+def settings_show_command() -> None:
+    print_json(api_request("GET", "/initial-settings"))
+
+
+@settings_app.command("set-endpoint")
+def settings_set_endpoint_command(
+    address: str = typer.Option(..., "--address"),
+    port: int = typer.Option(..., "--port"),
+) -> None:
+    target = f"{settings.api_base_url.rstrip('/')}/initial-settings"
+    payload = json.dumps(
+        {"endpoint_address": address, "endpoint_port": port}
+    ).encode("utf-8")
+    http_request = request.Request(
+        target,
+        data=payload,
+        method="PUT",
+        headers={
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        },
+    )
+    try:
+        with request.urlopen(http_request) as response:
+            raw = response.read().decode("utf-8")
+    except error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise typer.BadParameter(
+            f"API request failed ({exc.code}): {detail}"
+        ) from exc
+    except error.URLError as exc:
+        raise typer.BadParameter(
+            f"could not reach API at {settings.api_base_url}: {exc.reason}"
+        ) from exc
+    print_json(json.loads(raw))
 
 
 if __name__ == "__main__":

@@ -10,7 +10,9 @@ from app.services import (
     create_user,
     generate_peer_artifacts,
     generate_server_config,
+    update_initial_settings,
 )
+from app.schemas import InitialSettingsUpdate
 
 
 def reset_db() -> None:
@@ -139,4 +141,44 @@ def test_generate_server_config_includes_only_active_peers(tmp_path: Path) -> No
         assert active_peer.public_key is not None
     finally:
         settings.artifact_root = previous_root
+        settings.server_address = previous_address
+
+
+def test_generate_peer_artifacts_uses_updated_initial_settings(tmp_path: Path) -> None:
+    reset_db()
+    previous_root = settings.artifact_root
+    previous_endpoint = settings.server_endpoint
+    previous_address = settings.server_address
+
+    settings.artifact_root = str(tmp_path)
+    settings.server_endpoint = "vpn.example.com"
+    settings.server_address = "10.99.0.1/24"
+
+    try:
+        with SessionLocal() as session:
+            update_initial_settings(
+                session,
+                InitialSettingsUpdate(
+                    endpoint_address="eip.sys-sol.jp",
+                    endpoint_port=51820,
+                ),
+            )
+            group = create_group(
+                session,
+                GroupCreate(
+                    name="corp-e",
+                    scope=GroupScope.SINGLE_SITE,
+                    network_cidr="10.61.1.0/24",
+                    default_allowed_ips=["10.61.1.0/24"],
+                ),
+            )
+            user = create_user(session, UserCreate(group_id=group.id, name="echo"))
+            peer = create_peer(session, PeerCreate(user_id=user.id, name="echo-pc"))
+            artifacts = generate_peer_artifacts(session, peer.id)
+
+        conf_text = Path(artifacts.config_path).read_text(encoding="utf-8")
+        assert "Endpoint = eip.sys-sol.jp:51820" in conf_text
+    finally:
+        settings.artifact_root = previous_root
+        settings.server_endpoint = previous_endpoint
         settings.server_address = previous_address

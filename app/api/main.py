@@ -11,6 +11,8 @@ from app.schemas import (
     GroupAllocationUpdate,
     GroupCreate,
     GroupRead,
+    InitialSettingsRead,
+    InitialSettingsUpdate,
     PeerCreate,
     PeerRead,
     PeerResolvedAccess,
@@ -27,6 +29,7 @@ from app.services import (
     delete_user,
     generate_peer_artifacts,
     generate_server_config,
+    get_initial_settings,
     get_group,
     get_peer,
     get_user,
@@ -36,6 +39,7 @@ from app.services import (
     list_users,
     revoke_peer,
     resolve_peer_access,
+    update_initial_settings,
     update_group_allocation,
 )
 
@@ -241,3 +245,18 @@ def apply_server_config_endpoint(
         return apply_server_config(session)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/initial-settings", response_model=InitialSettingsRead)
+def get_initial_settings_endpoint(
+    session: Session = Depends(get_session),
+) -> InitialSettingsRead:
+    return InitialSettingsRead.model_validate(get_initial_settings(session))
+
+
+@app.put("/initial-settings", response_model=InitialSettingsRead)
+def update_initial_settings_endpoint(
+    payload: InitialSettingsUpdate,
+    session: Session = Depends(get_session),
+) -> InitialSettingsRead:
+    return InitialSettingsRead.model_validate(update_initial_settings(session, payload))

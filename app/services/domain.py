@@ -16,6 +16,7 @@ from app.models import Group, InitialSettings, Peer, ServerState, User
 from app.schemas import (
     GroupAllocationUpdate,
     GroupCreate,
+    InitialSettingsUpdate,
     PeerCreate,
     PeerResolvedAccess,
     UserCreate,
@@ -146,6 +147,28 @@ def get_initial_settings(session: Session) -> InitialSettings:
         session.add(initial_settings)
         session.commit()
         session.refresh(initial_settings)
+    return initial_settings
+
+
+def update_initial_settings(
+    session: Session, payload: InitialSettingsUpdate
+) -> InitialSettings:
+    initial_settings = get_initial_settings(session)
+    initial_settings.endpoint_address = payload.endpoint_address
+    initial_settings.endpoint_port = payload.endpoint_port
+    initial_settings.updated_at = datetime.now(timezone.utc)
+    session.commit()
+    session.refresh(initial_settings)
+    log_operation(
+        "initial_settings.update",
+        "initial_settings",
+        initial_settings.id,
+        source="service",
+        details={
+            "endpoint_address": initial_settings.endpoint_address,
+            "endpoint_port": initial_settings.endpoint_port,
+        },
+    )
     return initial_settings
 
 

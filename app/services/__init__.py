@@ -9,6 +9,7 @@ from app.services.domain import (
     delete_group,
     delete_peer,
     delete_user,
+    get_initial_settings,
     get_group,
     get_peer,
     get_user,
@@ -18,6 +19,7 @@ from app.services.domain import (
     list_users,
     revoke_peer,
     resolve_peer_access,
+    update_initial_settings,
     update_group_allocation,
 )
 
@@ -32,6 +34,7 @@ __all__ = [
     "delete_user",
     "generate_peer_artifacts",
     "generate_server_config",
+    "get_initial_settings",
     "get_group",
     "get_peer",
     "get_user",
@@ -43,5 +46,6 @@ __all__ = [
     "log_operation",
     "revoke_peer",
     "resolve_peer_access",
+    "update_initial_settings",
     "update_group_allocation",
 ]

@@ -223,6 +223,21 @@ class ServerStateRead(BaseModel):
     public_key: str
 
 
+class InitialSettingsUpdate(BaseModel):
+    endpoint_address: str = Field(min_length=1, max_length=255)
+    endpoint_port: int = Field(ge=1, le=65535)
+
+
+class InitialSettingsRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    endpoint_address: str
+    endpoint_port: int
+    created_at: datetime
+    updated_at: datetime
+
+
 class PeerResolvedAccess(BaseModel):
     peer_id: int
     peer_name: str
