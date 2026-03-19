@@ -56,13 +56,7 @@ def _docker_request(
     return json.loads(raw.decode("utf-8"))
 
 
-def _run_wireguard_syncconf() -> None:
-    socket_path = Path(settings.docker_socket_path)
-    if not socket_path.exists():
-        raise ValueError(
-            f"Docker socket '{settings.docker_socket_path}' is not available"
-        )
-
+def _run_exec(command: list[str]) -> int:
     container_name = quote(settings.wireguard_container_name, safe="")
     create_response = _docker_request(
         "POST",
@@ -70,12 +64,7 @@ def _run_wireguard_syncconf() -> None:
         body={
             "AttachStdout": False,
             "AttachStderr": False,
-            "Cmd": [
-                "wg",
-                "syncconf",
-                settings.wireguard_interface_name,
-                settings.wireguard_config_path,
-            ],
+            "Cmd": command,
         },
     )
     if not isinstance(create_response, dict) or "Id" not in create_response:
@@ -105,16 +94,48 @@ def _run_wireguard_syncconf() -> None:
     if inspect_response is None or inspect_response.get("Running", False):
         raise ValueError("timed out while applying WireGuard configuration")
 
-    if inspect_response.get("ExitCode") != 0:
+    return int(inspect_response.get("ExitCode", 1))
+
+
+def _wireguard_interface_exists() -> bool:
+    return _run_exec(
+        ["sh", "-lc", f"ip link show {settings.wireguard_interface_name} >/dev/null 2>&1"]
+    ) == 0
+
+
+def _run_wireguard_apply() -> None:
+    socket_path = Path(settings.docker_socket_path)
+    if not socket_path.exists():
         raise ValueError(
-            f"wg syncconf failed with exit code {inspect_response.get('ExitCode')}"
+            f"Docker socket '{settings.docker_socket_path}' is not available"
         )
+
+    if not _wireguard_interface_exists():
+        exit_code = _run_exec(
+            ["wg-quick", "up", settings.wireguard_config_path]
+        )
+        if exit_code != 0:
+            raise ValueError(f"wg-quick up failed with exit code {exit_code}")
+        return
+
+    exit_code = _run_exec(
+        [
+            "sh",
+            "-lc",
+            (
+                f"wg-quick strip {settings.wireguard_config_path} | "
+                f"wg syncconf {settings.wireguard_interface_name} /dev/stdin"
+            ),
+        ]
+    )
+    if exit_code != 0:
+        raise ValueError(f"wg syncconf failed with exit code {exit_code}")
 
 
 def apply_server_config(session: Session) -> ApplyResult:
     artifacts = generate_server_config(session)
     server = get_server_state(session)
-    _run_wireguard_syncconf()
+    _run_wireguard_apply()
 
     applied_at = datetime.now(timezone.utc)
     log_operation(
