@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { t } from "../lib/i18n";
 import type { RevealedPeerArtifacts } from "../types";
 
 export function RevealModal({
@@ -23,7 +24,22 @@ export function RevealModal({
 
   async function handleCopy() {
     try {
-      await navigator.clipboard.writeText(artifacts.config_text);
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(artifacts.config_text);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = artifacts.config_text;
+        textarea.setAttribute("readonly", "true");
+        textarea.style.position = "absolute";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand("copy");
+        document.body.removeChild(textarea);
+        if (!copied) {
+          throw new Error("copy failed");
+        }
+      }
       setCopyState("done");
     } catch {
       setCopyState("failed");
@@ -34,13 +50,13 @@ export function RevealModal({
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-card" onClick={(event) => event.stopPropagation()}>
         <div className="panel-header">
-          <h2>Reveal WireGuard Configuration</h2>
+          <h2>{t("reveal.title", "Reveal WireGuard Configuration")}</h2>
           <button className="ghost-button" onClick={onClose}>
-            Close
+            {t("common.close", "Close")}
           </button>
         </div>
         <div className="warning-banner">
-          This configuration is revealed only once. Download or scan it now.
+          {t("reveal.warning", "This configuration is revealed only once. Download or scan it now.")}
         </div>
         <div className="reveal-grid">
           <div className="qr-card">
@@ -51,10 +67,10 @@ export function RevealModal({
             <div className="modal-actions">
               <button className="ghost-button" onClick={handleCopy}>
                 {copyState === "done"
-                  ? "Copied"
+                  ? t("reveal.copied", "Copied")
                   : copyState === "failed"
-                    ? "Copy failed"
-                    : "Copy config"}
+                    ? t("reveal.copy_failed", "Copy failed")
+                    : t("reveal.copy", "Copy config")}
               </button>
             </div>
           </div>

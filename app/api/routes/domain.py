@@ -10,13 +10,16 @@ from app.schemas import (
     GroupAllocationUpdate,
     GroupCreate,
     GroupRead,
+    GroupUpdate,
     InitialSettingsRead,
     InitialSettingsUpdate,
     PeerCreate,
     PeerRead,
     PeerResolvedAccess,
+    PeerUpdate,
     UserCreate,
     UserRead,
+    UserUpdate,
 )
 from app.services import (
     create_group,
@@ -32,10 +35,14 @@ from app.services import (
     list_groups,
     list_peers,
     list_users,
+    reissue_peer_keys,
     revoke_peer,
     resolve_peer_access,
     update_initial_settings,
+    update_group,
     update_group_allocation,
+    update_peer,
+    update_user,
 )
 
 router = APIRouter()
@@ -56,6 +63,22 @@ def create_group_endpoint(
         group = create_group(session, payload)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return GroupRead.model_validate(group)
+
+
+@router.patch("/groups/{group_id}", response_model=GroupRead)
+def update_group_endpoint(
+    group_id: int,
+    payload: GroupUpdate,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> GroupRead:
+    try:
+        group = update_group(session, group_id, payload)
+    except ValueError as exc:
+        message = str(exc)
+        status_code = 404 if "does not exist" in message else 400
+        raise HTTPException(status_code=status_code, detail=message) from exc
     return GroupRead.model_validate(group)
 
 
@@ -126,6 +149,22 @@ def create_user_endpoint(
     return UserRead.model_validate(user)
 
 
+@router.patch("/users/{user_id}", response_model=UserRead)
+def update_user_endpoint(
+    user_id: int,
+    payload: UserUpdate,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> UserRead:
+    try:
+        user = update_user(session, user_id, payload)
+    except ValueError as exc:
+        message = str(exc)
+        status_code = 404 if "does not exist" in message else 400
+        raise HTTPException(status_code=status_code, detail=message) from exc
+    return UserRead.model_validate(user)
+
+
 @router.get("/users", response_model=list[UserRead])
 def list_users_endpoint(
     group_id: int | None = Query(default=None),
@@ -178,6 +217,37 @@ def create_peer_endpoint(
         peer = create_peer(session, payload)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return PeerRead.model_validate(peer)
+
+
+@router.patch("/peers/{peer_id}", response_model=PeerRead)
+def update_peer_endpoint(
+    peer_id: int,
+    payload: PeerUpdate,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> PeerRead:
+    try:
+        peer = update_peer(session, peer_id, payload)
+    except ValueError as exc:
+        message = str(exc)
+        status_code = 404 if "does not exist" in message else 400
+        raise HTTPException(status_code=status_code, detail=message) from exc
+    return PeerRead.model_validate(peer)
+
+
+@router.post("/peers/{peer_id}/reissue", response_model=PeerRead)
+def reissue_peer_keys_endpoint(
+    peer_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> PeerRead:
+    try:
+        peer = reissue_peer_keys(session, peer_id)
+    except ValueError as exc:
+        message = str(exc)
+        status_code = 404 if "does not exist" in message else 400
+        raise HTTPException(status_code=status_code, detail=message) from exc
     return PeerRead.model_validate(peer)
 
 

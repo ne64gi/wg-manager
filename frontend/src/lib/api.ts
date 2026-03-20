@@ -7,6 +7,7 @@ import type {
   GeneratedServerArtifacts,
   Group,
   GroupCreateInput,
+  GroupUpdateInput,
   GroupTrafficSummary,
   GuiLog,
   GuiSettings,
@@ -18,10 +19,12 @@ import type {
   LoginUserUpdate,
   Peer,
   PeerStatus,
+  PeerUpdateInput,
   RevealedPeerArtifacts,
   TokenPair,
   User,
   UserCreateInput,
+  UserUpdateInput,
   UserTrafficSummary,
   WireGuardOverviewHistoryPoint,
   WireGuardOverview,
@@ -44,6 +47,35 @@ export class ApiError extends Error {
   }
 }
 
+function extractApiErrorMessage(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  const detail = (payload as { detail?: unknown }).detail;
+  if (typeof detail === "string") {
+    return detail;
+  }
+
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) => {
+        if (!item || typeof item !== "object") {
+          return null;
+        }
+        const msg = (item as { msg?: unknown }).msg;
+        return typeof msg === "string" ? msg : null;
+      })
+      .filter((value): value is string => Boolean(value));
+
+    if (messages.length > 0) {
+      return messages.join(" / ");
+    }
+  }
+
+  return null;
+}
+
 async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const headers = new Headers();
   if (options.body !== undefined) {
@@ -62,9 +94,10 @@ async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
   if (!response.ok) {
     let message = response.statusText;
     try {
-      const payload = (await response.json()) as { detail?: string };
-      if (payload.detail) {
-        message = payload.detail;
+      const payload = (await response.json()) as unknown;
+      const extracted = extractApiErrorMessage(payload);
+      if (extracted) {
+        message = extracted;
       }
     } catch {
       // Ignore parse errors and fall back to status text.
@@ -148,6 +181,22 @@ export function createGroup(
   });
 }
 
+export function updateGroup(
+  accessToken: string,
+  groupId: number,
+  payload: GroupUpdateInput,
+): Promise<Group> {
+  return request<Group>(`/groups/${groupId}`, {
+    method: "PATCH",
+    accessToken,
+    body: payload,
+  });
+}
+
+export function deleteGroup(groupId: number, accessToken: string): Promise<void> {
+  return request<void>(`/groups/${groupId}`, { method: "DELETE", accessToken });
+}
+
 export function listUsers(accessToken: string): Promise<User[]> {
   return request<User[]>("/users", { accessToken });
 }
@@ -161,6 +210,22 @@ export function createUser(
     accessToken,
     body: payload,
   });
+}
+
+export function updateUser(
+  accessToken: string,
+  userId: number,
+  payload: UserUpdateInput,
+): Promise<User> {
+  return request<User>(`/users/${userId}`, {
+    method: "PATCH",
+    accessToken,
+    body: payload,
+  });
+}
+
+export function deleteUser(userId: number, accessToken: string): Promise<void> {
+  return request<void>(`/users/${userId}`, { method: "DELETE", accessToken });
 }
 
 export function listPeers(accessToken: string): Promise<Peer[]> {
@@ -178,12 +243,31 @@ export function createPeer(
   });
 }
 
+export function updatePeer(
+  accessToken: string,
+  peerId: number,
+  payload: PeerUpdateInput,
+): Promise<Peer> {
+  return request<Peer>(`/peers/${peerId}`, {
+    method: "PATCH",
+    accessToken,
+    body: payload,
+  });
+}
+
 export function deletePeer(peerId: number, accessToken: string): Promise<void> {
   return request<void>(`/peers/${peerId}`, { method: "DELETE", accessToken });
 }
 
 export function revokePeer(peerId: number, accessToken: string): Promise<Peer> {
   return request<Peer>(`/peers/${peerId}/revoke`, { method: "POST", accessToken });
+}
+
+export function reissuePeer(peerId: number, accessToken: string): Promise<Peer> {
+  return request<Peer>(`/peers/${peerId}/reissue`, {
+    method: "POST",
+    accessToken,
+  });
 }
 
 export function revealPeerArtifacts(

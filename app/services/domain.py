@@ -16,10 +16,13 @@ from app.models import Group, InitialSettings, Peer, ServerState, User
 from app.schemas import (
     GroupAllocationUpdate,
     GroupCreate,
+    GroupUpdate,
     InitialSettingsUpdate,
     PeerCreate,
     PeerResolvedAccess,
+    PeerUpdate,
     UserCreate,
+    UserUpdate,
 )
 from app.services.audit import init_log_db, log_operation
 
@@ -293,6 +296,47 @@ def _validate_group_allocation_settings(
             raise ValueError(f"reserved ip '{ip}' is outside group network")
 
 
+def _group_name_taken(
+    session: Session, name: str, exclude_group_id: int | None = None
+) -> bool:
+    query = select(Group).where(Group.name == name)
+    if exclude_group_id is not None:
+        query = query.where(Group.id != exclude_group_id)
+    return session.scalar(query) is not None
+
+
+def _peer_name_taken(
+    session: Session,
+    user_id: int,
+    name: str,
+    exclude_peer_id: int | None = None,
+) -> bool:
+    query = select(Peer).where(Peer.user_id == user_id, Peer.name == name)
+    if exclude_peer_id is not None:
+        query = query.where(Peer.id != exclude_peer_id)
+    return session.scalar(query) is not None
+
+
+def _user_name_taken(
+    session: Session,
+    group_id: int,
+    name: str,
+    exclude_user_id: int | None = None,
+) -> bool:
+    query = select(User).where(User.group_id == group_id, User.name == name)
+    if exclude_user_id is not None:
+        query = query.where(User.id != exclude_user_id)
+    return session.scalar(query) is not None
+
+
+def _load_peer_with_context(session: Session, peer_id: int) -> Peer | None:
+    return session.scalar(
+        select(Peer)
+        .options(joinedload(Peer.user).joinedload(User.group))
+        .where(Peer.id == peer_id)
+    )
+
+
 def list_groups(session: Session) -> list[Group]:
     return list(session.scalars(select(Group).order_by(Group.name)))
 
@@ -334,6 +378,52 @@ def create_group(session: Session, payload: GroupCreate) -> Group:
             "dns_servers": group.dns_servers,
             "allocation_start_host": group.allocation_start_host,
             "reserved_ips": group.reserved_ips,
+        },
+    )
+    return group
+
+
+def update_group(session: Session, group_id: int, payload: GroupUpdate) -> Group:
+    group = session.get(Group, group_id)
+    if group is None:
+        raise ValueError(f"group id={group_id} does not exist")
+
+    update_data = payload.model_dump(exclude_unset=True)
+    if "name" in update_data and update_data["name"] != group.name:
+        new_name = update_data["name"]
+        if new_name is None:
+            raise ValueError("group name cannot be null")
+        if _group_name_taken(session, new_name, exclude_group_id=group_id):
+            raise ValueError(f"group '{new_name}' already exists")
+        group.name = new_name
+    if "default_allowed_ips" in update_data:
+        if update_data["default_allowed_ips"] is None:
+            raise ValueError("default_allowed_ips cannot be null")
+        group.default_allowed_ips = update_data["default_allowed_ips"]
+    if "dns_servers" in update_data:
+        group.dns_servers = update_data["dns_servers"]
+    if "description" in update_data:
+        group.description = update_data["description"] or ""
+    if "is_active" in update_data:
+        if update_data["is_active"] is None:
+            raise ValueError("is_active cannot be null")
+        group.is_active = update_data["is_active"]
+    for user in group.users:
+        for peer in user.peers:
+            peer.last_config_generated_at = None
+    session.commit()
+    session.refresh(group)
+    log_operation(
+        "group.update",
+        "group",
+        group.id,
+        source="service",
+        details={
+            "name": group.name,
+            "default_allowed_ips": group.default_allowed_ips,
+            "dns_servers": group.dns_servers,
+            "description": group.description,
+            "is_active": group.is_active,
         },
     )
     return group
@@ -386,6 +476,8 @@ def create_user(session: Session, payload: UserCreate) -> User:
     group = session.get(Group, payload.group_id)
     if group is None:
         raise ValueError(f"group id={payload.group_id} does not exist")
+    if not group.is_active:
+        raise ValueError(f"group id={payload.group_id} is inactive")
 
     existing = session.scalar(
         select(User).where(
@@ -411,6 +503,52 @@ def create_user(session: Session, payload: UserCreate) -> User:
             "group_id": user.group_id,
             "name": user.name,
             "allowed_ips_override": user.allowed_ips_override,
+        },
+    )
+    return user
+
+
+def update_user(session: Session, user_id: int, payload: UserUpdate) -> User:
+    user = session.get(User, user_id)
+    if user is None:
+        raise ValueError(f"user id={user_id} does not exist")
+
+    update_data = payload.model_dump(exclude_unset=True)
+    if "name" in update_data:
+        new_name = update_data["name"]
+        if new_name is None:
+            raise ValueError("user name cannot be null")
+        if new_name != user.name and _user_name_taken(
+            session, user.group_id, new_name, exclude_user_id=user_id
+        ):
+            raise ValueError(
+                f"user '{new_name}' already exists in group id={user.group_id}"
+            )
+        user.name = new_name
+    if "allowed_ips_override" in update_data:
+        user.allowed_ips_override = update_data["allowed_ips_override"]
+    if "description" in update_data:
+        user.description = update_data["description"] or ""
+    if "is_active" in update_data:
+        if update_data["is_active"] is None:
+            raise ValueError("is_active cannot be null")
+        if update_data["is_active"] and not user.group.is_active:
+            raise ValueError(f"group id={user.group_id} is inactive")
+        user.is_active = update_data["is_active"]
+    for peer in user.peers:
+        peer.last_config_generated_at = None
+    session.commit()
+    session.refresh(user)
+    log_operation(
+        "user.update",
+        "user",
+        user.id,
+        source="service",
+        details={
+            "group_id": user.group_id,
+            "name": user.name,
+            "allowed_ips_override": user.allowed_ips_override,
+            "is_active": user.is_active,
         },
     )
     return user
@@ -559,14 +697,12 @@ def create_peer(session: Session, payload: PeerCreate) -> Peer:
     user = session.get(User, payload.user_id)
     if user is None:
         raise ValueError(f"user id={payload.user_id} does not exist")
+    if not user.is_active:
+        raise ValueError(f"user id={payload.user_id} is inactive")
+    if not user.group.is_active:
+        raise ValueError(f"group id={user.group_id} is inactive")
 
-    existing = session.scalar(
-        select(Peer).where(
-            Peer.user_id == payload.user_id,
-            Peer.name == payload.name,
-        )
-    )
-    if existing:
+    if _peer_name_taken(session, payload.user_id, payload.name):
         raise ValueError(
             f"peer '{payload.name}' already exists for user id={payload.user_id}"
         )
@@ -601,6 +737,99 @@ def create_peer(session: Session, payload: PeerCreate) -> Peer:
     ensure_peer_keys(session, peer)
     log_operation(
         "peer.create",
+        "peer",
+        peer.id,
+        source="service",
+        details={
+            "user_id": peer.user_id,
+            "name": peer.name,
+            "assigned_ip": peer.assigned_ip,
+        },
+    )
+    return peer
+
+
+def update_peer(session: Session, peer_id: int, payload: PeerUpdate) -> Peer:
+    peer = _load_peer_with_context(session, peer_id)
+    if peer is None:
+        raise ValueError(f"peer id={peer_id} does not exist")
+
+    update_data = payload.model_dump(exclude_unset=True)
+    if "name" in update_data:
+        new_name = update_data["name"]
+        if new_name is None:
+            raise ValueError("peer name cannot be null")
+        if _peer_name_taken(session, peer.user_id, new_name, exclude_peer_id=peer_id):
+            raise ValueError(
+                f"peer '{new_name}' already exists for user id={peer.user_id}"
+            )
+        peer.name = new_name
+    if "assigned_ip" in update_data:
+        new_assigned_ip = update_data["assigned_ip"]
+        if new_assigned_ip is None:
+            raise ValueError("assigned_ip cannot be null")
+        group_network = ipaddress.ip_network(peer.user.group.network_cidr, strict=True)
+        reserved_ips = _reserved_ip_set(peer.user.group)
+        ip_taken = session.scalar(
+            select(Peer).where(Peer.assigned_ip == new_assigned_ip, Peer.id != peer_id)
+        )
+        if ip_taken:
+            raise ValueError(f"assigned ip '{new_assigned_ip}' is already in use")
+
+        normalized_ip = ipaddress.ip_address(new_assigned_ip)
+        _ensure_assignable_ip(group_network, normalized_ip, reserved_ips)
+        peer.assigned_ip = str(normalized_ip)
+    if "description" in update_data:
+        peer.description = update_data["description"] or ""
+    if "is_active" in update_data:
+        if update_data["is_active"] is None:
+            raise ValueError("is_active cannot be null")
+        if update_data["is_active"] and (not peer.user.is_active or not peer.user.group.is_active):
+            raise ValueError(f"user id={peer.user_id} or group id={peer.user.group_id} is inactive")
+        peer.is_active = update_data["is_active"]
+        peer.revoked_at = None if update_data["is_active"] else datetime.now(timezone.utc)
+    peer.updated_at = datetime.now(timezone.utc)
+    session.commit()
+    session.refresh(peer)
+    log_operation(
+        "peer.update",
+        "peer",
+        peer.id,
+        source="service",
+        details={
+            "user_id": peer.user_id,
+            "name": peer.name,
+            "assigned_ip": peer.assigned_ip,
+            "is_active": peer.is_active,
+        },
+    )
+    return peer
+
+
+def reissue_peer_keys(session: Session, peer_id: int) -> Peer:
+    peer = _load_peer_with_context(session, peer_id)
+    if peer is None:
+        raise ValueError(f"peer id={peer_id} does not exist")
+    if not peer.is_active:
+        raise ValueError(f"peer id={peer_id} is inactive")
+    if not peer.user.is_active:
+        raise ValueError(f"user id={peer.user_id} is inactive")
+    if not peer.user.group.is_active:
+        raise ValueError(f"group id={peer.user.group_id} is inactive")
+
+    private_key, public_key = generate_keypair()
+    peer.private_key = private_key
+    peer.public_key = public_key
+    peer.preshared_key = _b64key()
+    peer.is_revealed = False
+    peer.revealed_at = None
+    peer.last_config_generated_at = None
+    peer.revoked_at = None
+    peer.updated_at = datetime.now(timezone.utc)
+    session.commit()
+    session.refresh(peer)
+    log_operation(
+        "peer.reissue_keys",
         "peer",
         peer.id,
         source="service",

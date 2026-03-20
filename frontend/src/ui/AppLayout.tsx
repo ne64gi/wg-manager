@@ -2,15 +2,16 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import type { PropsWithChildren } from "react";
 
+import { t } from "../lib/i18n";
 import { useAuth } from "../modules/auth/AuthContext";
 
 const navItems = [
-  { to: "/", label: "Dashboard" },
-  { to: "/groups", label: "Groups" },
-  { to: "/users", label: "Users" },
-  { to: "/peers", label: "Peers" },
-  { to: "/settings", label: "Settings" },
-  { to: "/logs", label: "Logs" },
+  { to: "/", labelKey: "nav.dashboard", label: "Dashboard" },
+  { to: "/groups", labelKey: "nav.groups", label: "Groups" },
+  { to: "/users", labelKey: "nav.users", label: "Users" },
+  { to: "/peers", labelKey: "nav.peers", label: "Peers" },
+  { to: "/settings", labelKey: "nav.settings", label: "Settings" },
+  { to: "/logs", labelKey: "nav.logs", label: "Logs" },
 ];
 
 export function AppLayout({ children }: PropsWithChildren) {
@@ -33,7 +34,10 @@ export function AppLayout({ children }: PropsWithChildren) {
           <span />
           <span />
         </button>
-        <div className="mobile-topbar-title">wg-studio</div>
+        <div className="mobile-topbar-title">
+          <span className="brand-badge brand-badge-compact">wg</span>
+          <span>wg-studio</span>
+        </div>
       </header>
       {isMobileNavOpen ? (
         <button
@@ -44,7 +48,13 @@ export function AppLayout({ children }: PropsWithChildren) {
       ) : null}
       <aside className={`sidebar${isMobileNavOpen ? " sidebar-mobile-open" : ""}`}>
         <div>
-          <div className="brand">wg-studio</div>
+          <div className="brand">
+            <span className="brand-badge">wg</span>
+            <div>
+              <div className="brand-title">wg-studio</div>
+              <div className="brand-subtitle">WireGuard control plane</div>
+            </div>
+          </div>
           <nav className="nav-list">
             {navItems.map((item) => (
               <NavLink
@@ -56,7 +66,7 @@ export function AppLayout({ children }: PropsWithChildren) {
                 end={item.to === "/"}
                 onClick={closeMobileNav}
               >
-                {item.label}
+                {t(item.labelKey, item.label)}
               </NavLink>
             ))}
           </nav>
@@ -70,7 +80,7 @@ export function AppLayout({ children }: PropsWithChildren) {
               auth.logoutAction();
             }}
           >
-            Log out
+            {t("auth.logout", "Log out")}
           </button>
         </div>
       </aside>

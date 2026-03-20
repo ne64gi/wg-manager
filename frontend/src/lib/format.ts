@@ -1,3 +1,5 @@
+import { getUiLocale } from "./i18n";
+
 const BYTE_UNITS = ["B", "KB", "MB", "GB", "TB"];
 
 export function formatBytes(value: number): string {
@@ -16,19 +18,21 @@ export function formatBytes(value: number): string {
 }
 
 export function formatDateTime(value: string | null): string {
+  const locale = getUiLocale();
   if (!value) {
-    return "Never";
+    return locale === "ja" ? "なし" : "Never";
   }
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
 }
 
 export function formatRelativeTime(value: string | null): string {
+  const locale = getUiLocale();
   if (!value) {
-    return "Offline";
+    return locale === "ja" ? "オフライン" : "Offline";
   }
 
   const now = Date.now();
@@ -36,13 +40,19 @@ export function formatRelativeTime(value: string | null): string {
   const deltaSeconds = Math.max(0, Math.floor((now - then) / 1000));
 
   if (deltaSeconds < 60) {
-    return `${deltaSeconds}s ago`;
+    return locale === "ja" ? `${deltaSeconds}秒前` : `${deltaSeconds}s ago`;
   }
   if (deltaSeconds < 3600) {
-    return `${Math.floor(deltaSeconds / 60)}m ago`;
+    return locale === "ja"
+      ? `${Math.floor(deltaSeconds / 60)}分前`
+      : `${Math.floor(deltaSeconds / 60)}m ago`;
   }
   if (deltaSeconds < 86400) {
-    return `${Math.floor(deltaSeconds / 3600)}h ago`;
+    return locale === "ja"
+      ? `${Math.floor(deltaSeconds / 3600)}時間前`
+      : `${Math.floor(deltaSeconds / 3600)}h ago`;
   }
-  return `${Math.floor(deltaSeconds / 86400)}d ago`;
+  return locale === "ja"
+    ? `${Math.floor(deltaSeconds / 86400)}日前`
+    : `${Math.floor(deltaSeconds / 86400)}d ago`;
 }

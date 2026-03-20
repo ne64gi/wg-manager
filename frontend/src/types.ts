@@ -94,7 +94,8 @@ export type Group = {
   dns_servers: string[];
   allocation_start_host: number;
   reserved_ips: string[];
-  is_active?: boolean;
+  description: string;
+  is_active: boolean;
 };
 
 export type GroupCreateInput = {
@@ -114,7 +115,8 @@ export type User = {
   group_id: number;
   name: string;
   allowed_ips_override: string[] | null;
-  is_active?: boolean;
+  description: string;
+  is_active: boolean;
 };
 
 export type UserCreateInput = {
@@ -130,11 +132,28 @@ export type Peer = {
   user_id: number;
   name: string;
   assigned_ip: string;
+  public_key: string | null;
+  description: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
   revoked_at: string | null;
+  last_config_generated_at: string | null;
+  is_revealed: boolean;
+  revealed_at: string | null;
 };
+
+export type GroupUpdateInput = Partial<
+  Pick<GroupCreateInput, "name" | "default_allowed_ips" | "dns_servers" | "description" | "is_active">
+>;
+
+export type UserUpdateInput = Partial<
+  Pick<UserCreateInput, "name" | "allowed_ips_override" | "description" | "is_active">
+>;
+
+export type PeerUpdateInput = Partial<
+  Pick<PeerCreateInput, "name" | "assigned_ip" | "description" | "is_active">
+>;
 
 export type PeerCreateInput = {
   user_id: number;
@@ -155,6 +174,7 @@ export type GuiSettings = {
   default_locale: LocaleCode;
   overview_refresh_seconds: number;
   peers_refresh_seconds: number;
+  traffic_snapshot_interval_seconds: number;
   refresh_after_apply: boolean;
   online_threshold_seconds: number;
 };
@@ -169,6 +189,7 @@ export type GuiSettingsUpdate = Partial<
     | "default_locale"
     | "overview_refresh_seconds"
     | "peers_refresh_seconds"
+    | "traffic_snapshot_interval_seconds"
     | "refresh_after_apply"
     | "online_threshold_seconds"
   >

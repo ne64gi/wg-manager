@@ -38,6 +38,9 @@ export function SettingsPage() {
   const [endpointPort, setEndpointPort] = useState("51820");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [settingsNotice, setSettingsNotice] = useState<string | null>(null);
+  const [endpointNotice, setEndpointNotice] = useState<string | null>(null);
+  const [loginUserError, setLoginUserError] = useState<string | null>(null);
 
   useEffect(() => {
     if (settingsQuery.data) {
@@ -56,7 +59,11 @@ export function SettingsPage() {
     mutationFn: async () =>
       updateGuiSettings((await auth.getValidAccessToken()) ?? "", formState),
     onSuccess: async () => {
+      setSettingsNotice("GUI settings saved.");
       await queryClient.invalidateQueries({ queryKey: queryKeys.guiSettings });
+    },
+    onError: (error) => {
+      setSettingsNotice(error instanceof Error ? error.message : "Failed to save GUI settings.");
     },
   });
 
@@ -70,7 +77,11 @@ export function SettingsPage() {
         },
       ),
     onSuccess: async () => {
+      setEndpointNotice("Endpoint settings saved.");
       await queryClient.invalidateQueries({ queryKey: queryKeys.initialSettings });
+    },
+    onError: (error) => {
+      setEndpointNotice(error instanceof Error ? error.message : "Failed to save endpoint settings.");
     },
   });
 
@@ -83,7 +94,11 @@ export function SettingsPage() {
     onSuccess: async () => {
       setNewUsername("");
       setNewPassword("");
+      setLoginUserError(null);
       await queryClient.invalidateQueries({ queryKey: queryKeys.loginUsers });
+    },
+    onError: (error) => {
+      setLoginUserError(error instanceof Error ? error.message : "Failed to create login user.");
     },
   });
 
@@ -101,6 +116,27 @@ export function SettingsPage() {
         <div>
           <div className="eyebrow">Settings</div>
           <h1>GUI and bootstrap settings</h1>
+        </div>
+      </div>
+
+      <div className="stats-grid stats-grid-compact">
+        <div className="stat-card">
+          <div className="stat-label">Theme mode</div>
+          <div className="stat-value settings-stat-value">
+            {settingsQuery.data?.theme_mode ?? "system"}
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Default locale</div>
+          <div className="stat-value settings-stat-value">
+            {settingsQuery.data?.default_locale ?? "en"}
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Error log level</div>
+          <div className="stat-value settings-stat-value">
+            {settingsQuery.data?.error_log_level ?? "warning"}
+          </div>
         </div>
       </div>
 
@@ -172,6 +208,19 @@ export function SettingsPage() {
               />
             </label>
             <label className="field">
+              <span>Traffic snapshot interval (sec)</span>
+              <input
+                type="number"
+                value={formState.traffic_snapshot_interval_seconds ?? 300}
+                onChange={(event) =>
+                  setFormState((current) => ({
+                    ...current,
+                    traffic_snapshot_interval_seconds: Number(event.target.value),
+                  }))
+                }
+              />
+            </label>
+            <label className="field">
               <span>Online threshold (sec)</span>
               <input
                 type="number"
@@ -202,7 +251,52 @@ export function SettingsPage() {
                 <option value="critical">critical</option>
               </select>
             </label>
+            <label className="field">
+              <span>Access log path</span>
+              <input
+                value={formState.access_log_path ?? "none"}
+                onChange={(event) =>
+                  setFormState((current) => ({
+                    ...current,
+                    access_log_path: event.target.value,
+                  }))
+                }
+                placeholder="none"
+              />
+            </label>
+            <label className="field">
+              <span>Error log path</span>
+              <input
+                value={formState.error_log_path ?? "none"}
+                onChange={(event) =>
+                  setFormState((current) => ({
+                    ...current,
+                    error_log_path: event.target.value,
+                  }))
+                }
+                placeholder="none"
+              />
+            </label>
+            <label className="field field-span-2 field-checkbox">
+              <input
+                type="checkbox"
+                checked={formState.refresh_after_apply ?? true}
+                onChange={(event) =>
+                  setFormState((current) => ({
+                    ...current,
+                    refresh_after_apply: event.target.checked,
+                  }))
+                }
+              />
+              <div>
+                <span>Apply immediately after peer changes</span>
+                <div className="muted-text">
+                  When enabled, create/revoke/delete peer operations trigger server apply.
+                </div>
+              </div>
+            </label>
           </div>
+          {settingsNotice ? <div className="info-banner">{settingsNotice}</div> : null}
         </Panel>
 
         <Panel
@@ -230,6 +324,7 @@ export function SettingsPage() {
               />
             </label>
           </div>
+          {endpointNotice ? <div className="info-banner">{endpointNotice}</div> : null}
         </Panel>
       </div>
 
@@ -250,6 +345,7 @@ export function SettingsPage() {
             Add user
           </button>
         </div>
+        {loginUserError ? <div className="error-banner">{loginUserError}</div> : null}
         <DataTable headers={["Username", "Status", "Last login", "Actions"]}>
           {(loginUsersQuery.data ?? []).map((loginUser) => (
             <tr key={loginUser.id}>

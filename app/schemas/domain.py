@@ -98,6 +98,34 @@ class GroupCreate(BaseModel):
         return self
 
 
+class GroupUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    default_allowed_ips: list[str] | None = None
+    dns_servers: list[str] | None = None
+    description: str | None = None
+    is_active: bool | None = None
+
+    @field_validator("default_allowed_ips")
+    @classmethod
+    def validate_default_allowed_ips(
+        cls, value: list[str] | None
+    ) -> list[str] | None:
+        if value is None:
+            return None
+        if not value:
+            raise ValueError("default_allowed_ips must contain at least one route")
+        return normalize_ip_list(value)
+
+    @field_validator("dns_servers")
+    @classmethod
+    def validate_dns_servers(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            return None
+        if not value:
+            raise ValueError("dns_servers cannot be empty")
+        return normalize_address_list(value)
+
+
 class GroupAllocationUpdate(BaseModel):
     allocation_start_host: int = 1
     reserved_ips: list[str] = Field(default_factory=list)
@@ -149,6 +177,24 @@ class UserCreate(BaseModel):
         return normalize_ip_list(value)
 
 
+class UserUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    allowed_ips_override: list[str] | None = None
+    description: str | None = None
+    is_active: bool | None = None
+
+    @field_validator("allowed_ips_override")
+    @classmethod
+    def validate_allowed_ips_override(
+        cls, value: list[str] | None
+    ) -> list[str] | None:
+        if value is None:
+            return None
+        if not value:
+            raise ValueError("allowed_ips_override cannot be empty")
+        return normalize_ip_list(value)
+
+
 class UserRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -166,6 +212,20 @@ class PeerCreate(BaseModel):
     assigned_ip: str | None = None
     description: str = ""
     is_active: bool = True
+
+    @field_validator("assigned_ip")
+    @classmethod
+    def validate_assigned_ip(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return normalize_ip(value)
+
+
+class PeerUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    assigned_ip: str | None = None
+    description: str | None = None
+    is_active: bool | None = None
 
     @field_validator("assigned_ip")
     @classmethod

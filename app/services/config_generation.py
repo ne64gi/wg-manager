@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from app.core import settings
-from app.models import Peer, User
+from app.models import Group, Peer, User
 from app.schemas import (
     GeneratedPeerArtifacts,
     GeneratedServerArtifacts,
@@ -55,6 +55,40 @@ def get_peer_qr_path(peer_name: str) -> Path:
 
 def _effective_allowed_ips(peer: Peer) -> list[str]:
     return peer.user.allowed_ips_override or peer.user.group.default_allowed_ips
+
+
+def _load_peer_with_context(session: Session, peer_id: int) -> Peer | None:
+    return session.scalar(
+        select(Peer)
+        .options(joinedload(Peer.user).joinedload(User.group))
+        .where(Peer.id == peer_id)
+    )
+
+
+def _ensure_peer_can_generate(peer: Peer) -> None:
+    if not peer.is_active:
+        raise ValueError(f"peer id={peer.id} is inactive")
+    if not peer.user.is_active:
+        raise ValueError(f"user id={peer.user_id} is inactive")
+    if not peer.user.group.is_active:
+        raise ValueError(f"group id={peer.user.group_id} is inactive")
+
+
+def _peer_artifacts_need_regeneration(
+    peer: Peer,
+    initial_settings_updated_at: datetime,
+    config_path: Path,
+    qr_path: Path,
+) -> bool:
+    if not config_path.exists() or not qr_path.exists():
+        return True
+    if peer.last_config_generated_at is None:
+        return True
+    if peer.updated_at > peer.last_config_generated_at:
+        return True
+    if initial_settings_updated_at > peer.last_config_generated_at:
+        return True
+    return False
 
 
 def _render_peer_config(
@@ -146,15 +180,10 @@ def _atomic_write_bytes(path: Path, contents: bytes) -> None:
 
 
 def generate_peer_artifacts(session: Session, peer_id: int) -> GeneratedPeerArtifacts:
-    peer = session.scalar(
-        select(Peer)
-        .options(joinedload(Peer.user).joinedload(User.group))
-        .where(Peer.id == peer_id)
-    )
+    peer = _load_peer_with_context(session, peer_id)
     if peer is None:
         raise ValueError(f"peer id={peer_id} does not exist")
-    if not peer.is_active:
-        raise ValueError(f"peer id={peer_id} is revoked and cannot be generated")
+    _ensure_peer_can_generate(peer)
 
     ensure_peer_keys(session, peer)
     initial_settings = get_initial_settings(session)
@@ -202,7 +231,13 @@ def generate_server_config(session: Session) -> GeneratedServerArtifacts:
         session.scalars(
             select(Peer)
             .options(joinedload(Peer.user).joinedload(User.group))
-            .where(Peer.is_active.is_(True))
+            .join(Peer.user)
+            .join(User.group)
+            .where(
+                Peer.is_active.is_(True),
+                User.is_active.is_(True),
+                Group.is_active.is_(True),
+            )
             .order_by(Peer.name)
         )
     )
@@ -238,56 +273,68 @@ def generate_server_config(session: Session) -> GeneratedServerArtifacts:
 
 
 def get_or_generate_peer_config_text(session: Session, peer_id: int) -> tuple[Peer, str]:
-    peer = session.scalar(
-        select(Peer)
-        .options(joinedload(Peer.user).joinedload(User.group))
-        .where(Peer.id == peer_id)
-    )
+    peer = _load_peer_with_context(session, peer_id)
     if peer is None:
         raise ValueError(f"peer id={peer_id} does not exist")
-    if not peer.is_active:
-        raise ValueError(f"peer id={peer_id} is revoked and cannot be generated")
+    _ensure_peer_can_generate(peer)
 
+    initial_settings = get_initial_settings(session)
     config_path = _peer_config_path(peer.name)
-    if not config_path.exists():
+    qr_path = _peer_qr_path(peer.name)
+    if _peer_artifacts_need_regeneration(
+        peer,
+        initial_settings.updated_at,
+        config_path,
+        qr_path,
+    ):
         generate_peer_artifacts(session, peer_id)
+        peer = _load_peer_with_context(session, peer_id) or peer
+        config_path = _peer_config_path(peer.name)
     return peer, config_path.read_text(encoding="utf-8")
 
 
 def get_or_generate_peer_qr_svg(session: Session, peer_id: int) -> tuple[Peer, str]:
-    peer = session.scalar(
-        select(Peer)
-        .options(joinedload(Peer.user).joinedload(User.group))
-        .where(Peer.id == peer_id)
-    )
+    peer = _load_peer_with_context(session, peer_id)
     if peer is None:
         raise ValueError(f"peer id={peer_id} does not exist")
-    if not peer.is_active:
-        raise ValueError(f"peer id={peer_id} is revoked and cannot be generated")
+    _ensure_peer_can_generate(peer)
 
+    initial_settings = get_initial_settings(session)
+    config_path = _peer_config_path(peer.name)
     qr_path = _peer_qr_path(peer.name)
-    if not qr_path.exists():
+    if _peer_artifacts_need_regeneration(
+        peer,
+        initial_settings.updated_at,
+        config_path,
+        qr_path,
+    ):
         generate_peer_artifacts(session, peer_id)
+        peer = _load_peer_with_context(session, peer_id) or peer
+        qr_path = _peer_qr_path(peer.name)
     return peer, qr_path.read_text(encoding="utf-8")
 
 
 def reveal_peer_artifacts(session: Session, peer_id: int) -> RevealedPeerArtifacts:
-    peer = session.scalar(
-        select(Peer)
-        .options(joinedload(Peer.user).joinedload(User.group))
-        .where(Peer.id == peer_id)
-    )
+    peer = _load_peer_with_context(session, peer_id)
     if peer is None:
         raise ValueError(f"peer id={peer_id} does not exist")
-    if not peer.is_active:
-        raise ValueError(f"peer id={peer_id} is revoked and cannot be revealed")
+    _ensure_peer_can_generate(peer)
     if peer.is_revealed:
         raise ValueError(f"peer id={peer_id} has already been revealed")
 
+    initial_settings = get_initial_settings(session)
     config_path = _peer_config_path(peer.name)
     qr_path = _peer_qr_path(peer.name)
-    if not config_path.exists() or not qr_path.exists():
+    if _peer_artifacts_need_regeneration(
+        peer,
+        initial_settings.updated_at,
+        config_path,
+        qr_path,
+    ):
         generate_peer_artifacts(session, peer_id)
+        peer = _load_peer_with_context(session, peer_id) or peer
+        config_path = _peer_config_path(peer.name)
+        qr_path = _peer_qr_path(peer.name)
 
     revealed_at = datetime.now(timezone.utc)
     peer.is_revealed = True

@@ -2,8 +2,16 @@ from __future__ import annotations
 
 from sqlalchemy import select
 
-from app.db import AuditBase, AuditSessionLocal, audit_engine
-from app.models import GuiLog, OperationLog
+from app.db import AuditBase, AuditSessionLocal, SessionLocal, audit_engine
+from app.models import GuiLog, GuiSettings, OperationLog
+
+LOG_LEVEL_ORDER = {
+    "debug": 10,
+    "info": 20,
+    "warning": 30,
+    "error": 40,
+    "critical": 50,
+}
 
 
 def init_log_db() -> None:
@@ -42,9 +50,17 @@ def log_gui_event(
     status_code: int | None = None,
     details: dict | None = None,
 ) -> None:
+    with SessionLocal() as settings_session:
+        gui_settings = settings_session.get(GuiSettings, 1)
+        threshold = (gui_settings.error_log_level if gui_settings else "warning").lower()
+
+    normalized_level = level.lower()
+    if LOG_LEVEL_ORDER.get(normalized_level, 100) < LOG_LEVEL_ORDER.get(threshold, 30):
+        return
+
     with AuditSessionLocal() as session:
         entry = GuiLog(
-            level=level,
+            level=normalized_level,
             category=category,
             message=message,
             login_user_id=login_user_id,
