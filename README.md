@@ -20,13 +20,16 @@ English docs live under [`docs/en/`](docs/en/README.md).
 Available pages:
 
 - [`docs/en/README.md`](docs/en/README.md)
+- [`docs/en/quick-start.md`](docs/en/quick-start.md)
 - [`docs/en/overview.md`](docs/en/overview.md)
 - [`docs/en/architecture.md`](docs/en/architecture.md)
 - [`docs/en/domain-model.md`](docs/en/domain-model.md)
 - [`docs/en/config-and-apply.md`](docs/en/config-and-apply.md)
 - [`docs/en/api.md`](docs/en/api.md)
+- [`docs/en/auth-and-api-rules.md`](docs/en/auth-and-api-rules.md)
 - [`docs/en/development.md`](docs/en/development.md)
 - [`docs/en/roadmap.md`](docs/en/roadmap.md)
+- [`docs/ai/README.md`](docs/ai/README.md)
 
 Japanese docs will later live under `docs/jp/`.
 
@@ -37,6 +40,13 @@ Copy the checked-in env template and adjust local values:
 ```bash
 cp .env.example .env
 ```
+
+Minimum values to change before first login:
+
+- `WG_SERVER_ENDPOINT`
+- `WG_BOOTSTRAP_ADMIN_USERNAME`
+- `WG_BOOTSTRAP_ADMIN_PASSWORD`
+- `WG_JWT_SECRET_KEY`
 
 Start the stack:
 
@@ -49,6 +59,10 @@ Open the GUI:
 ```text
 http://localhost:3900/wg-studio/
 ```
+
+Sign in with the bootstrap admin credentials from `.env`.
+
+For a more complete GUI-first startup flow, see [`docs/en/quick-start.md`](docs/en/quick-start.md).
 
 Check API health from inside the stack:
 

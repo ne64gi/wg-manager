@@ -1,5 +1,12 @@
 # API
 
+This page is the endpoint index.
+
+For behavior rules that are not obvious from the route list, also read:
+
+- [`quick-start.md`](quick-start.md)
+- [`auth-and-api-rules.md`](auth-and-api-rules.md)
+
 ## Core Endpoints
 
 - `GET /health`
@@ -22,20 +29,39 @@
 ## Config Endpoints
 
 - `POST /config/peers/{peer_id}/generate`
-- `GET /config/peers/{peer_id}`
-- `GET /config/peers/{peer_id}/qr`
+- `POST /config/peers/{peer_id}/reveal`
+- `GET /config/peers/{peer_id}` (`410`, intentionally disabled)
+- `GET /config/peers/{peer_id}/qr` (`410`, intentionally disabled)
 - `POST /config/server/generate`
 - `POST /config/server/apply`
+
+## Auth Endpoints
+
+- `POST /auth/login`
+- `POST /auth/refresh`
+- `POST /auth/logout`
+- `GET /auth/me`
 
 ## Settings Endpoints
 
 - `GET /initial-settings`
 - `PUT /initial-settings`
+- `GET /gui/settings`
+- `PUT /gui/settings`
+- `GET /gui/login-users`
+- `POST /gui/login-users`
+- `GET /gui/login-users/{login_user_id}`
+- `PATCH /gui/login-users/{login_user_id}`
+- `DELETE /gui/login-users/{login_user_id}`
+- `GET /gui/logs`
 
 ## Status Endpoints
 
 - `GET /status/overview`
 - `GET /status/peers`
+- `GET /status/users-summary`
+- `GET /status/groups-summary`
+- `GET /status/overview-history`
 
 The status layer currently exposes:
 
