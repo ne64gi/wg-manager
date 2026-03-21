@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
+from app.authz import authorize
 from app.api.deps import require_authenticated_login_user
 from app.db import get_session
 from app.models import LoginUser
@@ -54,11 +55,13 @@ router = APIRouter()
 
 
 @router.get("/health")
+@authorize(action="system.health", public=True)
 def healthcheck() -> dict[str, str]:
     return {"status": "ok"}
 
 
 @router.get("/state/export", response_model=StateExportRead)
+@authorize(action="state.export")
 def export_state_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
@@ -67,6 +70,7 @@ def export_state_endpoint(
 
 
 @router.post("/state/import", response_model=StateImportResultRead)
+@authorize(action="state.import")
 def import_state_endpoint(
     payload: StateImportRequest,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -79,6 +83,7 @@ def import_state_endpoint(
 
 
 @router.post("/groups", response_model=GroupRead, status_code=201)
+@authorize(action="group.create", resource_type="group")
 def create_group_endpoint(
     payload: GroupCreate,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -92,6 +97,7 @@ def create_group_endpoint(
 
 
 @router.patch("/groups/{group_id}", response_model=GroupRead)
+@authorize(action="group.update", resource_type="group", resource_id_param="group_id")
 def update_group_endpoint(
     group_id: int,
     payload: GroupUpdate,
@@ -108,6 +114,7 @@ def update_group_endpoint(
 
 
 @router.patch("/groups/{group_id}/allocation", response_model=GroupRead)
+@authorize(action="group.update_allocation", resource_type="group", resource_id_param="group_id")
 def update_group_allocation_endpoint(
     group_id: int,
     payload: GroupAllocationUpdate,
@@ -124,6 +131,7 @@ def update_group_allocation_endpoint(
 
 
 @router.get("/groups", response_model=list[GroupRead])
+@authorize(action="group.list", resource_type="group")
 def list_groups_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
@@ -132,6 +140,7 @@ def list_groups_endpoint(
 
 
 @router.get("/groups/{group_id}", response_model=GroupRead)
+@authorize(action="group.read", resource_type="group", resource_id_param="group_id")
 def get_group_endpoint(
     group_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -149,6 +158,7 @@ def get_group_endpoint(
     response_class=Response,
     response_model=None,
 )
+@authorize(action="group.delete", resource_type="group", resource_id_param="group_id")
 def delete_group_endpoint(
     group_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -162,6 +172,7 @@ def delete_group_endpoint(
 
 
 @router.post("/users", response_model=UserRead, status_code=201)
+@authorize(action="user.create", resource_type="user")
 def create_user_endpoint(
     payload: UserCreate,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -175,6 +186,7 @@ def create_user_endpoint(
 
 
 @router.patch("/users/{user_id}", response_model=UserRead)
+@authorize(action="user.update", resource_type="user", resource_id_param="user_id")
 def update_user_endpoint(
     user_id: int,
     payload: UserUpdate,
@@ -191,6 +203,7 @@ def update_user_endpoint(
 
 
 @router.get("/users", response_model=list[UserRead])
+@authorize(action="user.list", resource_type="user")
 def list_users_endpoint(
     group_id: int | None = Query(default=None),
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -203,6 +216,7 @@ def list_users_endpoint(
 
 
 @router.get("/users/{user_id}", response_model=UserRead)
+@authorize(action="user.read", resource_type="user", resource_id_param="user_id")
 def get_user_endpoint(
     user_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -220,6 +234,7 @@ def get_user_endpoint(
     response_class=Response,
     response_model=None,
 )
+@authorize(action="user.delete", resource_type="user", resource_id_param="user_id")
 def delete_user_endpoint(
     user_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -233,6 +248,7 @@ def delete_user_endpoint(
 
 
 @router.post("/peers", response_model=PeerRead, status_code=201)
+@authorize(action="peer.create", resource_type="peer")
 def create_peer_endpoint(
     payload: PeerCreate,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -246,6 +262,7 @@ def create_peer_endpoint(
 
 
 @router.patch("/peers/{peer_id}", response_model=PeerRead)
+@authorize(action="peer.update", resource_type="peer", resource_id_param="peer_id")
 def update_peer_endpoint(
     peer_id: int,
     payload: PeerUpdate,
@@ -262,6 +279,7 @@ def update_peer_endpoint(
 
 
 @router.post("/peers/{peer_id}/reissue", response_model=PeerRead)
+@authorize(action="peer.reissue", resource_type="peer", resource_id_param="peer_id")
 def reissue_peer_keys_endpoint(
     peer_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -277,6 +295,7 @@ def reissue_peer_keys_endpoint(
 
 
 @router.get("/peers", response_model=list[PeerRead])
+@authorize(action="peer.list", resource_type="peer")
 def list_peers_endpoint(
     user_id: int | None = Query(default=None),
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -289,6 +308,7 @@ def list_peers_endpoint(
 
 
 @router.get("/peers/{peer_id}", response_model=PeerRead)
+@authorize(action="peer.read", resource_type="peer", resource_id_param="peer_id")
 def get_peer_endpoint(
     peer_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -301,6 +321,7 @@ def get_peer_endpoint(
 
 
 @router.post("/peers/{peer_id}/revoke", response_model=PeerRead)
+@authorize(action="peer.revoke", resource_type="peer", resource_id_param="peer_id")
 def revoke_peer_endpoint(
     peer_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -319,6 +340,7 @@ def revoke_peer_endpoint(
     response_class=Response,
     response_model=None,
 )
+@authorize(action="peer.delete", resource_type="peer", resource_id_param="peer_id")
 def delete_peer_endpoint(
     peer_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -332,6 +354,7 @@ def delete_peer_endpoint(
 
 
 @router.get("/peers/{peer_id}/resolved-access", response_model=PeerResolvedAccess)
+@authorize(action="peer.read_access", resource_type="peer", resource_id_param="peer_id")
 def get_peer_resolved_access_endpoint(
     peer_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -344,6 +367,7 @@ def get_peer_resolved_access_endpoint(
 
 
 @router.get("/initial-settings", response_model=InitialSettingsRead)
+@authorize(action="settings.read", resource_type="initial_settings")
 def get_initial_settings_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
@@ -352,6 +376,7 @@ def get_initial_settings_endpoint(
 
 
 @router.put("/initial-settings", response_model=InitialSettingsRead)
+@authorize(action="settings.update", resource_type="initial_settings")
 def update_initial_settings_endpoint(
     payload: InitialSettingsUpdate,
     current_user: LoginUser = Depends(require_authenticated_login_user),

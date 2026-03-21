@@ -18,6 +18,7 @@ Recommended read order:
 6. [`ui-consistency-audit.md`](ui-consistency-audit.md)
 7. [`testing-map.md`](testing-map.md)
 8. [`roadmap.md`](roadmap.md) `E2E Strategy` section when planning test work
+9. [`v1.1-authorization-notes.md`](v1.1-authorization-notes.md) when planning post-`v1.0.0` access control work
 
 Rules:
 

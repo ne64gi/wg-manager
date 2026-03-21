@@ -1,12 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.authz import AuthorizationMiddleware
 from app.api.routes import router
 from app.core import get_system_version, settings
 from app.db import SessionLocal
 from app.services import bootstrap_login_user, init_db
 
 app = FastAPI(title="WireGuard Control Plane", version=get_system_version())
+app.add_middleware(AuthorizationMiddleware)
 if settings.cors_allowed_origins:
     app.add_middleware(
         CORSMiddleware,

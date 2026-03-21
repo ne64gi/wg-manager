@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.authz import authorize
 from app.api.deps import require_authenticated_login_user
 from app.db import get_session
 from app.models import LoginUser
@@ -29,6 +30,7 @@ router = APIRouter()
 
 
 @router.get("/auth/setup-status", response_model=AuthSetupStatusRead)
+@authorize(action="auth.setup_status", public=True)
 def auth_setup_status_endpoint(
     session: Session = Depends(get_session),
 ) -> AuthSetupStatusRead:
@@ -36,6 +38,7 @@ def auth_setup_status_endpoint(
 
 
 @router.post("/auth/setup", response_model=TokenPairRead, status_code=201)
+@authorize(action="auth.setup", public=True)
 def auth_setup_endpoint(
     payload: AuthSetupRequest,
     session: Session = Depends(get_session),
@@ -48,6 +51,7 @@ def auth_setup_endpoint(
 
 
 @router.post("/auth/login", response_model=TokenPairRead)
+@authorize(action="auth.login", public=True)
 def login_endpoint(
     payload: AuthLoginRequest,
     session: Session = Depends(get_session),
@@ -60,6 +64,7 @@ def login_endpoint(
 
 
 @router.post("/auth/refresh", response_model=TokenPairRead)
+@authorize(action="auth.refresh", public=True)
 def refresh_endpoint(
     payload: AuthRefreshRequest,
     session: Session = Depends(get_session),
@@ -72,6 +77,7 @@ def refresh_endpoint(
 
 
 @router.post("/auth/logout", status_code=204)
+@authorize(action="auth.logout")
 def logout_endpoint(
     payload: AuthLogoutRequest,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -85,6 +91,7 @@ def logout_endpoint(
 
 
 @router.get("/auth/me", response_model=AuthenticatedLoginUserRead)
+@authorize(action="auth.me")
 def auth_me_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
 ) -> AuthenticatedLoginUserRead:
@@ -92,6 +99,7 @@ def auth_me_endpoint(
 
 
 @router.post("/auth/change-password", response_model=AuthenticatedLoginUserRead)
+@authorize(action="auth.change_password")
 def change_password_endpoint(
     payload: AuthChangePasswordRequest,
     current_user: LoginUser = Depends(require_authenticated_login_user),

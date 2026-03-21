@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
+from app.authz import authorize
 from app.api.deps import require_authenticated_login_user
 from app.db import get_session
 from app.models import LoginUser
@@ -30,6 +31,7 @@ router = APIRouter()
 
 
 @router.post("/config/peers/{peer_id}/generate", response_model=GeneratedPeerArtifacts)
+@authorize(action="peer.generate_artifacts", resource_type="peer", resource_id_param="peer_id")
 def generate_peer_config_endpoint(
     peer_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -44,6 +46,7 @@ def generate_peer_config_endpoint(
 
 
 @router.post("/config/peers/{peer_id}/reveal", response_model=RevealedPeerArtifacts)
+@authorize(action="peer.reveal", resource_type="peer", resource_id_param="peer_id")
 def reveal_peer_artifacts_endpoint(
     peer_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -58,6 +61,7 @@ def reveal_peer_artifacts_endpoint(
 
 
 @router.get("/config/groups/{group_id}/bundle-warning", response_model=BundleWarningRead)
+@authorize(action="group.bundle_warning", resource_type="group", resource_id_param="group_id")
 def get_group_bundle_warning_endpoint(
     group_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -72,6 +76,7 @@ def get_group_bundle_warning_endpoint(
 
 
 @router.post("/config/groups/{group_id}/bundle", response_class=Response)
+@authorize(action="group.bundle_download", resource_type="group", resource_id_param="group_id")
 def download_group_bundle_endpoint(
     group_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -88,6 +93,7 @@ def download_group_bundle_endpoint(
 
 
 @router.get("/config/users/{user_id}/bundle-warning", response_model=BundleWarningRead)
+@authorize(action="user.bundle_warning", resource_type="user", resource_id_param="user_id")
 def get_user_bundle_warning_endpoint(
     user_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -102,6 +108,7 @@ def get_user_bundle_warning_endpoint(
 
 
 @router.post("/config/users/{user_id}/bundle", response_class=Response)
+@authorize(action="user.bundle_download", resource_type="user", resource_id_param="user_id")
 def download_user_bundle_endpoint(
     user_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -118,6 +125,7 @@ def download_user_bundle_endpoint(
 
 
 @router.get("/config/peers/{peer_id}", response_class=Response)
+@authorize(action="peer.read_direct_config", resource_type="peer", resource_id_param="peer_id")
 def get_peer_config_endpoint(
     peer_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -130,6 +138,7 @@ def get_peer_config_endpoint(
 
 
 @router.get("/config/peers/{peer_id}/qr", response_class=Response)
+@authorize(action="peer.read_direct_qr", resource_type="peer", resource_id_param="peer_id")
 def get_peer_qr_endpoint(
     peer_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -142,6 +151,7 @@ def get_peer_qr_endpoint(
 
 
 @router.post("/config/server/generate", response_model=GeneratedServerArtifacts)
+@authorize(action="config.generate_server", resource_type="server_config")
 def generate_server_config_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
@@ -150,6 +160,7 @@ def generate_server_config_endpoint(
 
 
 @router.post("/config/server/apply", response_model=ApplyResult)
+@authorize(action="config.apply", resource_type="server_config")
 def apply_server_config_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
