@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
+  applyServerConfig,
   getGroupSummaries,
   getOverview,
   getOverviewHistory,
@@ -14,12 +15,64 @@ import { useGuiSettingsQuery } from "../modules/gui/useGuiSettingsQuery";
 import { queryKeys } from "../modules/queryKeys";
 import { StatCard, Panel } from "../ui/Cards";
 import { DataTable } from "../ui/Table";
+import { useToast } from "../ui/ToastProvider";
+
+function translateDriftReason(reason: string): string {
+  const missingMatch = reason.match(/^(\d+)\s+desired peers are missing from runtime$/);
+  if (missingMatch) {
+    return t("dashboard.drift_missing_runtime", "{count} 件の必要なピアがランタイムに反映されていません。").replace(
+      "{count}",
+      missingMatch[1],
+    );
+  }
+
+  const unexpectedMatch = reason.match(/^(\d+)\s+runtime peers are not managed by current state$/);
+  if (unexpectedMatch) {
+    return t("dashboard.drift_unmanaged_runtime", "{count} 件のランタイムピアが現在の管理状態に含まれていません。").replace(
+      "{count}",
+      unexpectedMatch[1],
+    );
+  }
+
+  const allowedIpsMatch = reason.match(
+    /^(\d+)\s+peers have runtime allowed IPs that differ from desired state$/,
+  );
+  if (allowedIpsMatch) {
+    return t(
+      "dashboard.drift_allowed_ips",
+      "{count} 件のピアでランタイムの AllowedIPs が期待値と一致していません。",
+    ).replace("{count}", allowedIpsMatch[1]);
+  }
+
+  return reason;
+}
 
 export function DashboardPage() {
   const auth = useAuth();
+  const queryClient = useQueryClient();
   const guiSettingsQuery = useGuiSettingsQuery();
+  const { pushToast } = useToast();
   const overviewRefreshMs =
     (guiSettingsQuery.data?.overview_refresh_seconds ?? 5) * 1000;
+
+  const applyMutation = useMutation({
+    mutationFn: async () => applyServerConfig((await auth.getValidAccessToken()) ?? ""),
+    onSuccess: async () => {
+      pushToast(t("peers.apply_notice", "Config applied."));
+      await queryClient.invalidateQueries({ queryKey: queryKeys.overview });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.overviewHistory(24) });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.userSummaries });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.groupSummaries });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.peerStatuses });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.syncState });
+    },
+    onError: (error) => {
+      pushToast(
+        error instanceof Error ? error.message : t("common.apply_failed", "Apply failed."),
+        "error",
+      );
+    },
+  });
 
   const overviewQuery = useQuery({
     queryKey: queryKeys.overview,
@@ -50,6 +103,8 @@ export function DashboardPage() {
   const overview = overviewQuery.data;
   const syncState = syncStateQuery.data;
   const historyPoints = historyQuery.data ?? [];
+  const hasRuntimeDrift = (syncState?.drift_reasons?.length ?? 0) > 0;
+  const hasPendingGeneration = (syncState?.pending_generation_count ?? 0) > 0;
   const timelinePath = buildTimelinePath(historyPoints.map((point) => point.total_usage_bytes));
   const onlinePath = buildTimelinePath(historyPoints.map((point) => point.online_peer_count));
 
@@ -81,12 +136,26 @@ export function DashboardPage() {
       <div className="two-column-grid">
         <Panel title={t("dashboard.sync_state", "Apply and drift status")}>
           <div className="page-stack" data-testid="dashboard-sync-state">
-            <div className={`status-pill ${syncState?.status === "synced" ? "status-online" : ""}`}>
-              {syncState?.status === "synced"
-                ? t("dashboard.sync_synced", "Synced")
-                : syncState?.status === "runtime_unavailable"
-                  ? t("dashboard.sync_unavailable", "Runtime unavailable")
-                  : t("dashboard.sync_drifted", "Apply required")}
+            <div className="action-row">
+              <div className={`status-pill ${syncState?.status === "synced" ? "status-online" : ""}`}>
+                {syncState?.status === "synced"
+                  ? t("dashboard.sync_synced", "Synced")
+                  : syncState?.status === "runtime_unavailable"
+                    ? t("dashboard.sync_unavailable", "Runtime unavailable")
+                    : t("dashboard.sync_drifted", "Apply required")}
+              </div>
+              {hasRuntimeDrift ? (
+                <button
+                  className="secondary-button"
+                  onClick={() => applyMutation.mutate()}
+                  disabled={applyMutation.isPending}
+                  data-testid="dashboard-apply-button"
+                >
+                  {applyMutation.isPending
+                    ? t("peers.applying", "Applying...")
+                    : t("peers.apply", "Apply config")}
+                </button>
+              ) : null}
             </div>
             <div className="muted-text">
               {t("dashboard.sync_counts", "Desired peers:")} {syncState?.desired_peer_count ?? 0} /{" "}
@@ -100,15 +169,27 @@ export function DashboardPage() {
               {t("dashboard.sync_last_generated", "Last generated:")}{" "}
               {formatDateTime(syncState?.last_generated_at ?? null)}
             </div>
-            {syncState?.drift_reasons?.length ? (
+            {hasPendingGeneration ? (
+              <div className="info-banner">
+                {t(
+                  "dashboard.pending_generation_notice",
+                  "{count} 件のピア設定はまだ表示またはダウンロードされていません。必要なときに Reveal や一括ダウンロードを実行してください。",
+                ).replace("{count}", String(syncState?.pending_generation_count ?? 0))}
+              </div>
+            ) : null}
+            {hasRuntimeDrift ? (
               <div className="page-stack">
-                {syncState.drift_reasons.map((reason) => (
-                  <div className="warning-banner" key={reason}>{reason}</div>
+                {syncState?.drift_reasons.map((reason) => (
+                  <div className="warning-banner" key={reason}>
+                    {translateDriftReason(reason)}
+                  </div>
                 ))}
               </div>
             ) : (
               <div className="muted-text">
-                {t("dashboard.sync_healthy", "Runtime state matches the desired WireGuard state.")}
+                {syncState?.status === "runtime_unavailable"
+                  ? t("dashboard.sync_runtime_unavailable_detail", "WireGuard ランタイムの状態を取得できませんでした。接続状況を確認してください。")
+                  : t("dashboard.sync_healthy", "Runtime state matches the desired WireGuard state.")}
               </div>
             )}
           </div>

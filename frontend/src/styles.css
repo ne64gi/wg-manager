@@ -33,9 +33,9 @@
   --secondary-button-bg: rgba(125, 145, 193, 0.14);
   --danger-button-bg: rgba(181, 58, 76, 0.18);
   --success-button: linear-gradient(135deg, #0ca78f, #11c0a5);
-  --info-banner-bg: rgba(159, 29, 32, 0.11);
-  --info-banner-border: rgba(159, 29, 32, 0.2);
-  --info-banner-text: #ffd7d8;
+  --info-banner-bg: rgba(79, 126, 221, 0.14);
+  --info-banner-border: rgba(104, 149, 232, 0.28);
+  --info-banner-text: #d7e6ff;
   --toast-bg: rgba(9, 14, 26, 0.94);
   --toast-border: rgba(255, 255, 255, 0.08);
   --toast-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
@@ -75,9 +75,9 @@
   --table-header: #5b6c8d;
   --secondary-button-bg: rgba(95, 111, 145, 0.12);
   --danger-button-bg: rgba(181, 58, 76, 0.14);
-  --info-banner-bg: rgba(159, 29, 32, 0.08);
-  --info-banner-border: rgba(159, 29, 32, 0.16);
-  --info-banner-text: #7d1d1f;
+  --info-banner-bg: rgba(95, 131, 217, 0.1);
+  --info-banner-border: rgba(95, 131, 217, 0.2);
+  --info-banner-text: #28457f;
   --toast-bg: rgba(255, 255, 255, 0.96);
   --toast-border: rgba(83, 105, 146, 0.18);
   --toast-shadow: 0 16px 36px rgba(48, 66, 104, 0.16);

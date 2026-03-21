@@ -121,6 +121,17 @@ Sync-state route contract:
 - compares desired active peer state against runtime `wg` dump
 - returns `synced`, `drifted`, or `runtime_unavailable`
 - includes peer counts, pending generation count, timestamps, and drift reasons
+- `drift_reasons` are for runtime mismatch only
+  - desired peers missing from runtime
+  - unmanaged runtime peers
+  - allowed IP mismatch
+- `pending_generation_count` is not runtime drift
+  - it means peer artifacts have not been revealed/downloaded yet
+  - this may be intentional
+  - it must be rendered as informational UI state, not warning drift
+- dashboard contract:
+  - show direct `Apply config` action when runtime drift exists
+  - show pending-generation notice separately from drift warnings
 
 ## State Transfer
 

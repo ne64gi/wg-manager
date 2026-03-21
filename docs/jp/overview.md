@@ -26,6 +26,8 @@
 - Group 単位 / User 単位の bundle ZIP 出力
 - 現在状態の JSON export / import
 - Dashboard での apply 状態と drift 状態の表示
+- drift 検出時に Dashboard からそのまま適用できる操作導線
+- まだ表示またはダウンロードしていない peer 設定の案内表示
 - GUI 操作ログと WireGuard 状態表示
 
 非目標:

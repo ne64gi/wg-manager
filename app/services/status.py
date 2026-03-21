@@ -249,11 +249,6 @@ def get_wireguard_sync_state(session: Session) -> SyncStateRead:
             f"{allowed_ip_mismatches} peers have runtime allowed IPs that differ from desired state"
         )
 
-    if pending_generation_count:
-        drift_reasons.append(
-            f"{pending_generation_count} peers have pending config generation"
-        )
-
     drift_detected = bool(drift_reasons)
     return SyncStateRead(
         interface_name=settings.wireguard_interface_name,

@@ -6,9 +6,13 @@
 
 1. [`quick-start.md`](quick-start.md)
 2. [`overview.md`](overview.md)
-3. [`api.md`](api.md)
-4. [`auth-and-api-rules.md`](auth-and-api-rules.md)
-5. [`roadmap.md`](roadmap.md)
+3. [`architecture.md`](architecture.md)
+4. [`domain-model.md`](domain-model.md)
+5. [`config-and-apply.md`](config-and-apply.md)
+6. [`api.md`](api.md)
+7. [`auth-and-api-rules.md`](auth-and-api-rules.md)
+8. [`development.md`](development.md)
+9. [`roadmap.md`](roadmap.md)
 
 補足:
 

@@ -197,3 +197,7 @@ Recommended behavior:
 - poll `/status/peers` on the peer interval
 - invalidate and refetch after create/update/delete/reveal/reissue/apply actions
 - if `refresh_after_apply = true`, treat config mutations as "write then apply"
+- treat `pending_generation_count` as informational state, not runtime drift
+- `pending_generation_count` means peer configs have not been revealed or downloaded yet
+- do not show `Apply required` from `pending_generation_count` alone
+- if runtime drift exists, the dashboard should expose a direct `Apply config` action

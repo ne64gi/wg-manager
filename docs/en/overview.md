@@ -23,6 +23,8 @@ Current product capabilities:
 - JSON export and import for current control-plane state
 - server config generation and apply flow
 - drift and apply-state visibility on the dashboard
+- direct dashboard apply action when runtime drift is detected
+- informational visibility for peer configs that have not been revealed or downloaded yet
 - Docker-based deployment path
 - live peer traffic and handshake status
 - bundled React/Vite GUI through `nginx`

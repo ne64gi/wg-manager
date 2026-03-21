@@ -113,3 +113,25 @@ Peer の秘密情報は stable な read endpoint では取れません。
 
 - `detail` が文字列ならそのまま表示
 - `detail` が配列なら読みやすい文に平坦化して表示
+
+## Status と Apply の扱い
+
+GUI 側は status API をポーリングします。
+
+関連する GUI 設定:
+
+- `overview_refresh_seconds`
+- `peers_refresh_seconds`
+- `refresh_after_apply`
+
+推奨ルール:
+
+- `/status/overview` と `/status/overview-history` は overview 間隔でポーリング
+- `/status/sync-state` も overview 間隔でポーリング
+- `/status/peers` は peer 間隔でポーリング
+- create/update/delete/reveal/reissue/apply 後は invalidate + refetch
+- `refresh_after_apply = true` の場合、設定変更は「保存してから適用」として扱う
+- `pending_generation_count` は runtime drift ではなく情報表示として扱う
+- `pending_generation_count` は「まだ表示またはダウンロードされていない peer 設定件数」を意味する
+- `pending_generation_count` だけで `適用が必要です` を出してはいけない
+- 実際の drift がある場合は Dashboard から直接 `設定を適用` できるようにする
