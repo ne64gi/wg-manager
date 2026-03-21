@@ -11,6 +11,7 @@ from app.models import Peer, PeerTrafficSnapshot, User
 from app.schemas import (
     GroupTrafficSummaryRead,
     PeerStatusRead,
+    SyncStateRead,
     UserTrafficSummaryRead,
     WireGuardOverviewHistoryPointRead,
     WireGuardOverviewRead,
@@ -165,6 +166,105 @@ def get_wireguard_overview(session: Session) -> WireGuardOverviewRead:
         peer_count=len(statuses),
         active_peer_count=sum(1 for status in statuses if status.is_active),
         online_peer_count=sum(1 for status in statuses if status.is_online),
+    )
+
+
+def get_wireguard_sync_state(session: Session) -> SyncStateRead:
+    desired_peers = list(
+        session.scalars(
+            select(Peer)
+            .options(joinedload(Peer.user).joinedload(User.group))
+            .join(Peer.user)
+            .join(User.group)
+            .where(
+                Peer.is_active.is_(True),
+                User.is_active.is_(True),
+                User.group.has(is_active=True),
+            )
+            .order_by(Peer.name)
+        )
+    )
+    desired_by_key = {
+        peer.public_key or "": peer
+        for peer in desired_peers
+        if peer.public_key
+    }
+    pending_generation_count = sum(
+        1 for peer in desired_peers if peer.last_config_generated_at is None
+    )
+    last_generated_at = max(
+        (peer.last_config_generated_at for peer in desired_peers if peer.last_config_generated_at),
+        default=None,
+    )
+
+    result = docker_exec(
+        ["wg", "show", settings.wireguard_interface_name, "dump"],
+        capture_output=True,
+    )
+    if result.exit_code != 0:
+        stderr = result.stderr.strip() or "wg show dump failed"
+        return SyncStateRead(
+            interface_name=settings.wireguard_interface_name,
+            status="runtime_unavailable",
+            desired_peer_count=len(desired_by_key),
+            runtime_peer_count=0,
+            pending_generation_count=pending_generation_count,
+            drift_detected=True,
+            drift_reasons=[stderr],
+            last_generated_at=last_generated_at,
+            last_runtime_sync_at=None,
+        )
+
+    runtime_peers = _parse_wg_dump(result.stdout)
+    runtime_by_key = {
+        peer.public_key: peer
+        for peer in runtime_peers
+        if peer.public_key
+    }
+    runtime_keys = set(runtime_by_key)
+    desired_keys = set(desired_by_key)
+
+    drift_reasons: list[str] = []
+    missing_keys = desired_keys - runtime_keys
+    unexpected_keys = runtime_keys - desired_keys
+    if missing_keys:
+        drift_reasons.append(
+            f"{len(missing_keys)} desired peers are missing from runtime"
+        )
+    if unexpected_keys:
+        drift_reasons.append(
+            f"{len(unexpected_keys)} runtime peers are not managed by current state"
+        )
+
+    allowed_ip_mismatches = 0
+    for public_key in desired_keys & runtime_keys:
+        desired_peer = desired_by_key[public_key]
+        runtime_peer = runtime_by_key[public_key]
+        desired_allowed_ips = {f"{desired_peer.assigned_ip}/32"}
+        runtime_allowed_ips = set(runtime_peer.allowed_ips)
+        if desired_allowed_ips != runtime_allowed_ips:
+            allowed_ip_mismatches += 1
+    if allowed_ip_mismatches:
+        drift_reasons.append(
+            f"{allowed_ip_mismatches} peers have runtime allowed IPs that differ from desired state"
+        )
+
+    if pending_generation_count:
+        drift_reasons.append(
+            f"{pending_generation_count} peers have pending config generation"
+        )
+
+    drift_detected = bool(drift_reasons)
+    return SyncStateRead(
+        interface_name=settings.wireguard_interface_name,
+        status="drifted" if drift_detected else "synced",
+        desired_peer_count=len(desired_by_key),
+        runtime_peer_count=len(runtime_by_key),
+        pending_generation_count=pending_generation_count,
+        drift_detected=drift_detected,
+        drift_reasons=drift_reasons,
+        last_generated_at=last_generated_at,
+        last_runtime_sync_at=datetime.now(timezone.utc),
     )
 
 

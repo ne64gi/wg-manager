@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   changeOwnPassword,
   createLoginUser,
   deleteLoginUser,
+  exportState,
   getGuiSettings,
   getInitialSettings,
   getSystemVersion,
+  importState,
   listLoginUsers,
   updateGuiSettings,
   updateInitialSettings,
@@ -16,7 +18,7 @@ import { formatDateTime } from "../lib/format";
 import { t, translateErrorMessage } from "../lib/i18n";
 import { useAuth } from "../modules/auth/AuthContext";
 import { queryKeys } from "../modules/queryKeys";
-import type { GuiSettingsUpdate } from "../types";
+import type { GuiSettingsUpdate, StateExport } from "../types";
 import { Panel } from "../ui/Cards";
 import { DataTable } from "../ui/Table";
 import { useToast } from "../ui/ToastProvider";
@@ -51,6 +53,7 @@ export function SettingsPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [nextPassword, setNextPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const importInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (settingsQuery.data) {
@@ -156,6 +159,74 @@ export function SettingsPage() {
       );
     },
   });
+
+  const exportMutation = useMutation({
+    mutationFn: async () => exportState((await auth.getValidAccessToken()) ?? ""),
+    onSuccess: (payload) => {
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: "application/json;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `wg-studio-state-${payload.exported_at.slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      pushToast(t("settings.export_done", "State exported."));
+    },
+    onError: (error) => {
+      pushToast(
+        error instanceof Error ? error.message : t("settings.export_failed", "Failed to export state."),
+        "error",
+      );
+    },
+  });
+
+  const importMutation = useMutation({
+    mutationFn: async (payload: StateExport) =>
+      importState((await auth.getValidAccessToken()) ?? "", payload),
+    onSuccess: async (result) => {
+      pushToast(
+        t(
+          "settings.import_done",
+          `State imported. Groups: ${result.imported_group_count}, users: ${result.imported_user_count}, peers: ${result.imported_peer_count}.`,
+        ),
+      );
+      await queryClient.invalidateQueries();
+    },
+    onError: (error) => {
+      pushToast(
+        error instanceof Error ? error.message : t("settings.import_failed", "Failed to import state."),
+        "error",
+      );
+    },
+  });
+
+  async function handleImportFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    try {
+      const payload = JSON.parse(await file.text()) as StateExport;
+      const confirmed = window.confirm(
+        t(
+          "settings.import_confirm",
+          "Importing state will replace the current groups, users, peers, endpoint, and GUI settings. Continue?",
+        ),
+      );
+      if (!confirmed) {
+        event.target.value = "";
+        return;
+      }
+      importMutation.mutate(payload);
+    } catch {
+      pushToast(t("settings.import_invalid", "The selected file is not valid wg-studio JSON."), "error");
+    } finally {
+      event.target.value = "";
+    }
+  }
 
   return (
     <div className="page-stack">
@@ -479,6 +550,39 @@ export function SettingsPage() {
               "settings.version_hint",
               "Current version embedded into this running build.",
             )}
+          </div>
+        </div>
+      </Panel>
+      <Panel title={t("settings.transfer_heading", "State import / export")}>
+        <div className="page-stack">
+          <div className="muted-text">
+            {t(
+              "settings.transfer_hint",
+              "Export the current control-plane state as JSON, or import a previously exported state to replace the current one.",
+            )}
+          </div>
+          <div className="action-row">
+            <button
+              className="secondary-button"
+              onClick={() => exportMutation.mutate()}
+              disabled={exportMutation.isPending}
+            >
+              {t("settings.export_state", "Export JSON")}
+            </button>
+            <button
+              className="primary-button"
+              onClick={() => importInputRef.current?.click()}
+              disabled={importMutation.isPending}
+            >
+              {t("settings.import_state", "Import JSON")}
+            </button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept="application/json,.json"
+              hidden
+              onChange={handleImportFile}
+            />
           </div>
         </div>
       </Panel>

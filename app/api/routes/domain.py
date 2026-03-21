@@ -17,6 +17,9 @@ from app.schemas import (
     PeerRead,
     PeerResolvedAccess,
     PeerUpdate,
+    StateExportRead,
+    StateImportRequest,
+    StateImportResultRead,
     UserCreate,
     UserRead,
     UserUpdate,
@@ -28,10 +31,12 @@ from app.services import (
     delete_group,
     delete_peer,
     delete_user,
+    export_domain_state,
     get_initial_settings,
     get_group,
     get_peer,
     get_user,
+    import_domain_state,
     list_groups,
     list_peers,
     list_users,
@@ -51,6 +56,26 @@ router = APIRouter()
 @router.get("/health")
 def healthcheck() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@router.get("/state/export", response_model=StateExportRead)
+def export_state_endpoint(
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> StateExportRead:
+    return export_domain_state(session)
+
+
+@router.post("/state/import", response_model=StateImportResultRead)
+def import_state_endpoint(
+    payload: StateImportRequest,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> StateImportResultRead:
+    try:
+        return import_domain_state(session, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.post("/groups", response_model=GroupRead, status_code=201)

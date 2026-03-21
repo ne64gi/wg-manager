@@ -74,10 +74,18 @@ Suggested first pass:
 2. create a `User` inside that group
 3. create a `Peer`
 4. use `Reveal` once to obtain the peer config
-5. use `Apply config` to sync the server config into WireGuard
+5. download the peer `.conf` or QR directly from the reveal modal
+6. use `Apply config` to sync the server config into WireGuard
+
+Optional admin workflows:
+
+- use the dashboard to confirm drift state before and after apply
+- download a group or user peer bundle when rotating multiple peers at once
+- export current control-plane state as JSON before larger maintenance changes
 
 ## Notes
 
 - The API is internal-only by default in Compose.
 - The GUI is the intended entry point for normal admin use.
 - Generated peer configs and QR artifacts are stored in the shared Docker volume `wg_config`.
+- If you need a separate WireGuard runtime such as `wg1`, use another container or another `wg-studio` stack.

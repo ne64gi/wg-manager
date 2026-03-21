@@ -8,16 +8,21 @@ from app.db import get_session
 from app.models import LoginUser
 from app.schemas import (
     ApplyResult,
+    BundleWarningRead,
     GeneratedPeerArtifacts,
     GeneratedServerArtifacts,
     RevealedPeerArtifacts,
 )
 from app.services import (
     apply_server_config,
+    build_group_peer_bundle,
+    build_user_peer_bundle,
     generate_peer_artifacts,
     generate_server_config,
+    get_group_bundle_warning,
     get_or_generate_peer_config_text,
     get_or_generate_peer_qr_svg,
+    get_user_bundle_warning,
     reveal_peer_artifacts,
 )
 
@@ -50,6 +55,66 @@ def reveal_peer_artifacts_endpoint(
         message = str(exc)
         status_code = 404 if "does not exist" in message else 400
         raise HTTPException(status_code=status_code, detail=message) from exc
+
+
+@router.get("/config/groups/{group_id}/bundle-warning", response_model=BundleWarningRead)
+def get_group_bundle_warning_endpoint(
+    group_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> BundleWarningRead:
+    try:
+        return get_group_bundle_warning(session, group_id)
+    except ValueError as exc:
+        message = str(exc)
+        status_code = 404 if "does not exist" in message else 400
+        raise HTTPException(status_code=status_code, detail=message) from exc
+
+
+@router.post("/config/groups/{group_id}/bundle", response_class=Response)
+def download_group_bundle_endpoint(
+    group_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> Response:
+    try:
+        bundle_bytes, filename = build_group_peer_bundle(session, group_id)
+    except ValueError as exc:
+        message = str(exc)
+        status_code = 404 if "does not exist" in message else 400
+        raise HTTPException(status_code=status_code, detail=message) from exc
+    headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+    return Response(content=bundle_bytes, media_type="application/zip", headers=headers)
+
+
+@router.get("/config/users/{user_id}/bundle-warning", response_model=BundleWarningRead)
+def get_user_bundle_warning_endpoint(
+    user_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> BundleWarningRead:
+    try:
+        return get_user_bundle_warning(session, user_id)
+    except ValueError as exc:
+        message = str(exc)
+        status_code = 404 if "does not exist" in message else 400
+        raise HTTPException(status_code=status_code, detail=message) from exc
+
+
+@router.post("/config/users/{user_id}/bundle", response_class=Response)
+def download_user_bundle_endpoint(
+    user_id: int,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> Response:
+    try:
+        bundle_bytes, filename = build_user_peer_bundle(session, user_id)
+    except ValueError as exc:
+        message = str(exc)
+        status_code = 404 if "does not exist" in message else 400
+        raise HTTPException(status_code=status_code, detail=message) from exc
+    headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+    return Response(content=bundle_bytes, media_type="application/zip", headers=headers)
 
 
 @router.get("/config/peers/{peer_id}", response_class=Response)

@@ -1,8 +1,16 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { createUser, deleteUser, listGroups, listUsers, updateUser } from "../lib/api";
-import { applyServerConfig } from "../lib/api";
+import {
+  applyServerConfig,
+  createUser,
+  deleteUser,
+  downloadUserBundle,
+  getUserBundleWarning,
+  listGroups,
+  listUsers,
+  updateUser,
+} from "../lib/api";
 import { formatApplyFailureMessage, t } from "../lib/i18n";
 import type { User } from "../types";
 import { useAuth } from "../modules/auth/AuthContext";
@@ -33,6 +41,15 @@ function formatDeleteConfirm(name: string) {
   return t("users.delete_confirm_named", `Delete "${name}"?`).replace("{name}", name);
 }
 
+function saveBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export function UsersPage() {
   const auth = useAuth();
   const queryClient = useQueryClient();
@@ -58,6 +75,7 @@ export function UsersPage() {
     await queryClient.invalidateQueries({ queryKey: queryKeys.userSummaries });
     await queryClient.invalidateQueries({ queryKey: queryKeys.groupSummaries });
     await queryClient.invalidateQueries({ queryKey: queryKeys.peerStatuses });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.syncState });
   }
 
   async function applyIfNeeded(successNotice?: string) {
@@ -192,6 +210,37 @@ export function UsersPage() {
     },
   });
 
+  const bundleMutation = useMutation({
+    mutationFn: async (user: User) => {
+      const accessToken = (await auth.getValidAccessToken()) ?? "";
+      const warning = await getUserBundleWarning(user.id, accessToken);
+      const confirmed = window.confirm(
+        `${warning.message}\n\n${t("users.bundle_peer_count", "Peer count")}: ${warning.peer_count}`,
+      );
+      if (!confirmed) {
+        return null;
+      }
+      return {
+        blob: await downloadUserBundle(user.id, accessToken),
+        filename: `${user.name}-peers.zip`,
+      };
+    },
+    onSuccess: async (result) => {
+      if (!result) {
+        return;
+      }
+      saveBlob(result.blob, result.filename);
+      await applyIfNeeded(t("users.bundle_notice", "User peer bundle downloaded."));
+      await refreshQueries();
+    },
+    onError: (error) => {
+      pushToast(
+        error instanceof Error ? error.message : t("users.bundle_failed", "Failed to download user bundle."),
+        "error",
+      );
+    },
+  });
+
   const groups = groupsQuery.data ?? [];
   const activeCount = useMemo(
     () => (usersQuery.data ?? []).filter((user) => user.is_active).length,
@@ -265,6 +314,12 @@ export function UsersPage() {
                 <td>{groupNames.get(user.group_id) ?? `Group ${user.group_id}`}</td>
                 <td>{user.allowed_ips_override?.join(", ") || t("users.inherit_group", "Inherit group defaults")}</td>
                 <td className="action-row">
+                  <button
+                    className="secondary-button"
+                    onClick={() => bundleMutation.mutate(user)}
+                  >
+                    {t("users.bundle", "Download bundle")}
+                  </button>
                   <button className="ghost-button" onClick={() => openEditModal(user)}>
                     {t("common.edit", "Edit")}
                   </button>
@@ -303,6 +358,12 @@ export function UsersPage() {
                   onClick={() => toggleMutation.mutate(user)}
                 >
                   {user.is_active ? t("common.on", "On") : t("common.off", "Off")}
+                </button>
+                <button
+                  className="secondary-button"
+                  onClick={() => bundleMutation.mutate(user)}
+                >
+                  {t("users.bundle", "Download bundle")}
                 </button>
                 <button className="ghost-button" onClick={() => openEditModal(user)}>
                   {t("common.edit", "Edit")}

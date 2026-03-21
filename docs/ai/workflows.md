@@ -18,6 +18,39 @@
 5. apply config
 6. monitor status and traffic
 
+## Secret Download Flow
+
+Single peer:
+
+1. create or locate peer
+2. reveal via `POST /config/peers/{peer_id}/reveal`
+3. operator may download `.conf` and `.svg` from the reveal modal
+4. second reveal is blocked until reissue
+
+Group or user bundle:
+
+1. request bundle warning
+2. show explicit operator confirmation
+3. bundle route reissues eligible peers
+4. bundle route reveals regenerated peer artifacts
+5. return zip with per-peer config and QR plus `NOTICE.txt`
+6. apply updated server config before distributing new peer files
+
+## State Transfer Flow
+
+Export:
+
+1. call `GET /state/export`
+2. persist JSON as operator backup or migration artifact
+
+Import:
+
+1. operator selects exported JSON
+2. UI warns that current state will be replaced
+3. call `POST /state/import`
+4. invalidate all GUI queries
+5. apply config if runtime should match imported desired state immediately
+
 ## Toggle Semantics
 
 If a group or user is inactive:
@@ -37,6 +70,7 @@ After create/update/delete/toggle/reveal/reissue:
 - invalidate relevant queries
 - optionally call server apply when GUI setting says so
 - use toast notifications, not inline persistent notices
+- refresh sync-state on dashboard-relevant mutations
 
 ## Agent Notes
 

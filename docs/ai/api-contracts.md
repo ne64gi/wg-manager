@@ -56,6 +56,21 @@ Reissue effects:
 - reset reveal state
 - invalidate cached/generated artifacts
 
+Bulk bundle routes:
+
+- `GET /config/groups/{group_id}/bundle-warning`
+- `POST /config/groups/{group_id}/bundle`
+- `GET /config/users/{user_id}/bundle-warning`
+- `POST /config/users/{user_id}/bundle`
+
+Bulk bundle effects:
+
+- warning route exists for explicit operator confirmation
+- bundle route reissues eligible active peers before packaging
+- bundle route reveals the newly generated artifacts
+- archive contains `.conf`, `.svg`, and `NOTICE.txt`
+- treat bundle generation as a secret rotation event
+
 ## Error Shape
 
 String-detail form:
@@ -95,7 +110,31 @@ Frontend contract:
 Current summary routes:
 
 - `GET /status/overview`
+- `GET /status/sync-state`
 - `GET /status/overview-history`
 - `GET /status/peers`
 - `GET /status/users-summary`
 - `GET /status/groups-summary`
+
+Sync-state route contract:
+
+- compares desired active peer state against runtime `wg` dump
+- returns `synced`, `drifted`, or `runtime_unavailable`
+- includes peer counts, pending generation count, timestamps, and drift reasons
+
+## State Transfer
+
+Routes:
+
+- `GET /state/export`
+- `POST /state/import`
+
+Export contract:
+
+- snapshot current server state, initial settings, GUI settings, and nested `Group -> User -> Peer` state
+
+Import contract:
+
+- replace current group/user/peer tree with provided payload
+- preserve imported peer secret material and reveal metadata from payload
+- treat as destructive administrative restore

@@ -54,8 +54,17 @@ from app.services.gui import (
 from app.services.status import get_wireguard_overview, get_wireguard_peer_statuses
 from app.services.status import (
     get_group_traffic_summaries,
+    get_wireguard_sync_state,
     get_user_traffic_summaries,
     get_wireguard_overview_history,
+)
+from app.services.transfer import (
+    build_group_peer_bundle,
+    build_user_peer_bundle,
+    export_domain_state,
+    get_group_bundle_warning,
+    get_user_bundle_warning,
+    import_domain_state,
 )
 
 __all__ = [
@@ -73,19 +82,25 @@ __all__ = [
     "delete_login_user",
     "delete_peer",
     "delete_user",
+    "build_group_peer_bundle",
+    "build_user_peer_bundle",
     "generate_peer_artifacts",
     "generate_server_config",
     "decode_jwt",
+    "export_domain_state",
     "get_gui_settings",
     "get_login_user",
     "get_or_generate_peer_config_text",
     "get_or_generate_peer_qr_svg",
     "get_initial_settings",
     "get_group",
+    "get_group_bundle_warning",
     "get_group_traffic_summaries",
     "get_peer",
     "get_user",
+    "get_user_bundle_warning",
     "get_wireguard_overview",
+    "get_wireguard_sync_state",
     "get_wireguard_overview_history",
     "get_wireguard_peer_statuses",
     "get_user_traffic_summaries",
@@ -100,6 +115,7 @@ __all__ = [
     "log_gui_event",
     "log_operation",
     "logout_login_session",
+    "import_domain_state",
     "reissue_peer_keys",
     "reveal_peer_artifacts",
     "refresh_login_tokens",

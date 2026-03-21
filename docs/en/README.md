@@ -13,6 +13,7 @@ Suggested reading order:
 7. [`auth-and-api-rules.md`](auth-and-api-rules.md)
 8. [`development.md`](development.md)
 9. [`roadmap.md`](roadmap.md)
+10. [`../jp/README.md`](../jp/README.md) for Japanese operators
 
 Current project state:
 
@@ -22,3 +23,5 @@ Current project state:
 - bundled React/Vite GUI served through `nginx` on port `3900`
 - shared Docker volume for WireGuard artifacts
 - live status collection from the WireGuard runtime
+- dashboard drift and apply-state visibility
+- bulk peer bundle export and JSON state transfer

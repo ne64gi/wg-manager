@@ -37,6 +37,7 @@ Hierarchy:
 - generated peer artifacts live under shared `wg_config`
 - server config generation excludes inactive groups, users, and peers
 - peer secret reveal is one-time until reissue
+- group and user bundle downloads reissue eligible peers before packaging secrets
 - access tokens are JWT; refresh tokens are DB sessions
 - GUI is the normal operator entry point
 - the group network is the allocation boundary for descendant peers
@@ -45,19 +46,20 @@ Hierarchy:
 ## Route Ownership
 
 - `app/api/routes/auth.py`: setup-status, setup, login, refresh, logout, me, change-password
-- `app/api/routes/domain.py`: groups, users, peers, initial settings
-- `app/api/routes/config.py`: config generation, reveal, apply
-- `app/api/routes/status.py`: overview, peers, summaries, history
+- `app/api/routes/domain.py`: groups, users, peers, initial settings, state export/import
+- `app/api/routes/config.py`: config generation, reveal, bundle download, apply
+- `app/api/routes/status.py`: overview, sync-state, peers, summaries, history
 - `app/api/routes/gui.py`: gui settings, login users, gui logs
 
 ## Frontend Ownership
 
 - `pages/LoginPage.tsx`: unauthenticated entry
 - `pages/DashboardPage.tsx`: overview and summaries
+- `pages/DashboardPage.tsx`: overview, summaries, and sync-state visibility
 - `pages/GroupsPage.tsx`: group CRUD and toggle
-- `pages/UsersPage.tsx`: user CRUD, search/filter, toggle
+- `pages/UsersPage.tsx`: user CRUD, search/filter, toggle, bundle download
 - `pages/PeersPage.tsx`: peer create/list/toggle/reveal/reissue/delete/apply
-- `pages/SettingsPage.tsx`: GUI settings, initial settings, login users
+- `pages/SettingsPage.tsx`: GUI settings, initial settings, login users, state import/export
 - `pages/LogsPage.tsx`: GUI log view
 
 ## Config Surface

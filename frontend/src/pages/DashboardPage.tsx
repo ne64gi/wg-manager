@@ -4,9 +4,10 @@ import {
   getGroupSummaries,
   getOverview,
   getOverviewHistory,
+  getSyncState,
   getUserSummaries,
 } from "../lib/api";
-import { formatBytes } from "../lib/format";
+import { formatBytes, formatDateTime } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useAuth } from "../modules/auth/AuthContext";
 import { useGuiSettingsQuery } from "../modules/gui/useGuiSettingsQuery";
@@ -40,8 +41,14 @@ export function DashboardPage() {
     queryFn: async () => getOverviewHistory((await auth.getValidAccessToken()) ?? "", 24),
     refetchInterval: overviewRefreshMs,
   });
+  const syncStateQuery = useQuery({
+    queryKey: queryKeys.syncState,
+    queryFn: async () => getSyncState((await auth.getValidAccessToken()) ?? ""),
+    refetchInterval: overviewRefreshMs,
+  });
 
   const overview = overviewQuery.data;
+  const syncState = syncStateQuery.data;
   const historyPoints = historyQuery.data ?? [];
   const timelinePath = buildTimelinePath(historyPoints.map((point) => point.total_usage_bytes));
   const onlinePath = buildTimelinePath(historyPoints.map((point) => point.online_peer_count));
@@ -72,6 +79,40 @@ export function DashboardPage() {
       </div>
 
       <div className="two-column-grid">
+        <Panel title={t("dashboard.sync_state", "Apply and drift status")}>
+          <div className="page-stack">
+            <div className={`status-pill ${syncState?.status === "synced" ? "status-online" : ""}`}>
+              {syncState?.status === "synced"
+                ? t("dashboard.sync_synced", "Synced")
+                : syncState?.status === "runtime_unavailable"
+                  ? t("dashboard.sync_unavailable", "Runtime unavailable")
+                  : t("dashboard.sync_drifted", "Apply required")}
+            </div>
+            <div className="muted-text">
+              {t("dashboard.sync_counts", "Desired peers:")} {syncState?.desired_peer_count ?? 0} /{" "}
+              {t("dashboard.sync_runtime", "Runtime peers:")} {syncState?.runtime_peer_count ?? 0}
+            </div>
+            <div className="muted-text">
+              {t("dashboard.sync_pending_generation", "Pending config generation:")}{" "}
+              {syncState?.pending_generation_count ?? 0}
+            </div>
+            <div className="muted-text">
+              {t("dashboard.sync_last_generated", "Last generated:")}{" "}
+              {formatDateTime(syncState?.last_generated_at ?? null)}
+            </div>
+            {syncState?.drift_reasons?.length ? (
+              <div className="page-stack">
+                {syncState.drift_reasons.map((reason) => (
+                  <div className="warning-banner" key={reason}>{reason}</div>
+                ))}
+              </div>
+            ) : (
+              <div className="muted-text">
+                {t("dashboard.sync_healthy", "Runtime state matches the desired WireGuard state.")}
+              </div>
+            )}
+          </div>
+        </Panel>
         <Panel title={t("dashboard.timeline", "Traffic timeline (24h)")}>
           <div className="chart-placeholder">
             <div className="chart-grid" />

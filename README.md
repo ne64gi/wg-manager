@@ -10,6 +10,10 @@ Current product state:
 - bundled React/Vite GUI served through `nginx`
 - policy-aware config generation
 - one-time peer reveal with QR output
+- peer reveal modal with direct config and QR download actions
+- dashboard drift and apply-state visibility
+- bulk group and user peer bundle export with warning-confirmed reissue
+- current-state JSON export and import
 - WireGuard apply flow
 - live WireGuard status and GUI audit logs
 
@@ -26,13 +30,15 @@ Recommended starting points:
 - [`docs/en/auth-and-api-rules.md`](docs/en/auth-and-api-rules.md)
 - [`docs/en/roadmap.md`](docs/en/roadmap.md)
 - [`docs/ai/README.md`](docs/ai/README.md)
+- [`docs/jp/README.md`](docs/jp/README.md)
 
 Documentation roles:
 
 - `docs/en`: human-facing product and operator documentation
 - `docs/ai`: low-ambiguity operational notes for coding and review agents
+- `docs/jp`: Japanese operator-facing documentation
 
-Japanese docs are not published yet in this branch.
+AI contributors should start with [`docs/ai/README.md`](docs/ai/README.md) before planning or changing the system.
 
 ## Icon Sources
 
@@ -79,6 +85,11 @@ First login behavior:
 - if no login users exist, the login screen switches into first-admin setup mode
 
 For the complete GUI-first startup flow, see [`docs/en/quick-start.md`](docs/en/quick-start.md).
+
+Multi-interface note:
+
+- `wg-studio` `v1.0.0` manages one WireGuard runtime per stack
+- if you want `wg1`, `wg2`, or another independent runtime, run another container or another `wg-studio` stack instead of extending one control plane into multi-instance orchestration
 
 Check API health from inside the stack:
 

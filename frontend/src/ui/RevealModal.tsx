@@ -46,6 +46,23 @@ export function RevealModal({
     }
   }
 
+  function handleDownloadConfig() {
+    const blob = new Blob([artifacts.config_text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${artifacts.peer_name}.conf`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleDownloadQr() {
+    const link = document.createElement("a");
+    link.href = qrImageSrc;
+    link.download = `${artifacts.peer_name}.svg`;
+    link.click();
+  }
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-card" onClick={(event) => event.stopPropagation()}>
@@ -65,6 +82,12 @@ export function RevealModal({
           <div className="page-stack">
             <pre className="code-block">{artifacts.config_text}</pre>
             <div className="modal-actions">
+              <button className="secondary-button" onClick={handleDownloadConfig}>
+                {t("reveal.download_config", "Download config")}
+              </button>
+              <button className="secondary-button" onClick={handleDownloadQr}>
+                {t("reveal.download_qr", "Download QR")}
+              </button>
               <button className="ghost-button" onClick={handleCopy}>
                 {copyState === "done"
                   ? t("reveal.copied", "Copied")

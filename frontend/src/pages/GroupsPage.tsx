@@ -1,8 +1,15 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { createGroup, deleteGroup, listGroups, updateGroup } from "../lib/api";
-import { applyServerConfig } from "../lib/api";
+import {
+  applyServerConfig,
+  createGroup,
+  deleteGroup,
+  downloadGroupBundle,
+  getGroupBundleWarning,
+  listGroups,
+  updateGroup,
+} from "../lib/api";
 import { formatApplyFailureMessage, t } from "../lib/i18n";
 import type { Group } from "../types";
 import { useAuth } from "../modules/auth/AuthContext";
@@ -84,6 +91,15 @@ function formatDeleteConfirm(name: string) {
   return t("groups.delete_confirm_named", `Delete "${name}"?`).replace("{name}", name);
 }
 
+function saveBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function getScopeValidationMessage(scope: string, networkCidr: string) {
   const expectedPrefix = SCOPE_PREFIX[scope];
   if (!networkCidr.trim()) {
@@ -162,6 +178,7 @@ export function GroupsPage() {
     await queryClient.invalidateQueries({ queryKey: queryKeys.groupSummaries });
     await queryClient.invalidateQueries({ queryKey: queryKeys.userSummaries });
     await queryClient.invalidateQueries({ queryKey: queryKeys.peerStatuses });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.syncState });
   }
 
   async function applyIfNeeded(successNotice?: string) {
@@ -298,6 +315,37 @@ export function GroupsPage() {
     },
   });
 
+  const bundleMutation = useMutation({
+    mutationFn: async (group: Group) => {
+      const accessToken = (await auth.getValidAccessToken()) ?? "";
+      const warning = await getGroupBundleWarning(group.id, accessToken);
+      const confirmed = window.confirm(
+        `${warning.message}\n\n${t("groups.bundle_peer_count", "Peer count")}: ${warning.peer_count}`,
+      );
+      if (!confirmed) {
+        return null;
+      }
+      return {
+        blob: await downloadGroupBundle(group.id, accessToken),
+        filename: `${group.name}-peers.zip`,
+      };
+    },
+    onSuccess: async (result) => {
+      if (!result) {
+        return;
+      }
+      saveBlob(result.blob, result.filename);
+      await applyIfNeeded(t("groups.bundle_notice", "Group peer bundle downloaded."));
+      await refreshGroupQueries();
+    },
+    onError: (error) => {
+      pushToast(
+        error instanceof Error ? error.message : t("groups.bundle_failed", "Failed to download group bundle."),
+        "error",
+      );
+    },
+  });
+
   return (
     <div className="page-stack">
       <div className="page-header">
@@ -350,6 +398,12 @@ export function GroupsPage() {
                 <td>{group.default_allowed_ips.join(", ")}</td>
                 <td>{group.dns_servers?.join(", ") || "—"}</td>
                 <td className="action-row">
+                  <button
+                    className="secondary-button"
+                    onClick={() => bundleMutation.mutate(group)}
+                  >
+                    {t("groups.bundle", "Download bundle")}
+                  </button>
                   <button className="ghost-button" onClick={() => openEditModal(group)}>
                     {t("common.edit", "Edit")}
                   </button>
@@ -390,6 +444,12 @@ export function GroupsPage() {
                   onClick={() => toggleMutation.mutate(group)}
                 >
                   {group.is_active ? t("common.on", "On") : t("common.off", "Off")}
+                </button>
+                <button
+                  className="secondary-button"
+                  onClick={() => bundleMutation.mutate(group)}
+                >
+                  {t("groups.bundle", "Download bundle")}
                 </button>
                 <button className="ghost-button" onClick={() => openEditModal(group)}>
                   {t("common.edit", "Edit")}

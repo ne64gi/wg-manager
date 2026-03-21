@@ -9,6 +9,7 @@ from app.models import LoginUser
 from app.schemas import (
     GroupTrafficSummaryRead,
     PeerStatusRead,
+    SyncStateRead,
     UserTrafficSummaryRead,
     WireGuardOverviewHistoryPointRead,
     WireGuardOverviewRead,
@@ -19,6 +20,7 @@ from app.services import (
     get_wireguard_overview,
     get_wireguard_overview_history,
     get_wireguard_peer_statuses,
+    get_wireguard_sync_state,
 )
 
 router = APIRouter()
@@ -31,6 +33,17 @@ def get_wireguard_overview_endpoint(
 ) -> WireGuardOverviewRead:
     try:
         return get_wireguard_overview(session)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/status/sync-state", response_model=SyncStateRead)
+def get_wireguard_sync_state_endpoint(
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> SyncStateRead:
+    try:
+        return get_wireguard_sync_state(session)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

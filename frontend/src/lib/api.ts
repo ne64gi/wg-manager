@@ -6,6 +6,7 @@ import type {
   AuthChangePasswordRequest,
   ApplyResult,
   AuthenticatedLoginUser,
+  BundleWarning,
   GeneratedPeerArtifacts,
   GeneratedServerArtifacts,
   Group,
@@ -24,7 +25,10 @@ import type {
   PeerStatus,
   PeerUpdateInput,
   RevealedPeerArtifacts,
+  StateExport,
+  StateImportResult,
   SystemVersion,
+  SyncState,
   TokenPair,
   User,
   UserCreateInput,
@@ -116,6 +120,38 @@ async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
   return (await response.json()) as T;
 }
 
+async function requestBlob(path: string, options: ApiOptions = {}): Promise<Blob> {
+  const headers = new Headers();
+  if (options.body !== undefined) {
+    headers.set("Content-Type", "application/json");
+  }
+  if (options.accessToken) {
+    headers.set("Authorization", `Bearer ${options.accessToken}`);
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: options.method ?? "GET",
+    headers,
+    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+  });
+
+  if (!response.ok) {
+    let message = response.statusText;
+    try {
+      const payload = (await response.json()) as unknown;
+      const extracted = extractApiErrorMessage(payload);
+      if (extracted) {
+        message = extracted;
+      }
+    } catch {
+      // Ignore parse errors and fall back to status text.
+    }
+    throw new ApiError(response.status, message);
+  }
+
+  return response.blob();
+}
+
 export function login(payload: AuthLoginRequest): Promise<TokenPair> {
   return request<TokenPair>("/auth/login", { method: "POST", body: payload });
 }
@@ -163,6 +199,10 @@ export function changeOwnPassword(
 
 export function getOverview(accessToken: string): Promise<WireGuardOverview> {
   return request<WireGuardOverview>("/status/overview", { accessToken });
+}
+
+export function getSyncState(accessToken: string): Promise<SyncState> {
+  return request<SyncState>("/status/sync-state", { accessToken });
 }
 
 export function getOverviewHistory(
@@ -303,6 +343,44 @@ export function revealPeerArtifacts(
   });
 }
 
+export function getGroupBundleWarning(
+  groupId: number,
+  accessToken: string,
+): Promise<BundleWarning> {
+  return request<BundleWarning>(`/config/groups/${groupId}/bundle-warning`, {
+    accessToken,
+  });
+}
+
+export function downloadGroupBundle(
+  groupId: number,
+  accessToken: string,
+): Promise<Blob> {
+  return requestBlob(`/config/groups/${groupId}/bundle`, {
+    method: "POST",
+    accessToken,
+  });
+}
+
+export function getUserBundleWarning(
+  userId: number,
+  accessToken: string,
+): Promise<BundleWarning> {
+  return request<BundleWarning>(`/config/users/${userId}/bundle-warning`, {
+    accessToken,
+  });
+}
+
+export function downloadUserBundle(
+  userId: number,
+  accessToken: string,
+): Promise<Blob> {
+  return requestBlob(`/config/users/${userId}/bundle`, {
+    method: "POST",
+    accessToken,
+  });
+}
+
 export function generateServerConfig(
   accessToken: string,
 ): Promise<GeneratedServerArtifacts> {
@@ -340,6 +418,21 @@ export function updateGuiSettings(
 
 export function getInitialSettings(accessToken: string): Promise<InitialSettings> {
   return request<InitialSettings>("/initial-settings", { accessToken });
+}
+
+export function exportState(accessToken: string): Promise<StateExport> {
+  return request<StateExport>("/state/export", { accessToken });
+}
+
+export function importState(
+  accessToken: string,
+  payload: StateExport,
+): Promise<StateImportResult> {
+  return request<StateImportResult>("/state/import", {
+    method: "POST",
+    accessToken,
+    body: payload,
+  });
 }
 
 export function updateInitialSettings(

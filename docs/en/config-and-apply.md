@@ -7,6 +7,7 @@ The current implementation generates:
 - server config: `/wg/config/wg_confs/wg0.conf`
 - peer config: `/wg/config/peers/<peer>.conf`
 - peer QR: `/wg/config/peers/<peer>.svg`
+- bulk bundle archive: generated in-memory and returned as zip download
 
 In the default compose stack, these files live in the shared Docker named volume `wg_config`.
 
@@ -38,3 +39,21 @@ Current flow:
 3. if `wg0` already exists, run `wg-quick strip ... | wg syncconf ...`
 
 Writes are atomic through temporary file + replace before apply.
+
+## Bulk Bundle Flow
+
+Group and user bundle downloads are treated as secret rotation operations.
+
+Current flow:
+
+1. request bundle warning in the GUI
+2. operator confirms the warning
+3. eligible active peers are reissued
+4. regenerated peer artifacts are revealed and packaged into a zip archive
+5. operator applies updated server config before distributing the new peer files
+
+Bundle contents:
+
+- per-peer `.conf`
+- per-peer `.svg`
+- `NOTICE.txt`

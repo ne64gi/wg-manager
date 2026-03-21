@@ -31,6 +31,9 @@ These items must be complete for `v1.0.0`.
 - polling-based status updates
 - `401` handling: auto logout and redirect to login
 - minimal API failure feedback
+- peer reveal download actions for config and QR
+- bulk group or user peer bundle export with explicit warning
+- JSON export and import for current control-plane state
 
 ### State Consistency
 
@@ -66,7 +69,7 @@ These are not part of `v1.0.0`.
 
 - full i18n
 - advanced filtering and search UX
-- bulk operations
+- generic bulk operations beyond the defined peer bundle export flow
 
 ### Testing
 

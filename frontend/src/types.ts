@@ -51,6 +51,18 @@ export type WireGuardOverview = {
   online_peer_count: number;
 };
 
+export type SyncState = {
+  interface_name: string;
+  status: "synced" | "drifted" | "runtime_unavailable" | string;
+  desired_peer_count: number;
+  runtime_peer_count: number;
+  pending_generation_count: number;
+  drift_detected: boolean;
+  drift_reasons: string[];
+  last_generated_at: string | null;
+  last_runtime_sync_at: string | null;
+};
+
 export type WireGuardOverviewHistoryPoint = {
   captured_at: string;
   total_received_bytes: number;
@@ -268,6 +280,85 @@ export type RevealedPeerArtifacts = {
   config_text: string;
   qr_svg: string;
   revealed_at: string;
+};
+
+export type BundleWarning = {
+  message: string;
+  peer_count: number;
+  requires_reissue: boolean;
+};
+
+export type StateExportPeer = {
+  name: string;
+  assigned_ip: string;
+  description: string;
+  is_active: boolean;
+  private_key: string | null;
+  public_key: string | null;
+  preshared_key: string | null;
+  last_config_generated_at: string | null;
+  is_revealed: boolean;
+  revealed_at: string | null;
+  revoked_at: string | null;
+};
+
+export type StateExportUser = {
+  name: string;
+  allowed_ips_override: string[] | null;
+  description: string;
+  is_active: boolean;
+  peers: StateExportPeer[];
+};
+
+export type StateExportGroup = {
+  name: string;
+  scope: string;
+  network_cidr: string;
+  default_allowed_ips: string[];
+  dns_servers: string[] | null;
+  allocation_start_host: number;
+  reserved_ips: string[];
+  description: string;
+  is_active: boolean;
+  users: StateExportUser[];
+};
+
+export type StateExportServerState = {
+  endpoint: string;
+  listen_port: number;
+  server_address: string;
+  dns: string[];
+  private_key: string;
+  public_key: string;
+};
+
+export type StateExportGuiSettings = {
+  theme_mode: ThemeMode;
+  default_locale: LocaleCode;
+  overview_refresh_seconds: number;
+  peers_refresh_seconds: number;
+  traffic_snapshot_interval_seconds: number;
+  refresh_after_apply: boolean;
+  online_threshold_seconds: number;
+  error_log_level: string;
+  access_log_path: string;
+  error_log_path: string;
+};
+
+export type StateExport = {
+  version: string;
+  exported_at: string;
+  server_state: StateExportServerState;
+  initial_settings: InitialSettings;
+  gui_settings: StateExportGuiSettings;
+  groups: StateExportGroup[];
+};
+
+export type StateImportResult = {
+  imported_group_count: number;
+  imported_user_count: number;
+  imported_peer_count: number;
+  imported_at: string;
 };
 
 export type GeneratedPeerArtifacts = {

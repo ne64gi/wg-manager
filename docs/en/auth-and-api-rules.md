@@ -110,6 +110,45 @@ It also resets reveal state:
 - `revealed_at = null`
 - peer artifacts are regenerated on the next reveal instead of reusing stale files
 
+## Bulk Secret Export Rules
+
+The bundled GUI supports group-level and user-level peer export bundles.
+
+Endpoints:
+
+- `GET /config/groups/{group_id}/bundle-warning`
+- `POST /config/groups/{group_id}/bundle`
+- `GET /config/users/{user_id}/bundle-warning`
+- `POST /config/users/{user_id}/bundle`
+
+Behavior:
+
+- the warning endpoints exist so the UI can show an explicit confirmation step before secret export
+- bundle creation reissues all eligible active peers in the selected scope before packaging files
+- bundle creation reveals the newly generated peer configs as part of archive generation
+- the archive contains peer `.conf` and `.svg` files plus a `NOTICE.txt`
+- after a bundle is created, old peer secrets should be treated as superseded
+
+Operational expectation:
+
+- regenerate and distribute bundle output only when operators are ready to rotate client configs
+- apply the updated server config before using the new peer files
+
+## State Export And Import Rules
+
+Current control-plane state can be moved through JSON.
+
+Endpoints:
+
+- `GET /state/export`
+- `POST /state/import`
+
+Behavior:
+
+- export includes server state, initial settings, GUI settings, groups, users, and peers
+- import replaces the current group, user, and peer tree with the provided payload
+- import is destructive for current domain state and should be treated as an administrative restore operation
+
 ## Error Format
 
 The API currently follows FastAPI default response shapes.
@@ -154,6 +193,7 @@ Current GUI settings expose:
 Recommended behavior:
 
 - poll `/status/overview` and `/status/overview-history` on the overview interval
+- poll `/status/sync-state` on the overview interval
 - poll `/status/peers` on the peer interval
 - invalidate and refetch after create/update/delete/reveal/reissue/apply actions
 - if `refresh_after_apply = true`, treat config mutations as "write then apply"

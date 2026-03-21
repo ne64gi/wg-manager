@@ -1,13 +1,8 @@
-# API
+# API 一覧
 
-This page is the endpoint index.
+これはルート一覧です。挙動ルールは [`auth-and-api-rules.md`](auth-and-api-rules.md) も合わせて読んでください。
 
-For behavior rules that are not obvious from the route list, also read:
-
-- [`quick-start.md`](quick-start.md)
-- [`auth-and-api-rules.md`](auth-and-api-rules.md)
-
-## Core Endpoints
+## 基本エンドポイント
 
 - `GET /health`
 - `POST /groups`
@@ -30,12 +25,12 @@ For behavior rules that are not obvious from the route list, also read:
 - `DELETE /peers/{peer_id}`
 - `GET /peers/{peer_id}/resolved-access`
 
-## Config Endpoints
+## Config エンドポイント
 
 - `POST /config/peers/{peer_id}/generate`
 - `POST /config/peers/{peer_id}/reveal`
-- `GET /config/peers/{peer_id}` (`410`, intentionally disabled)
-- `GET /config/peers/{peer_id}/qr` (`410`, intentionally disabled)
+- `GET /config/peers/{peer_id}` (`410`, 無効化)
+- `GET /config/peers/{peer_id}/qr` (`410`, 無効化)
 - `GET /config/groups/{group_id}/bundle-warning`
 - `POST /config/groups/{group_id}/bundle`
 - `GET /config/users/{user_id}/bundle-warning`
@@ -43,7 +38,7 @@ For behavior rules that are not obvious from the route list, also read:
 - `POST /config/server/generate`
 - `POST /config/server/apply`
 
-## Auth Endpoints
+## 認証エンドポイント
 
 - `GET /auth/setup-status`
 - `POST /auth/setup`
@@ -53,15 +48,15 @@ For behavior rules that are not obvious from the route list, also read:
 - `GET /auth/me`
 - `POST /auth/change-password`
 
-## Settings Endpoints
+## 設定・状態転送エンドポイント
 
 - `GET /initial-settings`
 - `PUT /initial-settings`
 - `GET /state/export`
 - `POST /state/import`
 - `GET /gui/settings`
-- `GET /gui/version`
 - `PUT /gui/settings`
+- `GET /gui/version`
 - `GET /gui/login-users`
 - `POST /gui/login-users`
 - `GET /gui/login-users/{login_user_id}`
@@ -69,7 +64,7 @@ For behavior rules that are not obvious from the route list, also read:
 - `DELETE /gui/login-users/{login_user_id}`
 - `GET /gui/logs`
 
-## Status Endpoints
+## ステータスエンドポイント
 
 - `GET /status/overview`
 - `GET /status/sync-state`
@@ -77,15 +72,3 @@ For behavior rules that are not obvious from the route list, also read:
 - `GET /status/peers`
 - `GET /status/users-summary`
 - `GET /status/groups-summary`
-
-The status layer currently exposes:
-
-- total received, sent, and combined traffic
-- peer counts
-- online/offline estimation from recent handshakes
-- peer endpoint
-- per-peer traffic counters
-- resolved effective access
-- drift and apply-state comparison between desired DB state and runtime WireGuard state
-
-The API is internal-only by default in Compose.

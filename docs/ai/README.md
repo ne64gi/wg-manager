@@ -22,3 +22,4 @@ Rules:
 - prefer this folder over human docs when you need invariants, route groups, or lifecycle rules
 - treat `docs/en/` as explanatory and `docs/ai/` as operational
 - when in conflict, verify against source code
+- if you are an AI agent changing this repo, start here before proposing architectural changes

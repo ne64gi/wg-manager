@@ -80,6 +80,7 @@ export function PeersPage() {
     await queryClient.invalidateQueries({ queryKey: queryKeys.overviewHistory(24) });
     await queryClient.invalidateQueries({ queryKey: queryKeys.userSummaries });
     await queryClient.invalidateQueries({ queryKey: queryKeys.groupSummaries });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.syncState });
   }
 
   async function applyIfNeeded(successNotice?: string) {
