@@ -298,6 +298,10 @@ a {
   box-shadow: var(--panel-shadow);
 }
 
+.toolbar-card-wrap {
+  flex-wrap: wrap;
+}
+
 .toolbar-row {
   flex-wrap: wrap;
 }
@@ -307,6 +311,10 @@ a {
   display: grid;
   gap: 6px;
   min-width: 220px;
+}
+
+.toolbar-field-grow {
+  flex: 1 1 240px;
 }
 
 .table-toolbar {
@@ -1162,6 +1170,14 @@ h2 {
 
 .mobile-info-grid strong {
   color: var(--text-soft);
+}
+
+.table-pagination {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 @media (max-width: 1080px) {

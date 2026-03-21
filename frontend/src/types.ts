@@ -261,6 +261,13 @@ export type GuiLog = {
   details: Record<string, unknown>;
 };
 
+export type GuiLogList = {
+  items: GuiLog[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
 export type InitialSettings = {
   id: number;
   endpoint_address: string;

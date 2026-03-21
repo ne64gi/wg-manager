@@ -11,6 +11,7 @@ export const queryKeys = {
   users: ["domain", "users"] as const,
   peers: ["domain", "peers"] as const,
   loginUsers: ["gui", "login-users"] as const,
-  guiLogs: (limit: number) => ["gui", "logs", limit] as const,
+  guiLogs: (params: { limit: number; offset: number; level: string; category: string; search: string }) =>
+    ["gui", "logs", params.limit, params.offset, params.level, params.category, params.search] as const,
   initialSettings: ["domain", "initial-settings"] as const,
 };

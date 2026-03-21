@@ -593,6 +593,13 @@ class GuiLogRead(BaseModel):
     details: dict
 
 
+class GuiLogListRead(BaseModel):
+    items: list[GuiLogRead]
+    total: int
+    limit: int
+    offset: int
+
+
 class SystemVersionRead(BaseModel):
     version: str
     frontend_version: str

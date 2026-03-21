@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { listGuiLogs } from "../lib/api";
@@ -12,10 +13,32 @@ import { DataTable } from "../ui/Table";
 export function LogsPage() {
   const auth = useAuth();
   const guiSettingsQuery = useGuiSettingsQuery();
+  const [offset, setOffset] = useState(0);
+  const [level, setLevel] = useState("");
+  const [category, setCategory] = useState("");
+  const [search, setSearch] = useState("");
+  const limit = 50;
+  const categoryOptions = useMemo(
+    () => ["auth", "settings", "secret", "server", "peer", "group", "user"],
+    [],
+  );
+
   const logsQuery = useQuery({
-    queryKey: queryKeys.guiLogs(100),
-    queryFn: async () => listGuiLogs((await auth.getValidAccessToken()) ?? "", 100),
+    queryKey: queryKeys.guiLogs({ limit, offset, level, category, search }),
+    queryFn: async () =>
+      listGuiLogs((await auth.getValidAccessToken()) ?? "", {
+        limit,
+        offset,
+        level: level || undefined,
+        category: category || undefined,
+        search: search || undefined,
+      }),
   });
+
+  const logs = logsQuery.data?.items ?? [];
+  const total = logsQuery.data?.total ?? 0;
+  const from = total === 0 ? 0 : offset + 1;
+  const to = Math.min(offset + limit, total);
 
   return (
     <div className="page-stack">
@@ -36,9 +59,67 @@ export function LogsPage() {
           </strong>
         </div>
       </div>
+      <div className="toolbar-card toolbar-card-wrap">
+        <label className="toolbar-field">
+          <span>{t("logs.level_filter", "Level")}</span>
+          <select
+            value={level}
+            onChange={(event) => {
+              setOffset(0);
+              setLevel(event.target.value);
+            }}
+          >
+            <option value="">{t("logs.all_levels", "All levels")}</option>
+            <option value="debug">{t("log_level.debug", "debug")}</option>
+            <option value="info">{t("log_level.info", "info")}</option>
+            <option value="warning">{t("log_level.warning", "warning")}</option>
+            <option value="error">{t("log_level.error", "error")}</option>
+            <option value="critical">{t("log_level.critical", "critical")}</option>
+          </select>
+        </label>
+        <label className="toolbar-field">
+          <span>{t("logs.category_filter", "Category")}</span>
+          <select
+            value={category}
+            onChange={(event) => {
+              setOffset(0);
+              setCategory(event.target.value);
+            }}
+          >
+            <option value="">{t("logs.all_categories", "All categories")}</option>
+            {categoryOptions.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="toolbar-field toolbar-field-grow">
+          <span>{t("logs.search", "Search")}</span>
+          <input
+            value={search}
+            onChange={(event) => {
+              setOffset(0);
+              setSearch(event.target.value);
+            }}
+            placeholder={t("logs.search_placeholder", "Message, user, category")}
+          />
+        </label>
+      </div>
       <Panel title={t("logs.recent", "Recent logs")}>
-        <DataTable headers={[t("table.time", "Time"), t("table.level", "Level"), t("table.category", "Category"), t("table.message", "Message"), t("table.user", "User")]}>
-          {(logsQuery.data ?? []).map((entry) => (
+        {logs.length === 0 ? (
+          <div className="muted-text">{t("logs.empty", "No logs match the current filters.")}</div>
+        ) : null}
+        <DataTable
+          headers={[
+            t("table.time", "Time"),
+            t("table.level", "Level"),
+            t("table.category", "Category"),
+            t("table.message", "Message"),
+            t("table.user", "User"),
+          ]}
+        >
+          {logs.map((entry) => (
             <tr key={entry.id}>
               <td>{formatDateTime(entry.occurred_at)}</td>
               <td>
@@ -52,6 +133,28 @@ export function LogsPage() {
             </tr>
           ))}
         </DataTable>
+        <div className="table-pagination">
+          <button
+            className="ghost-button"
+            disabled={offset === 0}
+            onClick={() => setOffset((current) => Math.max(0, current - limit))}
+          >
+            {t("logs.prev_page", "Previous")}
+          </button>
+          <div className="muted-text">
+            {t("logs.page_status", "{from}-{to} / {total}")
+              .replace("{from}", String(from))
+              .replace("{to}", String(to))
+              .replace("{total}", String(total))}
+          </div>
+          <button
+            className="ghost-button"
+            disabled={offset + limit >= total}
+            onClick={() => setOffset((current) => current + limit)}
+          >
+            {t("logs.next_page", "Next")}
+          </button>
+        </div>
       </Panel>
     </div>
   );

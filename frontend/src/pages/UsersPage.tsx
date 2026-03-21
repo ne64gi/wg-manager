@@ -50,6 +50,13 @@ function saveBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+function getBundleWarningText(peerCount: number) {
+  return `${t(
+    "users.bundle_warning",
+    "This bundle will reissue keys for eligible peers, package the new configs into a ZIP, and invalidate older peer files. Apply before distributing the new files.",
+  )}\n\n${t("users.bundle_peer_count", "Peer count")}: ${peerCount}`;
+}
+
 export function UsersPage() {
   const auth = useAuth();
   const queryClient = useQueryClient();
@@ -214,9 +221,7 @@ export function UsersPage() {
     mutationFn: async (user: User) => {
       const accessToken = (await auth.getValidAccessToken()) ?? "";
       const warning = await getUserBundleWarning(user.id, accessToken);
-      const confirmed = window.confirm(
-        `${warning.message}\n\n${t("users.bundle_peer_count", "Peer count")}: ${warning.peer_count}`,
-      );
+      const confirmed = window.confirm(getBundleWarningText(warning.peer_count));
       if (!confirmed) {
         return null;
       }

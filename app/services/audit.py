@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from app.db import AuditBase, AuditSessionLocal, SessionLocal, audit_engine
 from app.models import GuiLog, GuiSettings, OperationLog
@@ -92,9 +92,46 @@ def log_gui_event(
 
 
 def list_gui_logs(*, limit: int = 100) -> list[GuiLog]:
+    entries, _ = list_gui_logs_page(limit=limit, offset=0, level=None, category=None, search=None)
+    return entries
+
+
+def list_gui_logs_page(
+    *,
+    limit: int = 50,
+    offset: int = 0,
+    level: str | None = None,
+    category: str | None = None,
+    search: str | None = None,
+) -> tuple[list[GuiLog], int]:
     with AuditSessionLocal() as session:
-        return list(
+        query = select(GuiLog)
+        count_query = select(GuiLog.id)
+
+        if level:
+            normalized_level = level.lower()
+            query = query.where(GuiLog.level == normalized_level)
+            count_query = count_query.where(GuiLog.level == normalized_level)
+
+        if category:
+            normalized_category = category.lower()
+            query = query.where(GuiLog.category == normalized_category)
+            count_query = count_query.where(GuiLog.category == normalized_category)
+
+        if search:
+            pattern = f"%{search.strip()}%"
+            condition = or_(
+                GuiLog.message.ilike(pattern),
+                GuiLog.username.ilike(pattern),
+                GuiLog.category.ilike(pattern),
+            )
+            query = query.where(condition)
+            count_query = count_query.where(condition)
+
+        entries = list(
             session.scalars(
-                select(GuiLog).order_by(GuiLog.occurred_at.desc()).limit(limit)
+                query.order_by(GuiLog.occurred_at.desc()).offset(offset).limit(limit)
             )
         )
+        total = len(list(session.scalars(count_query)))
+        return entries, total

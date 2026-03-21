@@ -138,6 +138,7 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "groups.bundle_notice": "グループ単位のピア設定をダウンロードしました。",
   "groups.bundle_failed": "グループ一括ダウンロードに失敗しました。",
   "groups.bundle_peer_count": "対象ピア数",
+  "groups.bundle_warning": "この一括ダウンロードでは、対象ピアの鍵を再生成し、新しい設定を ZIP にまとめます。既存の設定は使えなくなるため、配布前に適用してください。",
   "groups.create_failed": "グループの作成に失敗しました。",
   "groups.update_failed": "グループの更新に失敗しました。",
   "groups.delete_failed": "グループの削除に失敗しました。",
@@ -170,6 +171,7 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "users.bundle_notice": "ユーザー単位のピア設定をダウンロードしました。",
   "users.bundle_failed": "ユーザー一括ダウンロードに失敗しました。",
   "users.bundle_peer_count": "対象ピア数",
+  "users.bundle_warning": "この一括ダウンロードでは、対象ピアの鍵を再生成し、新しい設定を ZIP にまとめます。既存の設定は使えなくなるため、配布前に適用してください。",
   "users.create_failed": "ユーザーの作成に失敗しました。",
   "users.update_failed": "ユーザーの更新に失敗しました。",
   "users.delete_failed": "ユーザーの削除に失敗しました。",
@@ -290,6 +292,16 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "logs.current_level": "現在のエラーログレベル",
   "logs.recent": "最近のログ",
   "logs.system": "システム",
+  "logs.level_filter": "レベル",
+  "logs.category_filter": "カテゴリ",
+  "logs.search": "検索",
+  "logs.search_placeholder": "メッセージ、ユーザー、カテゴリ",
+  "logs.all_levels": "すべてのレベル",
+  "logs.all_categories": "すべてのカテゴリ",
+  "logs.prev_page": "前へ",
+  "logs.next_page": "次へ",
+  "logs.page_status": "{from}-{to} / {total} 件",
+  "logs.empty": "条件に一致するログはありません。",
 };
 
 export function getUiLocale(): "en" | "ja" {

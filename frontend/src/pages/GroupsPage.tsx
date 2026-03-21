@@ -100,6 +100,13 @@ function saveBlob(blob: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+function getBundleWarningText(peerCount: number) {
+  return `${t(
+    "groups.bundle_warning",
+    "This bundle will reissue keys for eligible peers, package the new configs into a ZIP, and invalidate older peer files. Apply before distributing the new files.",
+  )}\n\n${t("groups.bundle_peer_count", "Peer count")}: ${peerCount}`;
+}
+
 function getScopeValidationMessage(scope: string, networkCidr: string) {
   const expectedPrefix = SCOPE_PREFIX[scope];
   if (!networkCidr.trim()) {
@@ -319,9 +326,7 @@ export function GroupsPage() {
     mutationFn: async (group: Group) => {
       const accessToken = (await auth.getValidAccessToken()) ?? "";
       const warning = await getGroupBundleWarning(group.id, accessToken);
-      const confirmed = window.confirm(
-        `${warning.message}\n\n${t("groups.bundle_peer_count", "Peer count")}: ${warning.peer_count}`,
-      );
+      const confirmed = window.confirm(getBundleWarningText(warning.peer_count));
       if (!confirmed) {
         return null;
       }

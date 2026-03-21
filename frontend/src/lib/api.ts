@@ -14,6 +14,7 @@ import type {
   GroupUpdateInput,
   GroupTrafficSummary,
   GuiLog,
+  GuiLogList,
   GuiSettings,
   GuiSettingsUpdate,
   InitialSettings,
@@ -485,7 +486,25 @@ export function deleteLoginUser(
 
 export function listGuiLogs(
   accessToken: string,
-  limit = 100,
-): Promise<GuiLog[]> {
-  return request<GuiLog[]>(`/gui/logs?limit=${limit}`, { accessToken });
+  options: {
+    limit?: number;
+    offset?: number;
+    level?: string;
+    category?: string;
+    search?: string;
+  } = {},
+): Promise<GuiLogList> {
+  const params = new URLSearchParams();
+  params.set("limit", String(options.limit ?? 50));
+  params.set("offset", String(options.offset ?? 0));
+  if (options.level) {
+    params.set("level", options.level);
+  }
+  if (options.category) {
+    params.set("category", options.category);
+  }
+  if (options.search) {
+    params.set("search", options.search);
+  }
+  return request<GuiLogList>(`/gui/logs?${params.toString()}`, { accessToken });
 }

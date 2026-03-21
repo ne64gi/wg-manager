@@ -8,6 +8,7 @@ from app.db import get_session
 from app.models import LoginUser
 from app.core import get_system_version
 from app.schemas import (
+    GuiLogListRead,
     GuiLogRead,
     GuiSettingsRead,
     GuiSettingsUpdate,
@@ -22,6 +23,7 @@ from app.services import (
     get_gui_settings,
     get_login_user,
     list_gui_logs,
+    list_gui_logs_page,
     list_login_users,
     update_gui_settings,
     update_login_user,
@@ -123,9 +125,25 @@ def delete_login_user_endpoint(
     return Response(status_code=204)
 
 
-@router.get("/gui/logs", response_model=list[GuiLogRead])
+@router.get("/gui/logs", response_model=GuiLogListRead)
 def list_gui_logs_endpoint(
-    limit: int = Query(default=100, ge=1, le=500),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    level: str | None = Query(default=None),
+    category: str | None = Query(default=None),
+    search: str | None = Query(default=None),
     current_user: LoginUser = Depends(require_authenticated_login_user),
-) -> list[GuiLogRead]:
-    return [GuiLogRead.model_validate(entry) for entry in list_gui_logs(limit=limit)]
+) -> GuiLogListRead:
+    entries, total = list_gui_logs_page(
+        limit=limit,
+        offset=offset,
+        level=level,
+        category=category,
+        search=search,
+    )
+    return GuiLogListRead(
+        items=[GuiLogRead.model_validate(entry) for entry in entries],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
