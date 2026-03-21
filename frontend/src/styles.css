@@ -175,9 +175,12 @@ a {
 }
 
 .brand-badge-logo {
-  background: transparent;
+  background: rgba(255, 252, 252, 0.96);
   color: inherit;
-  box-shadow: none;
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.12),
+    inset 0 0 0 1px rgba(136, 23, 26, 0.08);
+  padding: 4px;
 }
 
 .brand-icon {
@@ -804,8 +807,8 @@ h2 {
 }
 
 .login-logo-orb .brand-badge {
-  width: 54px;
-  height: 54px;
+  width: 58px;
+  height: 58px;
   box-shadow: none;
 }
 
