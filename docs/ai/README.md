@@ -13,6 +13,7 @@ Recommended read order:
 1. [`system-map.md`](system-map.md)
 2. [`api-contracts.md`](api-contracts.md)
 3. [`workflows.md`](workflows.md)
+4. [`roadmap.md`](roadmap.md)
 
 Rules:
 
