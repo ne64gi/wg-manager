@@ -1,6 +1,10 @@
-import type { ReactNode, SVGProps } from "react";
+import type { ImgHTMLAttributes, ReactNode, SVGProps } from "react";
+import wireguardLogo from "./wireguard-logo.svg";
 
 type IconProps = SVGProps<SVGSVGElement> & {
+  title?: string;
+};
+type BrandIconProps = ImgHTMLAttributes<HTMLImageElement> & {
   title?: string;
 };
 
@@ -23,19 +27,14 @@ function BaseIcon({ title, children, ...props }: IconProps & { children: ReactNo
   );
 }
 
-export function BrandIcon(props: IconProps) {
+export function BrandIcon(props: BrandIconProps) {
+  const { title, alt, ...rest } = props;
   return (
-    <svg viewBox="0 0 64 64" aria-hidden="true" {...props}>
-      <circle cx="32" cy="32" r="32" fill="currentColor" />
-      <path
-        d="M34.8 10.8c5.6 0 10.1 4.2 10.1 9.4 0 3.6-2.1 6.7-5.3 8.3 2.7 1.4 4.4 4 4.4 7.1 0 5.1-4.6 9.2-10.3 9.2-5 0-9.2-3.1-10.1-7.3h6.4c.7 1.5 2.2 2.5 4 2.5 2.4 0 4.4-1.8 4.4-4 0-2.4-2-4.3-4.6-4.3h-2.2v-5.2h1.7c2.4 0 4.2-1.8 4.2-4 0-2.1-1.8-3.9-4.1-3.9-1.7 0-3.1.9-3.8 2.3h-6.3c1-4 5.1-7.1 10-7.1Z"
-        fill="#fff7f7"
-      />
-      <path
-        d="M22 44.2c4.7 0 8.5 3.5 8.5 7.8H17.2c0-4.3 3.9-7.8 8.8-7.8Z"
-        fill="#fff7f7"
-      />
-    </svg>
+    <img
+      src={wireguardLogo}
+      alt={alt ?? title ?? "WireGuard logo"}
+      {...rest}
+    />
   );
 }
 
