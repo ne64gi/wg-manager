@@ -65,10 +65,10 @@ export function RevealModal({
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+      <div className="modal-card" data-testid="reveal-modal" onClick={(event) => event.stopPropagation()}>
         <div className="panel-header">
           <h2>{t("reveal.title", "Reveal WireGuard Configuration")}</h2>
-          <button className="ghost-button" onClick={onClose}>
+          <button className="ghost-button" data-testid="reveal-close" onClick={onClose}>
             {t("common.close", "Close")}
           </button>
         </div>
@@ -82,10 +82,10 @@ export function RevealModal({
           <div className="page-stack">
             <pre className="code-block">{artifacts.config_text}</pre>
             <div className="modal-actions">
-              <button className="secondary-button" onClick={handleDownloadConfig}>
+              <button className="secondary-button" data-testid="reveal-download-config" onClick={handleDownloadConfig}>
                 {t("reveal.download_config", "Download config")}
               </button>
-              <button className="secondary-button" onClick={handleDownloadQr}>
+              <button className="secondary-button" data-testid="reveal-download-qr" onClick={handleDownloadQr}>
                 {t("reveal.download_qr", "Download QR")}
               </button>
               <button className="ghost-button" onClick={handleCopy}>

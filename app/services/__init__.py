@@ -9,7 +9,13 @@ from app.services.auth import (
     refresh_login_tokens,
     setup_initial_login_user,
 )
-from app.services.audit import init_log_db, list_gui_logs, log_gui_event, log_operation
+from app.services.audit import (
+    init_log_db,
+    list_gui_logs,
+    list_gui_logs_page,
+    log_gui_event,
+    log_operation,
+)
 from app.services.config_generation import generate_peer_artifacts, generate_server_config
 from app.services.config_generation import (
     get_or_generate_peer_config_text,
@@ -108,6 +114,7 @@ __all__ = [
     "init_db",
     "init_log_db",
     "list_gui_logs",
+    "list_gui_logs_page",
     "list_groups",
     "list_login_users",
     "list_peers",

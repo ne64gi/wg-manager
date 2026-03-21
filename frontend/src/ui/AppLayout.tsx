@@ -72,6 +72,7 @@ export function AppLayout({ children }: PropsWithChildren) {
               <NavLink
                 key={item.to}
                 to={item.to}
+                data-testid={`nav-${item.label.toLowerCase()}`}
                 className={({ isActive }) =>
                   `nav-item${isActive ? " nav-item-active" : ""}`
                 }
@@ -88,6 +89,7 @@ export function AppLayout({ children }: PropsWithChildren) {
           <div className="sidebar-user">{auth.currentUser?.username}</div>
           <button
             className="secondary-button"
+            data-testid="nav-logout"
             onClick={() => {
               closeMobileNav();
               auth.logoutAction();

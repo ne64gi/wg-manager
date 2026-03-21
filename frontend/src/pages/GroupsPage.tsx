@@ -370,7 +370,7 @@ export function GroupsPage() {
         </div>
       </div>
       <div className="toolbar-card">
-        <button className="success-button" onClick={() => setIsCreateOpen(true)}>
+        <button className="success-button" data-testid="groups-add-button" onClick={() => setIsCreateOpen(true)}>
           {t("groups.add", "+ Add group")}
         </button>
       </div>
@@ -488,7 +488,7 @@ export function GroupsPage() {
       </Panel>
       {isCreateOpen ? (
         <div className="modal-backdrop" onClick={closeCreateModal}>
-          <div className="modal-card modal-compact" onClick={(event) => event.stopPropagation()}>
+          <div className="modal-card modal-compact" data-testid="groups-create-modal" onClick={(event) => event.stopPropagation()}>
             <div className="panel-header">
               <h2>{t("groups.add_title", "Add group")}</h2>
               <button className="ghost-button" onClick={closeCreateModal}>
@@ -499,6 +499,7 @@ export function GroupsPage() {
               <label className="field">
                 <span>{t("groups.name", "Name")}</span>
                 <input
+                  data-testid="groups-create-name"
                   value={createForm.name}
                   autoComplete="off"
                   onChange={(event) => updateCreateFormField("name", event.target.value)}
@@ -507,6 +508,7 @@ export function GroupsPage() {
               <label className="field">
                 <span>{t("groups.scope", "Scope")}</span>
                 <select
+                  data-testid="groups-create-scope"
                   value={createForm.scope}
                   onChange={(event) => updateCreateFormField("scope", event.target.value)}
                 >
@@ -518,6 +520,7 @@ export function GroupsPage() {
               <label className="field">
                 <span>{t("groups.network_cidr", "Network CIDR")}</span>
                 <input
+                  data-testid="groups-create-network-cidr"
                   value={createForm.networkCidr}
                   autoComplete="off"
                   onChange={(event) => updateCreateFormField("networkCidr", event.target.value)}
@@ -533,6 +536,7 @@ export function GroupsPage() {
               <label className="field">
                 <span>{t("groups.allowed_ips", "Allowed IPs")}</span>
                 <input
+                  data-testid="groups-create-allowed-ips"
                   value={createForm.allowedIps}
                   autoComplete="off"
                   onChange={(event) => updateCreateFormField("allowedIps", event.target.value)}
@@ -542,6 +546,7 @@ export function GroupsPage() {
               <label className="field">
                 <span>{t("groups.dns_servers", "DNS servers")}</span>
                 <input
+                  data-testid="groups-create-dns-servers"
                   value={createForm.dnsServers}
                   autoComplete="off"
                   onChange={(event) => updateCreateFormField("dnsServers", event.target.value)}
@@ -551,6 +556,7 @@ export function GroupsPage() {
               <label className="field field-span-2">
                 <span>{t("groups.description", "Description")}</span>
                 <input
+                  data-testid="groups-create-description"
                   value={createForm.description}
                   autoComplete="off"
                   onChange={(event) => updateCreateFormField("description", event.target.value)}
@@ -559,6 +565,7 @@ export function GroupsPage() {
               </label>
               <label className="field-checkbox field-span-2">
                 <input
+                  data-testid="groups-create-enabled"
                   type="checkbox"
                   checked={createForm.isActive}
                   onChange={(event) => updateCreateFormField("isActive", event.target.checked)}
@@ -573,6 +580,7 @@ export function GroupsPage() {
             <div className="modal-actions">
               <button
                 className="primary-button"
+                data-testid="groups-create-submit"
                 disabled={
                   !createForm.name ||
                   !createForm.networkCidr ||

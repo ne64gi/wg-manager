@@ -25,7 +25,9 @@ def _coerce_exec_result(result: int | ExecResult) -> ExecResult:
 def _run_exec_maybe_capture(command: list[str], *, capture_output: bool) -> ExecResult:
     try:
         result = _run_exec(command, capture_output=capture_output)
-    except TypeError:
+    except TypeError as exc:
+        if "capture_output" not in str(exc):
+            raise
         result = _run_exec(command)
     return _coerce_exec_result(result)
 

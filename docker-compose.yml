@@ -83,6 +83,20 @@ services:
       - wg-studio-internal
       - wg-studio-edge
 
+  wg-studio-e2e:
+    build:
+      context: .
+      dockerfile: docker/e2e/Dockerfile
+    working_dir: /app/frontend
+    depends_on:
+      - wg-studio-web
+    environment:
+      E2E_BASE_URL: http://wg-studio-web/wg-studio/
+      E2E_USERNAME: ${WG_BOOTSTRAP_ADMIN_USERNAME:-playwright-admin}
+      E2E_PASSWORD: ${WG_BOOTSTRAP_ADMIN_PASSWORD:-playwright-pass-123!}
+    networks:
+      - wg-studio-internal
+
 volumes:
   postgres_data:
   wg_config:

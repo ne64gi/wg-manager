@@ -44,7 +44,7 @@ export function ToastProvider({ children }: PropsWithChildren) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="toast-stack" aria-live="polite" aria-atomic="true">
+      <div className="toast-stack" data-testid="toast-stack" aria-live="polite" aria-atomic="true">
         {toasts.map((toast) => (
           <div
             key={toast.id}

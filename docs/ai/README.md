@@ -16,6 +16,8 @@ Recommended read order:
 4. [`roadmap.md`](roadmap.md)
 5. [`versioning-policy.md`](versioning-policy.md)
 6. [`ui-consistency-audit.md`](ui-consistency-audit.md)
+7. [`testing-map.md`](testing-map.md)
+8. [`roadmap.md`](roadmap.md) `E2E Strategy` section when planning test work
 
 Rules:
 

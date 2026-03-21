@@ -62,3 +62,44 @@ docker compose run --rm \
 ```
 
 Tests currently override database URLs to temporary SQLite files for speed and isolation, while the normal runtime stack uses PostgreSQL.
+
+## Browser E2E Direction
+
+`v1.0.0` should adopt only a minimal Playwright smoke suite for release confidence.
+
+Recommended smoke targets:
+
+- login
+- `Group -> User -> Peer` creation
+- reveal modal visibility and download actions
+- apply flow and dashboard sync-state visibility
+- logs page loading with filters and pagination
+
+After `v1.0.0`, expand Playwright incrementally instead of trying to build a full E2E matrix in one step.
+
+## Browser E2E Commands
+
+Install frontend test dependencies locally:
+
+```bash
+cd frontend
+npm install
+npx playwright install chromium
+```
+
+Run the release smoke suite through Docker Compose:
+
+```bash
+docker compose run --rm \
+  -e E2E_BASE_URL=http://wg-studio-web/wg-studio/ \
+  -e E2E_USERNAME=admin \
+  -e E2E_PASSWORD=supersecret123 \
+  wg-studio-e2e
+```
+
+Environment notes:
+
+- if no login users exist, the smoke suite uses the setup screen and creates the first admin user from `E2E_USERNAME` and `E2E_PASSWORD`
+- if login users already exist, the suite expects those credentials to be valid
+- tests create uniquely named `Group`, `User`, and `Peer` records and do not currently clean them up automatically
+- local `npm run test:e2e` remains available when Node and Playwright are installed on the host

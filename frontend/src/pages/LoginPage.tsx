@@ -81,7 +81,11 @@ export function LoginPage() {
     <div className="login-shell">
       <div className="login-backdrop-glow login-backdrop-glow-left" />
       <div className="login-backdrop-glow login-backdrop-glow-right" />
-      <form className="login-card login-card-xui" onSubmit={needsSetup ? handleSetupSubmit : handleSubmit}>
+      <form
+        className="login-card login-card-xui"
+        data-testid="login-form"
+        onSubmit={needsSetup ? handleSetupSubmit : handleSubmit}
+      >
         <div className="login-card-top">
           <div className="login-brand-chip">
             <div className="eyebrow">wg-studio</div>
@@ -173,13 +177,18 @@ export function LoginPage() {
         <label className="field login-field">
           <span>{t("auth.username", "Username")}</span>
           <div className="login-input-shell">
-            <input value={username} onChange={(event) => setUsername(event.target.value)} />
+            <input
+              data-testid="login-username"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+            />
           </div>
         </label>
         <label className="field login-field">
           <span>{t("auth.password", "Password")}</span>
           <div className="login-input-shell">
             <input
+              data-testid="login-password"
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -191,6 +200,7 @@ export function LoginPage() {
             <span>{t("auth.confirm_password", "Confirm password")}</span>
             <div className="login-input-shell">
               <input
+                data-testid="login-confirm-password"
                 type="password"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
@@ -199,7 +209,12 @@ export function LoginPage() {
           </label>
         ) : null}
         {error ? <div className="error-banner">{error}</div> : null}
-        <button className="primary-button login-submit" type="submit" disabled={isSubmitting}>
+        <button
+          className="primary-button login-submit"
+          data-testid="login-submit"
+          type="submit"
+          disabled={isSubmitting}
+        >
           {needsSetup
             ? isSubmitting
               ? t("auth.setup_submitting", "Creating...")

@@ -282,7 +282,7 @@ export function UsersPage() {
         </div>
       </div>
       <div className="toolbar-card">
-        <button className="success-button" onClick={() => setIsCreateOpen(true)}>
+        <button className="success-button" data-testid="users-add-button" onClick={() => setIsCreateOpen(true)}>
           {t("users.add", "+ Add user")}
         </button>
       </div>
@@ -290,6 +290,7 @@ export function UsersPage() {
         <label className="toolbar-field">
           <span>{t("users.group_filter", "Group filter")}</span>
           <select
+            data-testid="users-group-filter"
             value={filterGroupId}
             onChange={(event) => setFilterGroupId(event.target.value)}
           >
@@ -398,7 +399,7 @@ export function UsersPage() {
       </Panel>
       {isCreateOpen ? (
         <div className="modal-backdrop" onClick={closeCreateModal}>
-          <div className="modal-card modal-compact" onClick={(event) => event.stopPropagation()}>
+          <div className="modal-card modal-compact" data-testid="users-create-modal" onClick={(event) => event.stopPropagation()}>
             <div className="panel-header">
               <h2>{t("users.add_title", "Add user")}</h2>
               <button className="ghost-button" onClick={closeCreateModal}>
@@ -409,6 +410,7 @@ export function UsersPage() {
               <label className="field">
                 <span>{t("table.group", "Group")}</span>
                 <select
+                  data-testid="users-create-group"
                   value={createForm.groupId}
                   onChange={(event) =>
                     setCreateForm((current) => ({ ...current, groupId: event.target.value }))
@@ -425,6 +427,7 @@ export function UsersPage() {
               <label className="field">
                 <span>{t("users.name", "Name")}</span>
                 <input
+                  data-testid="users-create-name"
                   value={createForm.name}
                   autoComplete="off"
                   onChange={(event) =>
@@ -435,6 +438,7 @@ export function UsersPage() {
               <label className="field field-span-2">
                 <span>{t("users.override_routes", "Override routes")}</span>
                 <input
+                  data-testid="users-create-override-routes"
                   value={createForm.overrideRoutes}
                   autoComplete="off"
                   onChange={(event) =>
@@ -449,6 +453,7 @@ export function UsersPage() {
               <label className="field field-span-2">
                 <span>{t("common.description", "Description")}</span>
                 <input
+                  data-testid="users-create-description"
                   value={createForm.description}
                   autoComplete="off"
                   onChange={(event) =>
@@ -458,6 +463,7 @@ export function UsersPage() {
               </label>
               <label className="field-checkbox field-span-2">
                 <input
+                  data-testid="users-create-enabled"
                   type="checkbox"
                   checked={createForm.isActive}
                   onChange={(event) =>
@@ -473,6 +479,7 @@ export function UsersPage() {
             <div className="modal-actions">
               <button
                 className="primary-button"
+                data-testid="users-create-submit"
                 disabled={!createForm.groupId || !createForm.name || createMutation.isPending}
                 onClick={() => createMutation.mutate()}
               >

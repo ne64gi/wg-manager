@@ -73,7 +73,7 @@ These are not part of `v1.0.0`.
 
 ### Testing
 
-- E2E test suite
+- broad E2E suite beyond release smoke coverage
 - full coverage
 
 ## Acceptable Limitations
@@ -82,6 +82,7 @@ These are not part of `v1.0.0`.
 - basic error messages
 - limited test coverage
 - manual deployment flow
+- only minimal browser smoke coverage at release time
 
 ## Release Criteria
 
@@ -92,6 +93,7 @@ These are not part of `v1.0.0`.
 - apply state is visible and understandable
 - authentication flow is stable: login, logout, expiration
 - system recovers from restart without inconsistency
+- the highest-risk operator path is covered by a minimal browser smoke test
 
 ## Post 1.0 Ideas
 
@@ -100,5 +102,6 @@ These are not part of `v1.0.0`.
 - improved logging UI: filters, search
 - advanced security hardening
 - better mobile UX
+- expand Playwright from smoke coverage into broader regression coverage
 
 For the low-ambiguity planning version used by agents, see [`../ai/roadmap.md`](../ai/roadmap.md).

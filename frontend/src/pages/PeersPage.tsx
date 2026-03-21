@@ -290,10 +290,10 @@ export function PeersPage() {
         />
       </div>
       <div className="toolbar-card toolbar-row">
-        <button className="success-button" onClick={() => setIsCreateOpen(true)}>
+        <button className="success-button" data-testid="peers-add-button" onClick={() => setIsCreateOpen(true)}>
           {t("peers.add", "+ Add peer")}
         </button>
-        <button className="secondary-button" onClick={() => applyMutation.mutate()}>
+        <button className="secondary-button" data-testid="peers-apply-button" onClick={() => applyMutation.mutate()}>
           {applyMutation.isPending ? t("peers.applying", "Applying...") : t("peers.apply", "Apply config")}
         </button>
       </div>
@@ -302,6 +302,7 @@ export function PeersPage() {
           <label className="toolbar-search">
             <span>{t("common.search", "Search")}</span>
             <input
+              data-testid="peers-search"
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
               placeholder={t("peers.search_placeholder", "Peer, user, group, IP, route...")}
@@ -366,6 +367,7 @@ export function PeersPage() {
                         <>
                           <button
                             className="ghost-button"
+                            data-testid="peer-reveal-button"
                             disabled={peer.is_revealed || revealMutation.isPending || !canManageSecrets}
                             onClick={() => revealMutation.mutate(peer.peer_id)}
                           >
@@ -373,6 +375,7 @@ export function PeersPage() {
                           </button>
                           <button
                             className="secondary-button"
+                            data-testid="peer-reissue-button"
                             disabled={!canManageSecrets || reissueMutation.isPending}
                             onClick={() => reissueMutation.mutate(peer.peer_id)}
                           >
@@ -465,6 +468,7 @@ export function PeersPage() {
                   </MobileInfoPopover>
                   <button
                     className="ghost-button"
+                    data-testid="peer-reveal-button"
                     disabled={peer.is_revealed || revealMutation.isPending || !canManageSecrets}
                     onClick={() => revealMutation.mutate(peer.peer_id)}
                   >
@@ -472,6 +476,7 @@ export function PeersPage() {
                   </button>
                   <button
                     className="secondary-button"
+                    data-testid="peer-reissue-button"
                     disabled={!canManageSecrets || reissueMutation.isPending}
                     onClick={() => reissueMutation.mutate(peer.peer_id)}
                   >
@@ -499,7 +504,7 @@ export function PeersPage() {
       ) : null}
       {isCreateOpen ? (
         <div className="modal-backdrop" onClick={closeCreateModal}>
-          <div className="modal-card modal-compact" onClick={(event) => event.stopPropagation()}>
+          <div className="modal-card modal-compact" data-testid="peers-create-modal" onClick={(event) => event.stopPropagation()}>
             <div className="panel-header">
               <h2>{t("peers.add_title", "Add peer")}</h2>
               <button className="ghost-button" onClick={closeCreateModal}>
@@ -510,6 +515,7 @@ export function PeersPage() {
               <label className="field">
                 <span>{t("table.user", "User")}</span>
                 <select
+                  data-testid="peers-create-user"
                   value={createForm.userId}
                   onChange={(event) =>
                     setCreateForm((current) => ({ ...current, userId: event.target.value }))
@@ -533,6 +539,7 @@ export function PeersPage() {
               <label className="field">
                 <span>{t("peers.peer", "Name")}</span>
                 <input
+                  data-testid="peers-create-name"
                   value={createForm.name}
                   autoComplete="off"
                   onChange={(event) =>
@@ -543,6 +550,7 @@ export function PeersPage() {
               <label className="field">
                 <span>{t("peers.assigned_ip", "Assigned IP")}</span>
                 <input
+                  data-testid="peers-create-assigned-ip"
                   value={createForm.assignedIp}
                   autoComplete="off"
                   onChange={(event) =>
@@ -554,6 +562,7 @@ export function PeersPage() {
               <label className="field">
                 <span>{t("common.description", "Description")}</span>
                 <input
+                  data-testid="peers-create-description"
                   value={createForm.description}
                   autoComplete="off"
                   onChange={(event) =>
@@ -563,6 +572,7 @@ export function PeersPage() {
               </label>
               <label className="field-checkbox field-span-2">
                 <input
+                  data-testid="peers-create-enabled"
                   type="checkbox"
                   checked={createForm.isActive}
                   onChange={(event) =>
@@ -578,6 +588,7 @@ export function PeersPage() {
             <div className="modal-actions">
               <button
                 className="primary-button"
+                data-testid="peers-create-submit"
                 disabled={
                   !createForm.userId ||
                   !createForm.name ||

@@ -74,7 +74,7 @@ These are not part of `v1.0.0`.
 
 ### Testing
 
-- E2E test suite
+- broad E2E test suite beyond release smoke coverage
 - full coverage
 
 ## Acceptable Limitations
@@ -83,6 +83,7 @@ These are not part of `v1.0.0`.
 - basic error messages
 - limited test coverage
 - manual deployment flow
+- only a minimal Playwright smoke path for release confidence, not full regression coverage
 
 ## Release Criteria
 
@@ -96,6 +97,7 @@ These are not part of `v1.0.0`.
 - bundle export and JSON state transfer work end to end
 - authentication flow is stable: login, logout, expiration
 - system recovers from restart without inconsistency
+- the release smoke path is covered by a minimal browser E2E suite
 
 ## Post 1.0 Ideas
 
@@ -104,6 +106,8 @@ These are not part of `v1.0.0`.
 - improved logging UI: filters, search
 - advanced security hardening
 - better mobile UX
+- expand Playwright coverage from smoke paths into full regression coverage
+- add archive, import/export, and mobile-specific E2E scenarios
 
 ## Immediate Priorities
 
@@ -123,3 +127,23 @@ Interpretation rules for automation and AI contributors:
 - after `v1.0.0`, use [`versioning-policy.md`](versioning-policy.md) for `x.y.z` updates
 
 When planning work, prefer closing Included gaps over polishing excluded areas.
+
+## E2E Strategy
+
+For `v1.0.0`:
+
+- adopt Playwright only for a minimal release smoke suite
+- target the highest-risk end-to-end paths:
+  - login
+  - group -> user -> peer creation
+  - reveal modal opens and download actions are visible
+  - apply flow updates dashboard sync-state
+  - logs page loads with filters and pagination
+
+After `v1.0.0`:
+
+- treat Playwright as an expanding regression layer
+- add bundle zip verification
+- add JSON export/import round-trip coverage
+- add mobile workflow coverage
+- add failure-path coverage around auth expiration and apply errors

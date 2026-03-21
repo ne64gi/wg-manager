@@ -63,6 +63,7 @@ export function LogsPage() {
         <label className="toolbar-field">
           <span>{t("logs.level_filter", "Level")}</span>
           <select
+            data-testid="logs-level-filter"
             value={level}
             onChange={(event) => {
               setOffset(0);
@@ -80,6 +81,7 @@ export function LogsPage() {
         <label className="toolbar-field">
           <span>{t("logs.category_filter", "Category")}</span>
           <select
+            data-testid="logs-category-filter"
             value={category}
             onChange={(event) => {
               setOffset(0);
@@ -97,6 +99,7 @@ export function LogsPage() {
         <label className="toolbar-field toolbar-field-grow">
           <span>{t("logs.search", "Search")}</span>
           <input
+            data-testid="logs-search"
             value={search}
             onChange={(event) => {
               setOffset(0);
@@ -133,7 +136,7 @@ export function LogsPage() {
             </tr>
           ))}
         </DataTable>
-        <div className="table-pagination">
+        <div className="table-pagination" data-testid="logs-pagination">
           <button
             className="ghost-button"
             disabled={offset === 0}
