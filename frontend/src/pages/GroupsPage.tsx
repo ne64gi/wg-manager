@@ -127,8 +127,6 @@ export function GroupsPage() {
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
   const [createForm, setCreateForm] = useState<GroupFormState>(DEFAULT_CREATE_FORM);
   const [editForm, setEditForm] = useState<GroupFormState>(DEFAULT_CREATE_FORM);
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [editError, setEditError] = useState<string | null>(null);
   const guiSettingsQuery = useGuiSettingsQuery();
   const { pushToast } = useToast();
   const groupsQuery = useQuery({
@@ -147,7 +145,6 @@ export function GroupsPage() {
     key: K,
     value: GroupFormState[K],
   ) {
-    setCreateError(null);
     setCreateForm((current) => ({ ...current, [key]: value }));
   }
 
@@ -183,13 +180,11 @@ export function GroupsPage() {
 
   function closeCreateModal() {
     setIsCreateOpen(false);
-    setCreateError(null);
     setCreateForm(DEFAULT_CREATE_FORM);
   }
 
   function openEditModal(group: Group) {
     setEditingGroup(group);
-    setEditError(null);
     setEditForm({
       name: group.name,
       scope: group.scope,
@@ -203,7 +198,6 @@ export function GroupsPage() {
 
   function closeEditModal() {
     setEditingGroup(null);
-    setEditError(null);
     setEditForm(DEFAULT_CREATE_FORM);
   }
 
@@ -232,8 +226,9 @@ export function GroupsPage() {
       await refreshGroupQueries();
     },
     onError: (error) => {
-      setCreateError(
+      pushToast(
         error instanceof Error ? error.message : t("groups.create_failed", "Failed to create group"),
+        "error",
       );
     },
   });
@@ -252,8 +247,9 @@ export function GroupsPage() {
       await refreshGroupQueries();
     },
     onError: (error) => {
-      setEditError(
+      pushToast(
         error instanceof Error ? error.message : t("groups.update_failed", "Failed to update group"),
+        "error",
       );
     },
   });
@@ -271,6 +267,12 @@ export function GroupsPage() {
       );
       await refreshGroupQueries();
     },
+    onError: (error) => {
+      pushToast(
+        error instanceof Error ? error.message : t("groups.update_failed", "Failed to update group"),
+        "error",
+      );
+    },
   });
 
   const deleteMutation = useMutation({
@@ -279,6 +281,12 @@ export function GroupsPage() {
     onSuccess: async () => {
       await applyIfNeeded(t("groups.deleted_notice", "Group deleted."));
       await refreshGroupQueries();
+    },
+    onError: (error) => {
+      pushToast(
+        error instanceof Error ? error.message : t("groups.delete_failed", "Failed to delete group"),
+        "error",
+      );
     },
   });
 
@@ -493,7 +501,6 @@ export function GroupsPage() {
               </label>
             </div>
             {createScopeError ? <div className="error-banner">{createScopeError}</div> : null}
-            {createError ? <div className="error-banner">{createError}</div> : null}
             <div className="modal-actions">
               <button
                 className="primary-button"
@@ -584,7 +591,6 @@ export function GroupsPage() {
                 </div>
               </label>
             </div>
-            {editError ? <div className="error-banner">{editError}</div> : null}
             <div className="modal-actions">
               <button
                 className="primary-button"

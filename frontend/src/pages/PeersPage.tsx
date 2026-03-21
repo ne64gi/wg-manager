@@ -47,7 +47,6 @@ export function PeersPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [createForm, setCreateForm] = useState<PeerFormState>(DEFAULT_CREATE_FORM);
-  const [createError, setCreateError] = useState<string | null>(null);
   const guiSettingsQuery = useGuiSettingsQuery();
   const { pushToast } = useToast();
   const peersRefreshMs = (guiSettingsQuery.data?.peers_refresh_seconds ?? 10) * 1000;
@@ -102,7 +101,6 @@ export function PeersPage() {
 
   function closeCreateModal() {
     setIsCreateOpen(false);
-    setCreateError(null);
     setCreateForm(DEFAULT_CREATE_FORM);
   }
 
@@ -144,8 +142,9 @@ export function PeersPage() {
       await refreshQueries();
     },
     onError: (error) => {
-      setCreateError(
+      pushToast(
         error instanceof Error ? error.message : t("peers.create_failed", "Failed to create peer"),
+        "error",
       );
     },
   });
@@ -184,6 +183,12 @@ export function PeersPage() {
       );
       await refreshQueries();
     },
+    onError: (error) => {
+      pushToast(
+        error instanceof Error ? error.message : t("peers.update_failed", "Failed to update peer"),
+        "error",
+      );
+    },
   });
 
   const reissueMutation = useMutation({
@@ -208,6 +213,12 @@ export function PeersPage() {
       await applyIfNeeded(t("peers.deleted_notice", "Peer deleted."));
       await refreshQueries();
     },
+    onError: (error) => {
+      pushToast(
+        error instanceof Error ? error.message : t("peers.delete_failed", "Failed to delete peer"),
+        "error",
+      );
+    },
   });
 
   const applyMutation = useMutation({
@@ -215,6 +226,12 @@ export function PeersPage() {
     onSuccess: async () => {
       pushToast(t("peers.apply_notice", "Config applied."));
       await refreshQueries();
+    },
+    onError: (error) => {
+      pushToast(
+        error instanceof Error ? error.message : t("common.apply_failed", "Apply failed."),
+        "error",
+      );
     },
   });
 
@@ -552,7 +569,6 @@ export function PeersPage() {
                 </div>
               </label>
             </div>
-            {createError ? <div className="error-banner">{createError}</div> : null}
             <div className="modal-actions">
               <button
                 className="primary-button"

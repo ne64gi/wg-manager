@@ -37,8 +37,6 @@ export function UsersPage() {
   const [createForm, setCreateForm] = useState<UserFormState>(DEFAULT_CREATE_FORM);
   const [editForm, setEditForm] = useState<UserFormState>(DEFAULT_CREATE_FORM);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [editError, setEditError] = useState<string | null>(null);
   const guiSettingsQuery = useGuiSettingsQuery();
   const { pushToast } = useToast();
   const usersQuery = useQuery({
@@ -81,13 +79,11 @@ export function UsersPage() {
 
   function closeCreateModal() {
     setIsCreateOpen(false);
-    setCreateError(null);
     setCreateForm(DEFAULT_CREATE_FORM);
   }
 
   function openEditModal(user: User) {
     setEditingUser(user);
-    setEditError(null);
     setEditForm({
       groupId: String(user.group_id),
       name: user.name,
@@ -99,7 +95,6 @@ export function UsersPage() {
 
   function closeEditModal() {
     setEditingUser(null);
-    setEditError(null);
     setEditForm(DEFAULT_CREATE_FORM);
   }
 
@@ -123,8 +118,9 @@ export function UsersPage() {
       await refreshQueries();
     },
     onError: (error) => {
-      setCreateError(
+      pushToast(
         error instanceof Error ? error.message : t("users.create_failed", "Failed to create user"),
+        "error",
       );
     },
   });
@@ -148,8 +144,9 @@ export function UsersPage() {
       await refreshQueries();
     },
     onError: (error) => {
-      setEditError(
+      pushToast(
         error instanceof Error ? error.message : t("users.update_failed", "Failed to update user"),
+        "error",
       );
     },
   });
@@ -167,6 +164,12 @@ export function UsersPage() {
       );
       await refreshQueries();
     },
+    onError: (error) => {
+      pushToast(
+        error instanceof Error ? error.message : t("users.update_failed", "Failed to update user"),
+        "error",
+      );
+    },
   });
 
   const deleteMutation = useMutation({
@@ -175,6 +178,12 @@ export function UsersPage() {
     onSuccess: async () => {
       await applyIfNeeded(t("users.deleted_notice", "User deleted."));
       await refreshQueries();
+    },
+    onError: (error) => {
+      pushToast(
+        error instanceof Error ? error.message : t("users.delete_failed", "Failed to delete user"),
+        "error",
+      );
     },
   });
 
@@ -390,7 +399,6 @@ export function UsersPage() {
                 </div>
               </label>
             </div>
-            {createError ? <div className="error-banner">{createError}</div> : null}
             <div className="modal-actions">
               <button
                 className="primary-button"
@@ -464,7 +472,6 @@ export function UsersPage() {
                 </div>
               </label>
             </div>
-            {editError ? <div className="error-banner">{editError}</div> : null}
             <div className="modal-actions">
               <button
                 className="primary-button"

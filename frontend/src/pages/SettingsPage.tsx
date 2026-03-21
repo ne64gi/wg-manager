@@ -18,10 +18,12 @@ import { queryKeys } from "../modules/queryKeys";
 import type { GuiSettingsUpdate } from "../types";
 import { Panel } from "../ui/Cards";
 import { DataTable } from "../ui/Table";
+import { useToast } from "../ui/ToastProvider";
 
 export function SettingsPage() {
   const auth = useAuth();
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const settingsQuery = useQuery({
     queryKey: queryKeys.guiSettings,
     queryFn: async () => getGuiSettings((await auth.getValidAccessToken()) ?? ""),
@@ -40,14 +42,10 @@ export function SettingsPage() {
   const [endpointPort, setEndpointPort] = useState("51820");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [settingsNotice, setSettingsNotice] = useState<string | null>(null);
-  const [endpointNotice, setEndpointNotice] = useState<string | null>(null);
-  const [loginUserError, setLoginUserError] = useState<string | null>(null);
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [nextPassword, setNextPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordNotice, setPasswordNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (settingsQuery.data) {
@@ -66,14 +64,15 @@ export function SettingsPage() {
     mutationFn: async () =>
       updateGuiSettings((await auth.getValidAccessToken()) ?? "", formState),
     onSuccess: async () => {
-      setSettingsNotice(t("settings.saved", "GUI settings saved."));
+      pushToast(t("settings.saved", "GUI settings saved."));
       await queryClient.invalidateQueries({ queryKey: queryKeys.guiSettings });
     },
     onError: (error) => {
-      setSettingsNotice(
+      pushToast(
         error instanceof Error
           ? error.message
           : t("settings.save_failed", "Failed to save GUI settings."),
+        "error",
       );
     },
   });
@@ -85,14 +84,15 @@ export function SettingsPage() {
         endpoint_port: Number(endpointPort),
       }),
     onSuccess: async () => {
-      setEndpointNotice(t("settings.endpoint_saved", "Endpoint settings saved."));
+      pushToast(t("settings.endpoint_saved", "Endpoint settings saved."));
       await queryClient.invalidateQueries({ queryKey: queryKeys.initialSettings });
     },
     onError: (error) => {
-      setEndpointNotice(
+      pushToast(
         error instanceof Error
           ? error.message
           : t("settings.endpoint_save_failed", "Failed to save endpoint settings."),
+        "error",
       );
     },
   });
@@ -106,14 +106,15 @@ export function SettingsPage() {
     onSuccess: async () => {
       setNewUsername("");
       setNewPassword("");
-      setLoginUserError(null);
+      pushToast(t("settings.login_user_created", "Login user created."));
       await queryClient.invalidateQueries({ queryKey: queryKeys.loginUsers });
     },
     onError: (error) => {
-      setLoginUserError(
+      pushToast(
         error instanceof Error
           ? error.message
           : t("settings.add_user_failed", "Failed to create login user."),
+        "error",
       );
     },
   });
@@ -133,18 +134,20 @@ export function SettingsPage() {
         new_password: nextPassword,
       }),
     onSuccess: async () => {
-      setPasswordNotice(t("auth.password_changed", "Password changed."));
+      pushToast(t("auth.password_changed", "Password changed."));
       setCurrentPassword("");
       setNextPassword("");
       setConfirmPassword("");
+      setPasswordModalOpen(false);
       await queryClient.invalidateQueries({ queryKey: queryKeys.authMe });
       await queryClient.invalidateQueries({ queryKey: queryKeys.loginUsers });
     },
     onError: (error) => {
-      setPasswordNotice(
+      pushToast(
         error instanceof Error
           ? translateErrorMessage(error.message)
           : t("auth.password_change_failed", "Failed to change password."),
+        "error",
       );
     },
   });
@@ -344,7 +347,6 @@ export function SettingsPage() {
               </div>
             </label>
           </div>
-          {settingsNotice ? <div className="info-banner">{settingsNotice}</div> : null}
         </Panel>
 
         <Panel
@@ -384,7 +386,6 @@ export function SettingsPage() {
               </div>
             </label>
           </div>
-          {endpointNotice ? <div className="info-banner">{endpointNotice}</div> : null}
         </Panel>
       </div>
 
@@ -411,7 +412,6 @@ export function SettingsPage() {
             {t("settings.add_user", "Add user")}
           </button>
         </div>
-        {loginUserError ? <div className="error-banner">{loginUserError}</div> : null}
         <DataTable
           headers={[
             t("common.username", "Username"),
@@ -435,7 +435,6 @@ export function SettingsPage() {
                     className="ghost-button"
                     onClick={() => {
                       setPasswordModalOpen(true);
-                      setPasswordNotice(null);
                     }}
                   >
                     {t("settings.change_password", "Change password")}
@@ -493,11 +492,6 @@ export function SettingsPage() {
                 />
               </label>
             </div>
-            {passwordNotice ? (
-              <div className={passwordNotice === t("auth.password_changed", "Password changed.") ? "info-banner" : "error-banner"}>
-                {passwordNotice}
-              </div>
-            ) : null}
             <div className="modal-actions">
               <button
                 className="primary-button"
@@ -509,7 +503,7 @@ export function SettingsPage() {
                 }
                 onClick={() => {
                   if (nextPassword !== confirmPassword) {
-                    setPasswordNotice(t("auth.password_mismatch", "Passwords do not match"));
+                    pushToast(t("auth.password_mismatch", "Passwords do not match"), "error");
                     return;
                   }
                   changePasswordMutation.mutate();

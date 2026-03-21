@@ -36,6 +36,13 @@
   --info-banner-bg: rgba(159, 29, 32, 0.11);
   --info-banner-border: rgba(159, 29, 32, 0.2);
   --info-banner-text: #ffd7d8;
+  --toast-bg: rgba(9, 14, 26, 0.94);
+  --toast-border: rgba(255, 255, 255, 0.08);
+  --toast-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+  --toast-close: var(--text-muted);
+  --toast-error-bg: rgba(38, 12, 18, 0.96);
+  --toast-error-border: rgba(214, 80, 80, 0.38);
+  --toast-info-border: rgba(159, 29, 32, 0.3);
   background:
     radial-gradient(circle at top, var(--bg-glow-top), transparent 30%),
     radial-gradient(circle at top right, var(--bg-glow-red), transparent 26%),
@@ -71,6 +78,13 @@
   --info-banner-bg: rgba(159, 29, 32, 0.08);
   --info-banner-border: rgba(159, 29, 32, 0.16);
   --info-banner-text: #7d1d1f;
+  --toast-bg: rgba(255, 255, 255, 0.96);
+  --toast-border: rgba(83, 105, 146, 0.18);
+  --toast-shadow: 0 16px 36px rgba(48, 66, 104, 0.16);
+  --toast-close: #5f6f91;
+  --toast-error-bg: rgba(255, 240, 243, 0.98);
+  --toast-error-border: rgba(181, 58, 76, 0.24);
+  --toast-info-border: rgba(159, 29, 32, 0.18);
 }
 
 * {
@@ -945,20 +959,20 @@ h2 {
   gap: 0.75rem;
   padding: 0.9rem 1rem;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(9, 14, 26, 0.94);
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--toast-border);
+  background: var(--toast-bg);
+  box-shadow: var(--toast-shadow);
   backdrop-filter: blur(18px);
   pointer-events: auto;
 }
 
 .toast-item-info {
-  border-color: rgba(159, 29, 32, 0.3);
+  border-color: var(--toast-info-border);
 }
 
 .toast-item-error {
-  border-color: rgba(214, 80, 80, 0.38);
-  background: rgba(38, 12, 18, 0.96);
+  border-color: var(--toast-error-border);
+  background: var(--toast-error-bg);
 }
 
 .toast-message {
@@ -970,7 +984,7 @@ h2 {
 .toast-close {
   border: 0;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--toast-close);
   font-size: 1.15rem;
   line-height: 1;
   cursor: pointer;
