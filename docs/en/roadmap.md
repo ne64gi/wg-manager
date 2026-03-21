@@ -20,6 +20,15 @@ The current beta has been verified with:
 - runtime status history beyond direct `wg show`
 - localization for docs and GUI
 
+## Scope Note
+
+The project no longer plans to add multiple WireGuard interfaces such as `wg1` and `wg2`
+inside a single stack as a roadmap target.
+
+If multiple interfaces are needed later, the preferred direction is to run another
+WireGuard container or another `wg-studio` stack instead of expanding one control plane
+into multi-interface orchestration.
+
 ## Documentation Plan
 
 - `docs/en`: active source documentation

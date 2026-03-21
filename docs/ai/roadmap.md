@@ -48,7 +48,7 @@ These are not part of `v1.0.0`.
 
 ### Infrastructure / Scale
 
-- multi-interface support: `wg1`, `wg2`
+- multi-instance orchestration inside one control plane
 - multi-server or multi-tenant support
 - Kubernetes or Helm deployment
 
