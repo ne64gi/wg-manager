@@ -147,7 +147,7 @@ export function LoginPage() {
         </div>
         <div className="login-hero">
           <div className="login-logo-orb">
-            <span className="brand-badge">
+            <span className="brand-badge brand-badge-logo">
               <BrandIcon className="brand-icon" />
             </span>
           </div>

@@ -43,7 +43,7 @@ export function AppLayout({ children }: PropsWithChildren) {
           <MenuIcon className="icon icon-menu" />
         </button>
         <div className="mobile-topbar-title">
-          <span className="brand-badge brand-badge-compact">
+          <span className="brand-badge brand-badge-logo brand-badge-compact">
             <BrandIcon className="brand-icon" />
           </span>
           <span>wg-studio</span>
@@ -59,7 +59,7 @@ export function AppLayout({ children }: PropsWithChildren) {
       <aside className={`sidebar${isMobileNavOpen ? " sidebar-mobile-open" : ""}`}>
         <div>
           <div className="brand">
-            <span className="brand-badge">
+            <span className="brand-badge brand-badge-logo">
               <BrandIcon className="brand-icon" />
             </span>
             <div>
