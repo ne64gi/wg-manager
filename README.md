@@ -73,6 +73,18 @@ Start the stack:
 docker compose up -d --build
 ```
 
+This starts only the normal runtime services:
+
+- `postgres`
+- `wireguard`
+- `wg-studio-api`
+- `wg-studio-web`
+
+Tooling services are profile-scoped and do not start by default:
+
+- `wg-studio-cli` -> `tools`
+- `wg-studio-e2e` -> `test`
+
 Open the GUI:
 
 ```text
@@ -100,16 +112,16 @@ docker compose exec wg-studio-api python -c "import urllib.request; print(urllib
 Run a CLI command:
 
 ```bash
-docker compose run --rm wg-studio-cli group list
+docker compose --profile tools run --rm wg-studio-cli group list
 ```
 
 Login-user related CLI examples:
 
 ```bash
-docker compose run --rm wg-studio-cli setup-status
-docker compose run --rm wg-studio-cli setup --username admin --password supersecret123
-docker compose run --rm wg-studio-cli login-user list
-docker compose run --rm wg-studio-cli login-user set-password --login-user-id 1 --password newsecret123
+docker compose --profile tools run --rm wg-studio-cli setup-status
+docker compose --profile tools run --rm wg-studio-cli setup --username admin --password supersecret123
+docker compose --profile tools run --rm wg-studio-cli login-user list
+docker compose --profile tools run --rm wg-studio-cli login-user set-password --login-user-id 1 --password newsecret123
 ```
 
 ## Security Notes

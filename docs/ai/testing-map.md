@@ -8,12 +8,12 @@ Give AI contributors a low-ambiguity map from change type to the minimum require
 
 ### Backend service and API tests
 
-- runner: `docker compose run --rm --entrypoint pytest wg-studio-cli /app/tests -q`
+- runner: `docker compose --profile tools run --rm --entrypoint pytest wg-studio-cli /app/tests -q`
 - role: source-of-truth validation for domain logic, API contracts, reveal lifecycle, apply behavior, import/export, and auth rules
 
 ### Browser smoke tests
 
-- runner: `docker compose run --rm wg-studio-e2e`
+- runner: `docker compose --profile test run --rm wg-studio-e2e`
 - framework: Playwright
 - role: catch cross-layer regressions that unit or service tests miss
 - scope: release smoke only for `v1.0.0`

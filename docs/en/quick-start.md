@@ -36,8 +36,12 @@ Default services:
 - `postgres`
 - `wireguard`
 - `wg-studio-api`
-- `wg-studio-cli`
 - `wg-studio-web`
+
+Profile-scoped services that do not start by default:
+
+- `wg-studio-cli` (`tools`)
+- `wg-studio-e2e` (`test`)
 
 ## 3. Open The GUI
 
@@ -63,7 +67,7 @@ docker compose exec wg-studio-api python -c "import urllib.request; print(urllib
 Run a CLI command:
 
 ```bash
-docker compose run --rm wg-studio-cli group list
+docker compose --profile tools run --rm wg-studio-cli group list
 ```
 
 ## 5. First GUI Workflow

@@ -9,6 +9,12 @@
 5. if no login users exist, complete first-admin setup in the GUI
 6. login to `http://localhost:3900/wg-studio/`
 
+Compose profile note:
+
+- runtime services start without extra profiles
+- use `docker compose --profile tools run --rm wg-studio-cli ...` for CLI/admin tasks
+- use `docker compose --profile test run --rm wg-studio-e2e` for Playwright smoke
+
 ## Normal Operator Flow
 
 1. create group

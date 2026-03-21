@@ -14,8 +14,13 @@
 
 - `postgres`: メイン DB と監査ログ DB
 - `wg-studio-api`: 内部 Docker ネットワーク上の FastAPI サービス
-- `wg-studio-cli`: 内部 Docker ネットワーク上の管理 / 開発用コンテナ
 - `wireguard`: `wg-studio` から制御される薄い runtime コンテナ
+- `wg-studio-web`: `nginx` 経由で配信される GUI
+
+profile 付きの補助サービス:
+
+- `wg-studio-cli`: 内部 Docker ネットワーク上の管理 / 開発用コンテナ（`tools`）
+- `wg-studio-e2e`: Playwright smoke 実行用コンテナ（`test`）
 
 セキュリティを意識した実行時の選択:
 

@@ -14,8 +14,13 @@ Runtime services in `docker-compose.yml`:
 
 - `postgres`: main and audit databases
 - `wg-studio-api`: FastAPI service on the internal Docker network
-- `wg-studio-cli`: admin/dev container on the internal Docker network
 - `wireguard`: thin runtime container controlled by `wg-studio`
+- `wg-studio-web`: bundled GUI served through `nginx`
+
+Profile-scoped helper services:
+
+- `wg-studio-cli`: admin/dev container on the internal Docker network (`tools`)
+- `wg-studio-e2e`: Playwright smoke runner (`test`)
 
 Security-oriented runtime choices:
 

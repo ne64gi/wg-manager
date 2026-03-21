@@ -22,6 +22,18 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
+標準で起動するサービス:
+
+- `postgres`
+- `wireguard`
+- `wg-studio-api`
+- `wg-studio-web`
+
+必要なときだけ使う profile 付きサービス:
+
+- `wg-studio-cli`（`tools`）
+- `wg-studio-e2e`（`test`）
+
 ## 3. GUI を開く
 
 ```text
@@ -46,3 +58,5 @@ http://localhost:3900/wg-studio/
 
 - `wg-studio` `v1.0.0` は 1 スタックにつき 1 WireGuard ランタイム前提です
 - `wg1` や別系統のランタイムを持ちたい場合は、別コンテナまたは別 `wg-studio` スタックで分けて運用します
+- CLI を使うときは `docker compose --profile tools run --rm wg-studio-cli ...` を使います
+- E2E smoke を回すときは `docker compose --profile test run --rm wg-studio-e2e` を使います

@@ -21,8 +21,13 @@ Default services:
 
 - `postgres`
 - `wg-studio-api`
-- `wg-studio-cli`
 - `wireguard`
+- `wg-studio-web`
+
+Profile-scoped helper services:
+
+- `wg-studio-cli` (`tools`)
+- `wg-studio-e2e` (`test`)
 
 Notable runtime behavior:
 
@@ -47,13 +52,13 @@ docker compose exec wg-studio-api python -c "import urllib.request; print(urllib
 Run a CLI command:
 
 ```bash
-docker compose run --rm wg-studio-cli group list
+docker compose --profile tools run --rm wg-studio-cli group list
 ```
 
 Run tests:
 
 ```bash
-docker compose run --rm \
+docker compose --profile tools run --rm \
   -e DATABASE_URL=sqlite:////tmp/wg-studio-test.db \
   -e LOG_DATABASE_URL=sqlite:////tmp/wg-studio-log-test.db \
   -e ARTIFACT_ROOT=/tmp/generated \
@@ -90,7 +95,7 @@ npx playwright install chromium
 Run the release smoke suite through Docker Compose:
 
 ```bash
-docker compose run --rm \
+docker compose --profile test run --rm \
   -e E2E_BASE_URL=http://wg-studio-web/wg-studio/ \
   -e E2E_USERNAME=admin \
   -e E2E_PASSWORD=supersecret123 \

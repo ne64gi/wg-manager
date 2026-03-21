@@ -21,8 +21,13 @@
 
 - `postgres`
 - `wg-studio-api`
-- `wg-studio-cli`
 - `wireguard`
+- `wg-studio-web`
+
+profile 付きの補助サービス:
+
+- `wg-studio-cli`（`tools`）
+- `wg-studio-e2e`（`test`）
 
 主な実行時の特徴:
 
@@ -47,13 +52,13 @@ docker compose exec wg-studio-api python -c "import urllib.request; print(urllib
 CLI コマンド実行:
 
 ```bash
-docker compose run --rm wg-studio-cli group list
+docker compose --profile tools run --rm wg-studio-cli group list
 ```
 
 テスト実行:
 
 ```bash
-docker compose run --rm \
+docker compose --profile tools run --rm \
   -e DATABASE_URL=sqlite:////tmp/wg-studio-test.db \
   -e LOG_DATABASE_URL=sqlite:////tmp/wg-studio-log-test.db \
   -e ARTIFACT_ROOT=/tmp/generated \
@@ -90,7 +95,7 @@ npx playwright install chromium
 Docker Compose 経由で release smoke を実行:
 
 ```bash
-docker compose run --rm \
+docker compose --profile test run --rm \
   -e E2E_BASE_URL=http://wg-studio-web/wg-studio/ \
   -e E2E_USERNAME=admin \
   -e E2E_PASSWORD=supersecret123 \
