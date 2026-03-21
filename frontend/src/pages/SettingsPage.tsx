@@ -158,40 +158,6 @@ export function SettingsPage() {
         </div>
       </div>
 
-      <div className="stats-grid stats-grid-compact">
-        <div className="stat-card">
-          <div className="stat-label">{t("settings.theme_mode", "Theme mode")}</div>
-          <div className="stat-value settings-stat-value">
-            {t(
-              `common.${settingsQuery.data?.theme_mode ?? "system"}`,
-              settingsQuery.data?.theme_mode ?? "system",
-            )}
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">
-            {t("settings.default_locale", "Default locale")}
-          </div>
-          <div className="stat-value settings-stat-value">
-            {t(
-              `locale.${settingsQuery.data?.default_locale ?? "en"}`,
-              settingsQuery.data?.default_locale ?? "en",
-            )}
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">
-            {t("settings.error_log_level", "Error log level")}
-          </div>
-          <div className="stat-value settings-stat-value">
-            {t(
-              `log_level.${settingsQuery.data?.error_log_level ?? "warning"}`,
-              settingsQuery.data?.error_log_level ?? "warning",
-            )}
-          </div>
-        </div>
-      </div>
-
       <div className="two-column-grid">
         <Panel
           title={t("settings.gui_heading", "GUI settings")}
