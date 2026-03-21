@@ -12,9 +12,9 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.core import settings
 from app.models import LoginSession, LoginUser
-from app.schemas import AuthLoginRequest, TokenPairRead
+from app.schemas import AuthLoginRequest, LoginUserCreate, LoginUserUpdate, TokenPairRead
 from app.services.audit import log_gui_event, log_operation
-from app.services.gui import verify_password
+from app.services.gui import create_login_user, update_login_user, verify_password
 
 
 def _b64url_encode(raw: bytes) -> str:
@@ -267,3 +267,33 @@ def authenticate_access_token(session: Session, access_token: str) -> LoginUser:
     session.commit()
     session.refresh(login_session.login_user)
     return login_session.login_user
+
+
+def has_login_users(session: Session) -> bool:
+    return session.scalar(select(LoginUser.id).limit(1)) is not None
+
+
+def setup_initial_login_user(
+    session: Session, username: str, password: str
+) -> tuple[LoginUser, TokenPairRead]:
+    if has_login_users(session):
+        raise ValueError("initial login user has already been created")
+
+    create_login_user(
+        session,
+        LoginUserCreate(username=username, password=password, description="", is_active=True),
+    )
+    return authenticate_login(session, AuthLoginRequest(username=username, password=password))
+
+
+def change_login_user_password(
+    session: Session, current_user: LoginUser, current_password: str, new_password: str
+) -> LoginUser:
+    if not verify_password(current_password, current_user.password_hash):
+        raise ValueError("current password is incorrect")
+
+    return update_login_user(
+        session,
+        current_user.id,
+        LoginUserUpdate(password=new_password),
+    )

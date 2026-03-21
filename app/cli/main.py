@@ -8,20 +8,32 @@ import typer
 from app.core import settings
 from app.db import SessionLocal
 from app.models import GroupScope
-from app.schemas import GroupAllocationUpdate, GroupCreate, PeerCreate, UserCreate
+from app.schemas import (
+    GroupAllocationUpdate,
+    GroupCreate,
+    LoginUserCreate,
+    LoginUserUpdate,
+    PeerCreate,
+    UserCreate,
+)
 from app.services import (
     create_group,
+    create_login_user,
     create_peer,
     create_user,
     delete_group,
+    delete_login_user,
     delete_peer,
     delete_user,
+    has_login_users,
     init_db,
     list_groups,
+    list_login_users,
     list_peers,
     list_users,
     revoke_peer,
     resolve_peer_access,
+    update_login_user,
     update_group_allocation,
 )
 
@@ -31,12 +43,14 @@ user_app = typer.Typer()
 peer_app = typer.Typer()
 config_app = typer.Typer()
 settings_app = typer.Typer()
+login_user_app = typer.Typer()
 
 app.add_typer(group_app, name="group")
 app.add_typer(user_app, name="user")
 app.add_typer(peer_app, name="peer")
 app.add_typer(config_app, name="config")
 app.add_typer(settings_app, name="settings")
+app.add_typer(login_user_app, name="login-user")
 
 
 @app.callback()
@@ -77,6 +91,34 @@ def api_request(method: str, path: str) -> object:
 def init_db_command() -> None:
     init_db()
     typer.echo("database initialized")
+
+
+@app.command("setup-status")
+def setup_status_command() -> None:
+    with SessionLocal() as session:
+        print_json({"has_login_users": has_login_users(session)})
+
+
+@app.command("setup")
+def setup_command(
+    username: str = typer.Option(..., "--username"),
+    password: str = typer.Option(..., "--password"),
+) -> None:
+    with SessionLocal() as session:
+        if has_login_users(session):
+            raise typer.BadParameter("initial login user has already been created")
+        login_user = create_login_user(
+            session,
+            LoginUserCreate(username=username, password=password, description="", is_active=True),
+        )
+        print_json(
+            {
+                "id": login_user.id,
+                "username": login_user.username,
+                "is_active": login_user.is_active,
+                "created_at": login_user.created_at,
+            }
+        )
 
 
 @group_app.command("create")
@@ -348,6 +390,105 @@ def settings_set_endpoint_command(
             f"could not reach API at {settings.api_base_url}: {exc.reason}"
         ) from exc
     print_json(json.loads(raw))
+
+
+@login_user_app.command("list")
+def login_user_list_command() -> None:
+    with SessionLocal() as session:
+        users = list_login_users(session)
+        print_json(
+            [
+                {
+                    "id": user.id,
+                    "username": user.username,
+                    "description": user.description,
+                    "is_active": user.is_active,
+                    "last_login_at": user.last_login_at,
+                    "created_at": user.created_at,
+                    "updated_at": user.updated_at,
+                }
+                for user in users
+            ]
+        )
+
+
+@login_user_app.command("create")
+def login_user_create_command(
+    username: str = typer.Option(..., "--username"),
+    password: str = typer.Option(..., "--password"),
+    description: str = typer.Option("", "--description"),
+    is_active: bool = typer.Option(True, "--active/--inactive"),
+) -> None:
+    with SessionLocal() as session:
+        user = create_login_user(
+            session,
+            LoginUserCreate(
+                username=username,
+                password=password,
+                description=description,
+                is_active=is_active,
+            ),
+        )
+        print_json(
+            {
+                "id": user.id,
+                "username": user.username,
+                "description": user.description,
+                "is_active": user.is_active,
+                "created_at": user.created_at,
+            }
+        )
+
+
+@login_user_app.command("set-password")
+def login_user_set_password_command(
+    login_user_id: int = typer.Option(..., "--login-user-id"),
+    password: str = typer.Option(..., "--password"),
+) -> None:
+    with SessionLocal() as session:
+        user = update_login_user(
+            session,
+            login_user_id,
+            LoginUserUpdate(password=password),
+        )
+        print_json(
+            {
+                "id": user.id,
+                "username": user.username,
+                "password_updated": True,
+                "updated_at": user.updated_at,
+            }
+        )
+
+
+@login_user_app.command("set-active")
+def login_user_set_active_command(
+    login_user_id: int = typer.Option(..., "--login-user-id"),
+    is_active: bool = typer.Option(..., "--active/--inactive"),
+) -> None:
+    with SessionLocal() as session:
+        user = update_login_user(
+            session,
+            login_user_id,
+            LoginUserUpdate(is_active=is_active),
+        )
+        print_json(
+            {
+                "id": user.id,
+                "username": user.username,
+                "is_active": user.is_active,
+                "updated_at": user.updated_at,
+            }
+        )
+
+
+@login_user_app.command("delete")
+def login_user_delete_command(
+    login_user_id: int = typer.Option(..., "--login-user-id"),
+) -> None:
+    with SessionLocal() as session:
+        delete_login_user(session, login_user_id)
+        typer.echo(f"login user {login_user_id} deleted")
 
 
 if __name__ == "__main__":

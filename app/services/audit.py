@@ -50,6 +50,23 @@ def log_gui_event(
     status_code: int | None = None,
     details: dict | None = None,
 ) -> None:
+    if category in {"auth", "settings", "secret"}:
+        with AuditSessionLocal() as session:
+            entry = GuiLog(
+                level=level.lower(),
+                category=category,
+                message=message,
+                login_user_id=login_user_id,
+                username=username,
+                request_path=request_path,
+                request_method=request_method,
+                status_code=status_code,
+                details=details or {},
+            )
+            session.add(entry)
+            session.commit()
+        return
+
     with SessionLocal() as settings_session:
         gui_settings = settings_session.get(GuiSettings, 1)
         threshold = (gui_settings.error_log_level if gui_settings else "warning").lower()

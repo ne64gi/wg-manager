@@ -4,9 +4,12 @@ from app.schemas import AuthLoginRequest, LoginUserCreate
 from app.services import (
     authenticate_access_token,
     authenticate_login,
+    change_login_user_password,
     create_login_user,
+    has_login_users,
     logout_login_session,
     refresh_login_tokens,
+    setup_initial_login_user,
 )
 from app.services.auth import decode_jwt
 
@@ -70,3 +73,41 @@ def test_jwt_login_refresh_and_logout(monkeypatch) -> None:
             assert "expired" in str(exc)
         else:
             raise AssertionError("expected revoked refresh token to be rejected")
+
+
+def test_initial_setup_and_password_change(monkeypatch) -> None:
+    reset_db()
+    monkeypatch.setattr(settings, "jwt_secret_key", "test-secret-key")
+
+    with SessionLocal() as session:
+        assert has_login_users(session) is False
+
+        login_user, token_pair = setup_initial_login_user(
+            session,
+            "setup-admin",
+            "supersecret123",
+        )
+        assert login_user.username == "setup-admin"
+        assert token_pair.access_token
+        assert has_login_users(session) is True
+
+        updated_user = change_login_user_password(
+            session,
+            login_user,
+            "supersecret123",
+            "newsecret123",
+        )
+        assert updated_user.id == login_user.id
+
+        authenticated_user, _ = authenticate_login(
+            session,
+            AuthLoginRequest(username="setup-admin", password="newsecret123"),
+        )
+        assert authenticated_user.id == login_user.id
+
+        try:
+            setup_initial_login_user(session, "second-admin", "anothersecret123")
+        except ValueError as exc:
+            assert "already been created" in str(exc)
+        else:
+            raise AssertionError("expected setup to reject when users already exist")

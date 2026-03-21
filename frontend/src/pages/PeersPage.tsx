@@ -13,6 +13,7 @@ import {
   updatePeer,
 } from "../lib/api";
 import { formatBytes } from "../lib/format";
+import { t } from "../lib/i18n";
 import { useAuth } from "../modules/auth/AuthContext";
 import { useGuiSettingsQuery } from "../modules/gui/useGuiSettingsQuery";
 import { queryKeys } from "../modules/queryKeys";
@@ -88,12 +89,12 @@ export function PeersPage() {
 
     try {
       await applyServerConfig((await auth.getValidAccessToken()) ?? "");
-      pushToast(successNotice ?? "Config applied.");
+      pushToast(successNotice ?? t("common.config_applied", "Config applied."));
     } catch (error) {
       pushToast(
         error instanceof Error
-          ? `${successNotice ?? "Change saved."} Apply failed: ${error.message}`
-          : `${successNotice ?? "Change saved."} Apply failed.`,
+          ? `${successNotice ?? t("common.change_saved", "Change saved.")} ${t("common.apply_failed", "Apply failed.")} ${error.message}`
+          : `${successNotice ?? t("common.change_saved", "Change saved.")} ${t("common.apply_failed", "Apply failed.")}`,
         "error",
       );
     }
@@ -139,11 +140,13 @@ export function PeersPage() {
       }),
     onSuccess: async () => {
       closeCreateModal();
-      await applyIfNeeded("Peer created.");
+      await applyIfNeeded(t("peers.created_notice", "Peer created."));
       await refreshQueries();
     },
     onError: (error) => {
-      setCreateError(error instanceof Error ? error.message : "Failed to create peer");
+      setCreateError(
+        error instanceof Error ? error.message : t("peers.create_failed", "Failed to create peer"),
+      );
     },
   });
 
@@ -156,7 +159,7 @@ export function PeersPage() {
     },
     onError: (error) => {
       pushToast(
-        error instanceof Error ? error.message : "Failed to reveal peer artifacts",
+        error instanceof Error ? error.message : t("peers.reveal_failed", "Failed to reveal peer artifacts"),
         "error",
       );
     },
@@ -174,7 +177,11 @@ export function PeersPage() {
         is_active: !isActive,
       }),
     onSuccess: async (_, variables) => {
-      await applyIfNeeded(variables.isActive ? "Peer disabled." : "Peer enabled.");
+      await applyIfNeeded(
+        variables.isActive
+          ? t("peers.disabled_notice", "Peer disabled.")
+          : t("peers.enabled_notice", "Peer enabled."),
+      );
       await refreshQueries();
     },
   });
@@ -183,12 +190,12 @@ export function PeersPage() {
     mutationFn: async (peerId: number) =>
       reissuePeer(peerId, (await auth.getValidAccessToken()) ?? ""),
     onSuccess: async () => {
-      await applyIfNeeded("Peer keys regenerated.");
+      await applyIfNeeded(t("peers.reissue_notice", "Peer keys regenerated."));
       await refreshQueries();
     },
     onError: (error) => {
       pushToast(
-        error instanceof Error ? error.message : "Failed to reissue peer keys",
+        error instanceof Error ? error.message : t("peers.reissue_failed", "Failed to reissue peer keys"),
         "error",
       );
     },
@@ -198,7 +205,7 @@ export function PeersPage() {
     mutationFn: async (peerId: number) =>
       deletePeer(peerId, (await auth.getValidAccessToken()) ?? ""),
     onSuccess: async () => {
-      await applyIfNeeded("Peer deleted.");
+      await applyIfNeeded(t("peers.deleted_notice", "Peer deleted."));
       await refreshQueries();
     },
   });
@@ -206,7 +213,7 @@ export function PeersPage() {
   const applyMutation = useMutation({
     mutationFn: async () => applyServerConfig((await auth.getValidAccessToken()) ?? ""),
     onSuccess: async () => {
-      pushToast("Config applied.");
+      pushToast(t("peers.apply_notice", "Config applied."));
       await refreshQueries();
     },
   });
@@ -247,48 +254,48 @@ export function PeersPage() {
     <div className="page-stack">
       <div className="page-header">
         <div>
-          <div className="eyebrow">Peers</div>
-          <h1>Peer management</h1>
+          <div className="eyebrow">{t("nav.peers", "Peers")}</div>
+          <h1>{t("peers.title", "Peer management")}</h1>
         </div>
       </div>
       <div className="stats-grid stats-grid-compact">
-        <StatCard title="Total peers" value={`${peers.length}`} />
-        <StatCard title="Online" value={`${onlineCount}`} accent="#79d483" />
+        <StatCard title={t("peers.total", "Total peers")} value={`${peers.length}`} />
+        <StatCard title={t("peers.online_total", "Online")} value={`${onlineCount}`} accent="#79d483" />
         <StatCard
-          title="Total traffic"
+          title={t("peers.total_traffic", "Total traffic")}
           value={formatBytes(peers.reduce((sum, peer) => sum + peer.total_bytes, 0))}
         />
       </div>
       <div className="toolbar-card toolbar-row">
         <button className="success-button" onClick={() => setIsCreateOpen(true)}>
-          + Add peer
+          {t("peers.add", "+ Add peer")}
         </button>
         <button className="secondary-button" onClick={() => applyMutation.mutate()}>
-          {applyMutation.isPending ? "Applying..." : "Apply config"}
+          {applyMutation.isPending ? t("peers.applying", "Applying...") : t("peers.apply", "Apply config")}
         </button>
       </div>
-      <Panel title="Peer list">
+      <Panel title={t("peers.list", "Peer list")}>
         <div className="table-toolbar">
           <label className="toolbar-search">
-            <span>Search</span>
+            <span>{t("common.search", "Search")}</span>
             <input
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
-              placeholder="Peer, user, group, IP, route..."
+              placeholder={t("peers.search_placeholder", "Peer, user, group, IP, route...")}
             />
           </label>
         </div>
         <div className="desktop-table">
           <DataTable
             headers={[
-              "Status",
-              "Toggle",
-              "Peer",
-              "IP",
-              "Routes",
-              "Traffic",
-              "Reveal / Reissue",
-              "Delete",
+              t("common.status", "Status"),
+              t("common.toggle", "Toggle"),
+              t("peers.peer", "Peer"),
+              t("peers.ip", "IP"),
+              t("peers.routes", "Routes"),
+              t("table.traffic", "Traffic"),
+              t("peers.reveal_reissue", "Reveal / Reissue"),
+              t("common.delete", "Delete"),
             ]}
           >
             {filteredPeers.map((peer) => {
@@ -299,7 +306,7 @@ export function PeersPage() {
                 <tr key={peer.peer_id}>
                   <td>
                     <div className={`status-pill ${peer.is_online ? "status-online" : ""}`}>
-                      {peer.is_online ? "Online" : "Offline"}
+                      {peer.is_online ? t("common.online", "Online") : t("common.offline", "Offline")}
                     </div>
                   </td>
                   <td>
@@ -312,7 +319,7 @@ export function PeersPage() {
                         })
                       }
                     >
-                      {peer.is_active ? "On" : "Off"}
+                      {peer.is_active ? t("common.on", "On") : t("common.off", "Off")}
                     </button>
                   </td>
                   <td>
@@ -339,21 +346,21 @@ export function PeersPage() {
                             disabled={peer.is_revealed || revealMutation.isPending || !canManageSecrets}
                             onClick={() => revealMutation.mutate(peer.peer_id)}
                           >
-                            Reveal
+                            {t("peers.reveal", "Reveal")}
                           </button>
                           <button
                             className="secondary-button"
                             disabled={!canManageSecrets || reissueMutation.isPending}
                             onClick={() => reissueMutation.mutate(peer.peer_id)}
                           >
-                            Reissue
+                            {t("peers.reissue", "Reissue")}
                           </button>
                           <div className="muted-text">
                             {peer.is_revealed
-                              ? "Consumed"
+                              ? t("peers.consumed", "Consumed")
                               : !canManageSecrets
-                                ? "Inactive upstream"
-                                : "Pending"}
+                                ? t("peers.inactive_upstream", "Inactive upstream")
+                                : t("peers.pending", "Pending")}
                           </div>
                         </>
                       );
@@ -363,12 +370,12 @@ export function PeersPage() {
                     <button
                       className="danger-button"
                       onClick={() => {
-                        if (window.confirm(`Delete peer "${peer.peer_name}"?`)) {
+                        if (window.confirm(`${t("peers.delete_confirm_prefix", "Delete peer: ")}"${peer.peer_name}"?`)) {
                           deleteMutation.mutate(peer.peer_id);
                         }
                       }}
                     >
-                      Delete
+                      {t("common.delete", "Delete")}
                     </button>
                   </td>
                 </tr>
@@ -396,7 +403,7 @@ export function PeersPage() {
                     </div>
                   </div>
                   <div className={`status-pill ${peer.is_online ? "status-online" : ""}`}>
-                    {peer.is_online ? "Online" : "Offline"}
+                    {peer.is_online ? t("common.online", "Online") : t("common.offline", "Offline")}
                   </div>
                 </div>
                 <div className="mobile-record-meta">
@@ -413,23 +420,23 @@ export function PeersPage() {
                       })
                     }
                   >
-                    {peer.is_active ? "On" : "Off"}
+                    {peer.is_active ? t("common.on", "On") : t("common.off", "Off")}
                   </button>
                   <MobileInfoPopover>
                     <div className="mobile-info-grid">
-                      <div><strong>IP</strong></div>
+                      <div><strong>{t("peers.ip", "IP")}</strong></div>
                       <div>{peer.assigned_ip}</div>
-                      <div><strong>Routes</strong></div>
+                      <div><strong>{t("peers.routes", "Routes")}</strong></div>
                       <div>{peer.effective_allowed_ips.join(", ")}</div>
-                      <div><strong>Traffic</strong></div>
+                      <div><strong>{t("table.traffic", "Traffic")}</strong></div>
                       <div>{formatBytes(peer.total_bytes)}</div>
-                      <div><strong>Status</strong></div>
+                      <div><strong>{t("common.status", "Status")}</strong></div>
                       <div>
                         {peer.is_revealed
-                          ? "Consumed"
+                          ? t("peers.consumed", "Consumed")
                           : !canManageSecrets
-                            ? "Inactive upstream"
-                            : "Pending"}
+                            ? t("peers.inactive_upstream", "Inactive upstream")
+                            : t("peers.pending", "Pending")}
                       </div>
                     </div>
                   </MobileInfoPopover>
@@ -438,24 +445,24 @@ export function PeersPage() {
                     disabled={peer.is_revealed || revealMutation.isPending || !canManageSecrets}
                     onClick={() => revealMutation.mutate(peer.peer_id)}
                   >
-                    Reveal
+                    {t("peers.reveal", "Reveal")}
                   </button>
                   <button
                     className="secondary-button"
                     disabled={!canManageSecrets || reissueMutation.isPending}
                     onClick={() => reissueMutation.mutate(peer.peer_id)}
                   >
-                    Reissue
+                    {t("peers.reissue", "Reissue")}
                   </button>
                   <button
                     className="danger-button"
                     onClick={() => {
-                      if (window.confirm(`Delete peer "${peer.peer_name}"?`)) {
+                      if (window.confirm(`${t("peers.delete_confirm_prefix", "Delete peer: ")}"${peer.peer_name}"?`)) {
                         deleteMutation.mutate(peer.peer_id);
                       }
                     }}
                   >
-                    Delete
+                    {t("common.delete", "Delete")}
                   </button>
                 </div>
               </article>
@@ -471,14 +478,14 @@ export function PeersPage() {
         <div className="modal-backdrop" onClick={closeCreateModal}>
           <div className="modal-card modal-compact" onClick={(event) => event.stopPropagation()}>
             <div className="panel-header">
-              <h2>Add peer</h2>
+              <h2>{t("peers.add_title", "Add peer")}</h2>
               <button className="ghost-button" onClick={closeCreateModal}>
-                Close
+                {t("common.close", "Close")}
               </button>
             </div>
             <div className="form-grid">
               <label className="field">
-                <span>User</span>
+                <span>{t("table.user", "User")}</span>
                 <select
                   value={createForm.userId}
                   onChange={(event) =>
@@ -486,7 +493,9 @@ export function PeersPage() {
                   }
                 >
                   <option value="">
-                    {activeUsers.length ? "Select active user" : "No active users available"}
+                    {activeUsers.length
+                      ? t("peers.select_active_user", "Select active user")
+                      : t("peers.no_active_users", "No active users available")}
                   </option>
                   {activeUsers.map((user) => (
                     <option key={user.id} value={user.id}>
@@ -495,11 +504,11 @@ export function PeersPage() {
                   ))}
                 </select>
                 <div className="muted-text">
-                  Inactive users cannot receive new peers.
+                  {t("peers.active_user_hint", "Inactive users cannot receive new peers.")}
                 </div>
               </label>
               <label className="field">
-                <span>Name</span>
+                <span>{t("peers.peer", "Name")}</span>
                 <input
                   value={createForm.name}
                   autoComplete="off"
@@ -509,18 +518,18 @@ export function PeersPage() {
                 />
               </label>
               <label className="field">
-                <span>Assigned IP</span>
+                <span>{t("peers.assigned_ip", "Assigned IP")}</span>
                 <input
                   value={createForm.assignedIp}
                   autoComplete="off"
                   onChange={(event) =>
                     setCreateForm((current) => ({ ...current, assignedIp: event.target.value }))
                   }
-                  placeholder="optional"
+                  placeholder={t("peers.optional", "optional")}
                 />
               </label>
               <label className="field">
-                <span>Description</span>
+                <span>{t("common.description", "Description")}</span>
                 <input
                   value={createForm.description}
                   autoComplete="off"
@@ -538,8 +547,8 @@ export function PeersPage() {
                   }
                 />
                 <div>
-                  <strong>Enabled</strong>
-                  <div className="muted-text">Create this peer in an active state.</div>
+                  <strong>{t("common.enabled", "Enabled")}</strong>
+                  <div className="muted-text">{t("peers.create_active", "Create this peer in an active state.")}</div>
                 </div>
               </label>
             </div>
@@ -556,10 +565,10 @@ export function PeersPage() {
                 onClick={() => createMutation.mutate()}
               >
                 {createMutation.isPending
-                  ? "Creating..."
+                  ? t("peers.creating", "Creating...")
                   : guiSettingsQuery.data?.refresh_after_apply
-                    ? "Create and apply"
-                    : "Create peer"}
+                    ? t("peers.create_apply", "Create and apply")
+                    : t("peers.create", "Create peer")}
               </button>
             </div>
           </div>

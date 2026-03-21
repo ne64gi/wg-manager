@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { createUser, deleteUser, listGroups, listUsers, updateUser } from "../lib/api";
 import { applyServerConfig } from "../lib/api";
+import { t } from "../lib/i18n";
 import type { User } from "../types";
 import { useAuth } from "../modules/auth/AuthContext";
 import { useGuiSettingsQuery } from "../modules/gui/useGuiSettingsQuery";
@@ -67,12 +68,12 @@ export function UsersPage() {
 
     try {
       await applyServerConfig((await auth.getValidAccessToken()) ?? "");
-      pushToast(successNotice ?? "Config applied.");
+      pushToast(successNotice ?? t("common.config_applied", "Config applied."));
     } catch (error) {
       pushToast(
         error instanceof Error
-          ? `${successNotice ?? "Change saved."} Apply failed: ${error.message}`
-          : `${successNotice ?? "Change saved."} Apply failed.`,
+          ? `${successNotice ?? t("common.change_saved", "Change saved.")} ${t("common.apply_failed", "Apply failed.")} ${error.message}`
+          : `${successNotice ?? t("common.change_saved", "Change saved.")} ${t("common.apply_failed", "Apply failed.")}`,
         "error",
       );
     }
@@ -118,11 +119,13 @@ export function UsersPage() {
       }),
     onSuccess: async () => {
       closeCreateModal();
-      await applyIfNeeded("User created.");
+      await applyIfNeeded(t("users.created_notice", "User created."));
       await refreshQueries();
     },
     onError: (error) => {
-      setCreateError(error instanceof Error ? error.message : "Failed to create user");
+      setCreateError(
+        error instanceof Error ? error.message : t("users.create_failed", "Failed to create user"),
+      );
     },
   });
 
@@ -141,11 +144,13 @@ export function UsersPage() {
       }),
     onSuccess: async () => {
       closeEditModal();
-      await applyIfNeeded("User updated.");
+      await applyIfNeeded(t("users.updated_notice", "User updated."));
       await refreshQueries();
     },
     onError: (error) => {
-      setEditError(error instanceof Error ? error.message : "Failed to update user");
+      setEditError(
+        error instanceof Error ? error.message : t("users.update_failed", "Failed to update user"),
+      );
     },
   });
 
@@ -155,7 +160,11 @@ export function UsersPage() {
         is_active: !user.is_active,
       }),
     onSuccess: async (_, user) => {
-      await applyIfNeeded(user.is_active ? "User disabled." : "User enabled.");
+      await applyIfNeeded(
+        user.is_active
+          ? t("users.disabled_notice", "User disabled.")
+          : t("users.enabled_notice", "User enabled."),
+      );
       await refreshQueries();
     },
   });
@@ -164,7 +173,7 @@ export function UsersPage() {
     mutationFn: async (userId: number) =>
       deleteUser(userId, (await auth.getValidAccessToken()) ?? ""),
     onSuccess: async () => {
-      await applyIfNeeded("User deleted.");
+      await applyIfNeeded(t("users.deleted_notice", "User deleted."));
       await refreshQueries();
     },
   });
@@ -190,33 +199,33 @@ export function UsersPage() {
     <div className="page-stack">
       <div className="page-header">
         <div>
-          <div className="eyebrow">Users</div>
-          <h1>User policy assignments</h1>
+          <div className="eyebrow">{t("nav.users", "Users")}</div>
+          <h1>{t("users.title", "User policy assignments")}</h1>
         </div>
       </div>
       <div className="stats-grid stats-grid-compact">
         <div className="stat-card">
-          <div className="stat-label">Total users</div>
+          <div className="stat-label">{t("users.total", "Total users")}</div>
           <div className="stat-value">{usersQuery.data?.length ?? 0}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Enabled</div>
+          <div className="stat-label">{t("users.enabled_total", "Enabled")}</div>
           <div className="stat-value">{activeCount}</div>
         </div>
       </div>
       <div className="toolbar-card">
         <button className="success-button" onClick={() => setIsCreateOpen(true)}>
-          + Add user
+          {t("users.add", "+ Add user")}
         </button>
       </div>
       <div className="toolbar-card">
         <label className="toolbar-field">
-          <span>Group filter</span>
+          <span>{t("users.group_filter", "Group filter")}</span>
           <select
             value={filterGroupId}
             onChange={(event) => setFilterGroupId(event.target.value)}
           >
-            <option value="all">All groups</option>
+            <option value="all">{t("users.all_groups", "All groups")}</option>
             {groups.map((group) => (
               <option key={group.id} value={group.id}>
                 {group.name}
@@ -225,9 +234,9 @@ export function UsersPage() {
           </select>
         </label>
       </div>
-      <Panel title="User list">
+      <Panel title={t("users.list", "User list")}>
         <div className="desktop-table">
-          <DataTable headers={["Status", "Name", "Group", "Override routes", "Actions"]}>
+          <DataTable headers={[t("common.status", "Status"), t("users.name", "Name"), t("table.group", "Group"), t("users.override_routes", "Override routes"), t("common.actions", "Actions")]}>
             {filteredUsers.map((user) => (
               <tr key={user.id}>
                 <td>
@@ -235,25 +244,25 @@ export function UsersPage() {
                     className={`toggle-chip ${user.is_active ? "toggle-chip-on" : ""}`}
                     onClick={() => toggleMutation.mutate(user)}
                   >
-                    {user.is_active ? "On" : "Off"}
+                    {user.is_active ? t("common.on", "On") : t("common.off", "Off")}
                   </button>
                 </td>
                 <td>{user.name}</td>
                 <td>{groupNames.get(user.group_id) ?? `Group ${user.group_id}`}</td>
-                <td>{user.allowed_ips_override?.join(", ") || "Inherit group defaults"}</td>
+                <td>{user.allowed_ips_override?.join(", ") || t("users.inherit_group", "Inherit group defaults")}</td>
                 <td className="action-row">
                   <button className="ghost-button" onClick={() => openEditModal(user)}>
-                    Edit
+                    {t("common.edit", "Edit")}
                   </button>
                   <button
                     className="danger-button"
                     onClick={() => {
-                      if (window.confirm(`Delete user "${user.name}"?`)) {
+                      if (window.confirm(`${t("users.delete_confirm_prefix", "Delete user: ")}"${user.name}"?`)) {
                         deleteMutation.mutate(user.id);
                       }
                     }}
                   >
-                    Delete
+                    {t("common.delete", "Delete")}
                   </button>
                 </td>
               </tr>
@@ -271,7 +280,7 @@ export function UsersPage() {
                   </div>
                 </div>
                 <div className={`status-pill ${user.is_active ? "status-online" : ""}`}>
-                  {user.is_active ? "Enabled" : "Disabled"}
+                  {user.is_active ? t("common.enabled", "Enabled") : t("common.disabled", "Disabled")}
                 </div>
               </div>
               <div className="mobile-record-actions">
@@ -279,28 +288,28 @@ export function UsersPage() {
                   className={`toggle-chip ${user.is_active ? "toggle-chip-on" : ""}`}
                   onClick={() => toggleMutation.mutate(user)}
                 >
-                  {user.is_active ? "On" : "Off"}
+                  {user.is_active ? t("common.on", "On") : t("common.off", "Off")}
                 </button>
                 <button className="ghost-button" onClick={() => openEditModal(user)}>
-                  Edit
+                  {t("common.edit", "Edit")}
                 </button>
                 <MobileInfoPopover>
                   <div className="mobile-info-grid">
-                    <div><strong>Override routes</strong></div>
-                    <div>{user.allowed_ips_override?.join(", ") || "Inherit group defaults"}</div>
-                    <div><strong>Description</strong></div>
+                    <div><strong>{t("users.override_routes", "Override routes")}</strong></div>
+                    <div>{user.allowed_ips_override?.join(", ") || t("users.inherit_group", "Inherit group defaults")}</div>
+                    <div><strong>{t("common.description", "Description")}</strong></div>
                     <div>{user.description || "—"}</div>
                   </div>
                 </MobileInfoPopover>
                 <button
                   className="danger-button"
                   onClick={() => {
-                    if (window.confirm(`Delete user "${user.name}"?`)) {
+                    if (window.confirm(`${t("users.delete_confirm_prefix", "Delete user: ")}"${user.name}"?`)) {
                       deleteMutation.mutate(user.id);
                     }
                   }}
                 >
-                  Delete
+                  {t("common.delete", "Delete")}
                 </button>
               </div>
             </article>
@@ -311,21 +320,21 @@ export function UsersPage() {
         <div className="modal-backdrop" onClick={closeCreateModal}>
           <div className="modal-card modal-compact" onClick={(event) => event.stopPropagation()}>
             <div className="panel-header">
-              <h2>Add user</h2>
+              <h2>{t("users.add_title", "Add user")}</h2>
               <button className="ghost-button" onClick={closeCreateModal}>
-                Close
+                {t("common.close", "Close")}
               </button>
             </div>
             <div className="form-grid">
               <label className="field">
-                <span>Group</span>
+                <span>{t("table.group", "Group")}</span>
                 <select
                   value={createForm.groupId}
                   onChange={(event) =>
                     setCreateForm((current) => ({ ...current, groupId: event.target.value }))
                   }
                 >
-                  <option value="">Select group</option>
+                  <option value="">{t("users.select_group", "Select group")}</option>
                   {groups.map((group) => (
                     <option key={group.id} value={group.id}>
                       {group.name}
@@ -334,7 +343,7 @@ export function UsersPage() {
                 </select>
               </label>
               <label className="field">
-                <span>Name</span>
+                <span>{t("users.name", "Name")}</span>
                 <input
                   value={createForm.name}
                   autoComplete="off"
@@ -344,7 +353,7 @@ export function UsersPage() {
                 />
               </label>
               <label className="field field-span-2">
-                <span>Override routes</span>
+                <span>{t("users.override_routes", "Override routes")}</span>
                 <input
                   value={createForm.overrideRoutes}
                   autoComplete="off"
@@ -358,7 +367,7 @@ export function UsersPage() {
                 />
               </label>
               <label className="field field-span-2">
-                <span>Description</span>
+                <span>{t("common.description", "Description")}</span>
                 <input
                   value={createForm.description}
                   autoComplete="off"
@@ -376,8 +385,8 @@ export function UsersPage() {
                   }
                 />
                 <div>
-                  <strong>Enabled</strong>
-                  <div className="muted-text">Create this user in an active state.</div>
+                  <strong>{t("common.enabled", "Enabled")}</strong>
+                  <div className="muted-text">{t("users.create_active", "Create this user in an active state.")}</div>
                 </div>
               </label>
             </div>
@@ -388,7 +397,7 @@ export function UsersPage() {
                 disabled={!createForm.groupId || !createForm.name || createMutation.isPending}
                 onClick={() => createMutation.mutate()}
               >
-                {createMutation.isPending ? "Creating..." : "Create user"}
+                {createMutation.isPending ? t("users.creating", "Creating...") : t("users.create", "Create user")}
               </button>
             </div>
           </div>
@@ -398,18 +407,18 @@ export function UsersPage() {
         <div className="modal-backdrop" onClick={closeEditModal}>
           <div className="modal-card modal-compact" onClick={(event) => event.stopPropagation()}>
             <div className="panel-header">
-              <h2>Edit user</h2>
+              <h2>{t("users.edit_title", "Edit user")}</h2>
               <button className="ghost-button" onClick={closeEditModal}>
-                Close
+                {t("common.close", "Close")}
               </button>
             </div>
             <div className="form-grid">
               <label className="field">
-                <span>Group</span>
+                <span>{t("table.group", "Group")}</span>
                 <input value={groupNames.get(Number(editForm.groupId)) ?? editForm.groupId} disabled />
               </label>
               <label className="field">
-                <span>Name</span>
+                <span>{t("users.name", "Name")}</span>
                 <input
                   value={editForm.name}
                   autoComplete="off"
@@ -419,7 +428,7 @@ export function UsersPage() {
                 />
               </label>
               <label className="field field-span-2">
-                <span>Override routes</span>
+                <span>{t("users.override_routes", "Override routes")}</span>
                 <input
                   value={editForm.overrideRoutes}
                   autoComplete="off"
@@ -432,7 +441,7 @@ export function UsersPage() {
                 />
               </label>
               <label className="field field-span-2">
-                <span>Description</span>
+                <span>{t("common.description", "Description")}</span>
                 <input
                   value={editForm.description}
                   autoComplete="off"
@@ -450,8 +459,8 @@ export function UsersPage() {
                   }
                 />
                 <div>
-                  <strong>Enabled</strong>
-                  <div className="muted-text">Disable to stop peer activity for this user.</div>
+                  <strong>{t("common.enabled", "Enabled")}</strong>
+                  <div className="muted-text">{t("users.disable_hint", "Disable to stop peer activity for this user.")}</div>
                 </div>
               </label>
             </div>
@@ -467,7 +476,7 @@ export function UsersPage() {
                   })
                 }
               >
-                {updateMutation.isPending ? "Saving..." : "Save changes"}
+                {updateMutation.isPending ? t("users.saving", "Saving...") : t("users.save_changes", "Save changes")}
               </button>
             </div>
           </div>

@@ -1,9 +1,12 @@
 from app.schemas.domain import (
     ApplyResult,
+    AuthChangePasswordRequest,
     AuthenticatedLoginUserRead,
     AuthLoginRequest,
     AuthLogoutRequest,
     AuthRefreshRequest,
+    AuthSetupRequest,
+    AuthSetupStatusRead,
     GeneratedPeerArtifacts,
     GeneratedServerArtifacts,
     GroupTrafficSummaryRead,
@@ -37,10 +40,13 @@ from app.schemas.domain import (
 
 __all__ = [
     "ApplyResult",
+    "AuthChangePasswordRequest",
     "AuthenticatedLoginUserRead",
     "AuthLoginRequest",
     "AuthLogoutRequest",
     "AuthRefreshRequest",
+    "AuthSetupRequest",
+    "AuthSetupStatusRead",
     "GeneratedPeerArtifacts",
     "GeneratedServerArtifacts",
     "GroupTrafficSummaryRead",

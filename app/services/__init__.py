@@ -2,9 +2,12 @@ from app.services.apply import apply_server_config
 from app.services.auth import (
     authenticate_access_token,
     authenticate_login,
+    change_login_user_password,
     decode_jwt,
+    has_login_users,
     logout_login_session,
     refresh_login_tokens,
+    setup_initial_login_user,
 )
 from app.services.audit import init_log_db, list_gui_logs, log_gui_event, log_operation
 from app.services.config_generation import generate_peer_artifacts, generate_server_config
@@ -61,6 +64,7 @@ __all__ = [
     "authenticate_access_token",
     "authenticate_login",
     "bootstrap_login_user",
+    "change_login_user_password",
     "create_group",
     "create_login_user",
     "create_peer",
@@ -85,6 +89,7 @@ __all__ = [
     "get_wireguard_overview_history",
     "get_wireguard_peer_statuses",
     "get_user_traffic_summaries",
+    "has_login_users",
     "init_db",
     "init_log_db",
     "list_gui_logs",
@@ -100,6 +105,7 @@ __all__ = [
     "refresh_login_tokens",
     "revoke_peer",
     "resolve_peer_access",
+    "setup_initial_login_user",
     "update_gui_settings",
     "update_group",
     "update_initial_settings",

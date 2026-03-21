@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
+  changeOwnPassword,
   createLoginUser,
   deleteLoginUser,
   getGuiSettings,
@@ -11,6 +12,7 @@ import {
   updateInitialSettings,
 } from "../lib/api";
 import { formatDateTime } from "../lib/format";
+import { t, translateErrorMessage } from "../lib/i18n";
 import { useAuth } from "../modules/auth/AuthContext";
 import { queryKeys } from "../modules/queryKeys";
 import type { GuiSettingsUpdate } from "../types";
@@ -41,6 +43,11 @@ export function SettingsPage() {
   const [settingsNotice, setSettingsNotice] = useState<string | null>(null);
   const [endpointNotice, setEndpointNotice] = useState<string | null>(null);
   const [loginUserError, setLoginUserError] = useState<string | null>(null);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [nextPassword, setNextPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordNotice, setPasswordNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (settingsQuery.data) {
@@ -59,29 +66,34 @@ export function SettingsPage() {
     mutationFn: async () =>
       updateGuiSettings((await auth.getValidAccessToken()) ?? "", formState),
     onSuccess: async () => {
-      setSettingsNotice("GUI settings saved.");
+      setSettingsNotice(t("settings.saved", "GUI settings saved."));
       await queryClient.invalidateQueries({ queryKey: queryKeys.guiSettings });
     },
     onError: (error) => {
-      setSettingsNotice(error instanceof Error ? error.message : "Failed to save GUI settings.");
+      setSettingsNotice(
+        error instanceof Error
+          ? error.message
+          : t("settings.save_failed", "Failed to save GUI settings."),
+      );
     },
   });
 
   const endpointMutation = useMutation({
     mutationFn: async () =>
-      updateInitialSettings(
-        (await auth.getValidAccessToken()) ?? "",
-        {
-          endpoint_address: endpointAddress,
-          endpoint_port: Number(endpointPort),
-        },
-      ),
+      updateInitialSettings((await auth.getValidAccessToken()) ?? "", {
+        endpoint_address: endpointAddress,
+        endpoint_port: Number(endpointPort),
+      }),
     onSuccess: async () => {
-      setEndpointNotice("Endpoint settings saved.");
+      setEndpointNotice(t("settings.endpoint_saved", "Endpoint settings saved."));
       await queryClient.invalidateQueries({ queryKey: queryKeys.initialSettings });
     },
     onError: (error) => {
-      setEndpointNotice(error instanceof Error ? error.message : "Failed to save endpoint settings.");
+      setEndpointNotice(
+        error instanceof Error
+          ? error.message
+          : t("settings.endpoint_save_failed", "Failed to save endpoint settings."),
+      );
     },
   });
 
@@ -98,7 +110,11 @@ export function SettingsPage() {
       await queryClient.invalidateQueries({ queryKey: queryKeys.loginUsers });
     },
     onError: (error) => {
-      setLoginUserError(error instanceof Error ? error.message : "Failed to create login user.");
+      setLoginUserError(
+        error instanceof Error
+          ? error.message
+          : t("settings.add_user_failed", "Failed to create login user."),
+      );
     },
   });
 
@@ -110,48 +126,84 @@ export function SettingsPage() {
     },
   });
 
+  const changePasswordMutation = useMutation({
+    mutationFn: async () =>
+      changeOwnPassword((await auth.getValidAccessToken()) ?? "", {
+        current_password: currentPassword,
+        new_password: nextPassword,
+      }),
+    onSuccess: async () => {
+      setPasswordNotice(t("auth.password_changed", "Password changed."));
+      setCurrentPassword("");
+      setNextPassword("");
+      setConfirmPassword("");
+      await queryClient.invalidateQueries({ queryKey: queryKeys.authMe });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.loginUsers });
+    },
+    onError: (error) => {
+      setPasswordNotice(
+        error instanceof Error
+          ? translateErrorMessage(error.message)
+          : t("auth.password_change_failed", "Failed to change password."),
+      );
+    },
+  });
+
   return (
     <div className="page-stack">
       <div className="page-header">
         <div>
-          <div className="eyebrow">Settings</div>
-          <h1>GUI and bootstrap settings</h1>
+          <div className="eyebrow">{t("settings.eyebrow", "Settings")}</div>
+          <h1>{t("settings.heading", "GUI and bootstrap settings")}</h1>
         </div>
       </div>
 
       <div className="stats-grid stats-grid-compact">
         <div className="stat-card">
-          <div className="stat-label">Theme mode</div>
+          <div className="stat-label">{t("settings.theme_mode", "Theme mode")}</div>
           <div className="stat-value settings-stat-value">
-            {settingsQuery.data?.theme_mode ?? "system"}
+            {t(
+              `common.${settingsQuery.data?.theme_mode ?? "system"}`,
+              settingsQuery.data?.theme_mode ?? "system",
+            )}
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Default locale</div>
+          <div className="stat-label">
+            {t("settings.default_locale", "Default locale")}
+          </div>
           <div className="stat-value settings-stat-value">
-            {settingsQuery.data?.default_locale ?? "en"}
+            {t(
+              `locale.${settingsQuery.data?.default_locale ?? "en"}`,
+              settingsQuery.data?.default_locale ?? "en",
+            )}
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Error log level</div>
+          <div className="stat-label">
+            {t("settings.error_log_level", "Error log level")}
+          </div>
           <div className="stat-value settings-stat-value">
-            {settingsQuery.data?.error_log_level ?? "warning"}
+            {t(
+              `log_level.${settingsQuery.data?.error_log_level ?? "warning"}`,
+              settingsQuery.data?.error_log_level ?? "warning",
+            )}
           </div>
         </div>
       </div>
 
       <div className="two-column-grid">
         <Panel
-          title="GUI settings"
+          title={t("settings.gui_heading", "GUI settings")}
           actions={
             <button className="primary-button" onClick={() => settingsMutation.mutate()}>
-              Save
+              {t("common.save", "Save")}
             </button>
           }
         >
           <div className="form-grid">
             <label className="field">
-              <span>Theme mode</span>
+              <span>{t("settings.theme_mode", "Theme mode")}</span>
               <select
                 value={formState.theme_mode ?? "system"}
                 onChange={(event) =>
@@ -161,13 +213,18 @@ export function SettingsPage() {
                   }))
                 }
               >
-                <option value="system">system</option>
-                <option value="dark">dark</option>
-                <option value="light">light</option>
+                <option value="system">
+                  {t("settings.system_label", "System")}
+                </option>
+                <option value="dark">{t("common.dark", "dark")}</option>
+                <option value="light">{t("common.light", "light")}</option>
               </select>
+              <div className="muted-text">
+                {t("settings.theme_hint", "Switch the GUI theme.")}
+              </div>
             </label>
             <label className="field">
-              <span>Default locale</span>
+              <span>{t("settings.default_locale", "Default locale")}</span>
               <select
                 value={formState.default_locale ?? "en"}
                 onChange={(event) =>
@@ -177,12 +234,18 @@ export function SettingsPage() {
                   }))
                 }
               >
-                <option value="en">en</option>
-                <option value="ja">ja</option>
+                <option value="en">{t("locale.en", "English")}</option>
+                <option value="ja">{t("locale.ja", "Japanese")}</option>
               </select>
+              <div className="muted-text">
+                {t(
+                  "settings.locale_hint",
+                  "Default language for newly opened screens.",
+                )}
+              </div>
             </label>
             <label className="field">
-              <span>Overview refresh (sec)</span>
+              <span>{t("settings.overview_refresh", "Overview refresh (sec)")}</span>
               <input
                 type="number"
                 value={formState.overview_refresh_seconds ?? 5}
@@ -195,7 +258,7 @@ export function SettingsPage() {
               />
             </label>
             <label className="field">
-              <span>Peers refresh (sec)</span>
+              <span>{t("settings.peers_refresh", "Peers refresh (sec)")}</span>
               <input
                 type="number"
                 value={formState.peers_refresh_seconds ?? 10}
@@ -208,7 +271,12 @@ export function SettingsPage() {
               />
             </label>
             <label className="field">
-              <span>Traffic snapshot interval (sec)</span>
+              <span>
+                {t(
+                  "settings.snapshot_interval",
+                  "Traffic snapshot interval (sec)",
+                )}
+              </span>
               <input
                 type="number"
                 value={formState.traffic_snapshot_interval_seconds ?? 300}
@@ -221,7 +289,7 @@ export function SettingsPage() {
               />
             </label>
             <label className="field">
-              <span>Online threshold (sec)</span>
+              <span>{t("settings.online_threshold", "Online threshold (sec)")}</span>
               <input
                 type="number"
                 value={formState.online_threshold_seconds ?? 120}
@@ -234,7 +302,7 @@ export function SettingsPage() {
               />
             </label>
             <label className="field">
-              <span>Error log level</span>
+              <span>{t("settings.error_log_level", "Error log level")}</span>
               <select
                 value={formState.error_log_level ?? "warning"}
                 onChange={(event) =>
@@ -244,15 +312,21 @@ export function SettingsPage() {
                   }))
                 }
               >
-                <option value="debug">debug</option>
-                <option value="info">info</option>
-                <option value="warning">warning</option>
-                <option value="error">error</option>
-                <option value="critical">critical</option>
+                <option value="debug">{t("log_level.debug", "debug")}</option>
+                <option value="info">{t("log_level.info", "info")}</option>
+                <option value="warning">{t("log_level.warning", "warning")}</option>
+                <option value="error">{t("log_level.error", "error")}</option>
+                <option value="critical">{t("log_level.critical", "critical")}</option>
               </select>
+              <div className="muted-text">
+                {t(
+                  "settings.log_level_hint",
+                  "Choose which GUI error levels should be recorded.",
+                )}
+              </div>
             </label>
             <label className="field">
-              <span>Access log path</span>
+              <span>{t("settings.access_log_path", "Access log path")}</span>
               <input
                 value={formState.access_log_path ?? "none"}
                 onChange={(event) =>
@@ -261,11 +335,11 @@ export function SettingsPage() {
                     access_log_path: event.target.value,
                   }))
                 }
-                placeholder="none"
+                placeholder={t("common.none", "none")}
               />
             </label>
             <label className="field">
-              <span>Error log path</span>
+              <span>{t("settings.error_log_path", "Error log path")}</span>
               <input
                 value={formState.error_log_path ?? "none"}
                 onChange={(event) =>
@@ -274,7 +348,7 @@ export function SettingsPage() {
                     error_log_path: event.target.value,
                   }))
                 }
-                placeholder="none"
+                placeholder={t("common.none", "none")}
               />
             </label>
             <label className="field field-span-2 field-checkbox">
@@ -289,9 +363,17 @@ export function SettingsPage() {
                 }
               />
               <div>
-                <span>Apply immediately after peer changes</span>
+                <span>
+                  {t(
+                    "settings.apply_after_change",
+                    "Apply immediately after peer changes",
+                  )}
+                </span>
                 <div className="muted-text">
-                  When enabled, create/revoke/delete peer operations trigger server apply.
+                  {t(
+                    "settings.apply_after_change_hint",
+                    "When enabled, create/revoke/delete peer operations trigger server apply.",
+                  )}
                 </div>
               </div>
             </label>
@@ -300,70 +382,179 @@ export function SettingsPage() {
         </Panel>
 
         <Panel
-          title="Endpoint settings"
+          title={t("settings.endpoint_heading", "Endpoint settings")}
           actions={
             <button className="primary-button" onClick={() => endpointMutation.mutate()}>
-              Save
+              {t("common.save", "Save")}
             </button>
           }
         >
           <div className="form-grid">
             <label className="field">
-              <span>Endpoint address</span>
+              <span>{t("settings.endpoint_address", "Endpoint address")}</span>
               <input
                 value={endpointAddress}
                 onChange={(event) => setEndpointAddress(event.target.value)}
               />
+              <div className="muted-text">
+                {t(
+                  "settings.endpoint_hint",
+                  "Address and port embedded into peer configs.",
+                )}
+              </div>
             </label>
             <label className="field">
-              <span>Endpoint port</span>
+              <span>{t("settings.endpoint_port", "Endpoint port")}</span>
               <input
                 type="number"
                 value={endpointPort}
                 onChange={(event) => setEndpointPort(event.target.value)}
               />
+              <div className="muted-text">
+                {t(
+                  "settings.endpoint_port_hint",
+                  "Public port number embedded in generated peer configs.",
+                )}
+              </div>
             </label>
           </div>
           {endpointNotice ? <div className="info-banner">{endpointNotice}</div> : null}
         </Panel>
       </div>
 
-      <Panel title="Login users">
+      <Panel title={t("settings.login_users_heading", "Login users")}>
         <div className="inline-form">
           <input
-            placeholder="username"
+            placeholder={t(
+              "settings.login_user_username_placeholder",
+              "username",
+            )}
             value={newUsername}
             onChange={(event) => setNewUsername(event.target.value)}
           />
           <input
-            placeholder="password"
+            placeholder={t(
+              "settings.login_user_password_placeholder",
+              "password",
+            )}
             type="password"
             value={newPassword}
             onChange={(event) => setNewPassword(event.target.value)}
           />
           <button className="primary-button" onClick={() => createLoginUserMutation.mutate()}>
-            Add user
+            {t("settings.add_user", "Add user")}
           </button>
         </div>
         {loginUserError ? <div className="error-banner">{loginUserError}</div> : null}
-        <DataTable headers={["Username", "Status", "Last login", "Actions"]}>
+        <DataTable
+          headers={[
+            t("common.username", "Username"),
+            t("common.status", "Status"),
+            t("common.last_login", "Last login"),
+            t("common.actions", "Actions"),
+          ]}
+        >
           {(loginUsersQuery.data ?? []).map((loginUser) => (
             <tr key={loginUser.id}>
               <td>{loginUser.username}</td>
-              <td>{loginUser.is_active ? "Active" : "Disabled"}</td>
+              <td>
+                {loginUser.is_active
+                  ? t("settings.status_active", "Active")
+                  : t("settings.status_disabled", "Disabled")}
+              </td>
               <td>{formatDateTime(loginUser.last_login_at)}</td>
               <td>
+                {auth.currentUser?.id === loginUser.id ? (
+                  <button
+                    className="ghost-button"
+                    onClick={() => {
+                      setPasswordModalOpen(true);
+                      setPasswordNotice(null);
+                    }}
+                  >
+                    {t("settings.change_password", "Change password")}
+                  </button>
+                ) : null}
                 <button
                   className="danger-button"
                   onClick={() => deleteLoginUserMutation.mutate(loginUser.id)}
                 >
-                  Delete
+                  {t("common.delete", "Delete")}
                 </button>
               </td>
             </tr>
           ))}
         </DataTable>
       </Panel>
+      {passwordModalOpen ? (
+        <div className="modal-backdrop" onClick={() => setPasswordModalOpen(false)}>
+          <div className="modal-card modal-compact" onClick={(event) => event.stopPropagation()}>
+            <div className="panel-header">
+              <h2>{t("auth.change_password_title", "Change password")}</h2>
+              <button className="ghost-button" onClick={() => setPasswordModalOpen(false)}>
+                {t("common.close", "Close")}
+              </button>
+            </div>
+            <div className="muted-text">
+              {t(
+                "auth.change_password_description",
+                "Verify your current password before updating it.",
+              )}
+            </div>
+            <div className="form-grid" style={{ marginTop: 16 }}>
+              <label className="field field-span-2">
+                <span>{t("auth.current_password", "Current password")}</span>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(event) => setCurrentPassword(event.target.value)}
+                />
+              </label>
+              <label className="field field-span-2">
+                <span>{t("auth.new_password", "New password")}</span>
+                <input
+                  type="password"
+                  value={nextPassword}
+                  onChange={(event) => setNextPassword(event.target.value)}
+                />
+              </label>
+              <label className="field field-span-2">
+                <span>{t("auth.confirm_password", "Confirm password")}</span>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                />
+              </label>
+            </div>
+            {passwordNotice ? (
+              <div className={passwordNotice === t("auth.password_changed", "Password changed.") ? "info-banner" : "error-banner"}>
+                {passwordNotice}
+              </div>
+            ) : null}
+            <div className="modal-actions">
+              <button
+                className="primary-button"
+                disabled={
+                  !currentPassword ||
+                  !nextPassword ||
+                  nextPassword !== confirmPassword ||
+                  changePasswordMutation.isPending
+                }
+                onClick={() => {
+                  if (nextPassword !== confirmPassword) {
+                    setPasswordNotice(t("auth.password_mismatch", "Passwords do not match"));
+                    return;
+                  }
+                  changePasswordMutation.mutate();
+                }}
+              >
+                {t("auth.change_password", "Change password")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

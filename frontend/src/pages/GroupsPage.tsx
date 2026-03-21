@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { createGroup, deleteGroup, listGroups, updateGroup } from "../lib/api";
 import { applyServerConfig } from "../lib/api";
+import { t } from "../lib/i18n";
 import type { Group } from "../types";
 import { useAuth } from "../modules/auth/AuthContext";
 import { useGuiSettingsQuery } from "../modules/gui/useGuiSettingsQuery";
@@ -87,7 +88,10 @@ function getScopeValidationMessage(scope: string, networkCidr: string) {
 
   const match = networkCidr.trim().match(/\/(\d{1,2})$/);
   if (!match) {
-    return "Network CIDR must include a prefix, such as 10.10.1.0/24.";
+    return t(
+      "groups.network_prefix_required",
+      "Network CIDR must include a prefix, such as 10.10.1.0/24.",
+    );
   }
 
   const actualPrefix = Number(match[1]);
@@ -166,12 +170,12 @@ export function GroupsPage() {
 
     try {
       await applyServerConfig((await auth.getValidAccessToken()) ?? "");
-      pushToast(successNotice ?? "Config applied.");
+      pushToast(successNotice ?? t("common.config_applied", "Config applied."));
     } catch (error) {
       pushToast(
         error instanceof Error
-          ? `${successNotice ?? "Change saved."} Apply failed: ${error.message}`
-          : `${successNotice ?? "Change saved."} Apply failed.`,
+          ? `${successNotice ?? t("common.change_saved", "Change saved.")} ${t("common.apply_failed", "Apply failed.")} ${error.message}`
+          : `${successNotice ?? t("common.change_saved", "Change saved.")} ${t("common.apply_failed", "Apply failed.")}`,
         "error",
       );
     }
@@ -224,11 +228,13 @@ export function GroupsPage() {
       }),
     onSuccess: async () => {
       closeCreateModal();
-      await applyIfNeeded("Group created.");
+      await applyIfNeeded(t("groups.created_notice", "Group created."));
       await refreshGroupQueries();
     },
     onError: (error) => {
-      setCreateError(error instanceof Error ? error.message : "Failed to create group");
+      setCreateError(
+        error instanceof Error ? error.message : t("groups.create_failed", "Failed to create group"),
+      );
     },
   });
 
@@ -242,11 +248,13 @@ export function GroupsPage() {
     }) => updateGroup((await auth.getValidAccessToken()) ?? "", groupId, toUpdatePayload(form)),
     onSuccess: async () => {
       closeEditModal();
-      await applyIfNeeded("Group updated.");
+      await applyIfNeeded(t("groups.updated_notice", "Group updated."));
       await refreshGroupQueries();
     },
     onError: (error) => {
-      setEditError(error instanceof Error ? error.message : "Failed to update group");
+      setEditError(
+        error instanceof Error ? error.message : t("groups.update_failed", "Failed to update group"),
+      );
     },
   });
 
@@ -256,7 +264,11 @@ export function GroupsPage() {
         is_active: !group.is_active,
       }),
     onSuccess: async (_, group) => {
-      await applyIfNeeded(group.is_active ? "Group disabled." : "Group enabled.");
+      await applyIfNeeded(
+        group.is_active
+          ? t("groups.disabled_notice", "Group disabled.")
+          : t("groups.enabled_notice", "Group enabled."),
+      );
       await refreshGroupQueries();
     },
   });
@@ -265,7 +277,7 @@ export function GroupsPage() {
     mutationFn: async (groupId: number) =>
       deleteGroup(groupId, (await auth.getValidAccessToken()) ?? ""),
     onSuccess: async () => {
-      await applyIfNeeded("Group deleted.");
+      await applyIfNeeded(t("groups.deleted_notice", "Group deleted."));
       await refreshGroupQueries();
     },
   });
@@ -274,29 +286,37 @@ export function GroupsPage() {
     <div className="page-stack">
       <div className="page-header">
         <div>
-          <div className="eyebrow">Groups</div>
-          <h1>Network groups</h1>
+          <div className="eyebrow">{t("nav.groups", "Groups")}</div>
+          <h1>{t("groups.title", "Network groups")}</h1>
         </div>
       </div>
       <div className="stats-grid stats-grid-compact">
         <div className="stat-card">
-          <div className="stat-label">Total groups</div>
+          <div className="stat-label">{t("groups.total", "Total groups")}</div>
           <div className="stat-value">{groups.length}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Enabled</div>
+          <div className="stat-label">{t("groups.enabled_total", "Enabled")}</div>
           <div className="stat-value">{activeCount}</div>
         </div>
       </div>
       <div className="toolbar-card">
         <button className="success-button" onClick={() => setIsCreateOpen(true)}>
-          + Add group
+          {t("groups.add", "+ Add group")}
         </button>
       </div>
-      <Panel title="Group list">
+      <Panel title={t("groups.list", "Group list")}>
         <div className="desktop-table">
           <DataTable
-            headers={["Status", "Name", "Scope", "Network", "Allowed IPs", "DNS", "Actions"]}
+            headers={[
+              t("common.status", "Status"),
+              t("groups.name", "Name"),
+              t("table.scope", "Scope"),
+              t("groups.network", "Network"),
+              t("groups.allowed_ips", "Allowed IPs"),
+              t("groups.dns", "DNS"),
+              t("common.actions", "Actions"),
+            ]}
           >
             {groups.map((group) => (
               <tr key={group.id}>
@@ -305,7 +325,7 @@ export function GroupsPage() {
                     className={`toggle-chip ${group.is_active ? "toggle-chip-on" : ""}`}
                     onClick={() => toggleMutation.mutate(group)}
                   >
-                    {group.is_active ? "On" : "Off"}
+                    {group.is_active ? t("common.on", "On") : t("common.off", "Off")}
                   </button>
                 </td>
                 <td>{group.name}</td>
@@ -315,17 +335,21 @@ export function GroupsPage() {
                 <td>{group.dns_servers?.join(", ") || "—"}</td>
                 <td className="action-row">
                   <button className="ghost-button" onClick={() => openEditModal(group)}>
-                    Edit
+                    {t("common.edit", "Edit")}
                   </button>
                   <button
                     className="danger-button"
                     onClick={() => {
-                      if (window.confirm(`Delete group "${group.name}"?`)) {
+                      if (
+                        window.confirm(
+                          `${t("groups.delete_confirm_prefix", "Delete group: ")}"${group.name}"?`,
+                        )
+                      ) {
                         deleteMutation.mutate(group.id);
                       }
                     }}
                   >
-                    Delete
+                    {t("common.delete", "Delete")}
                   </button>
                 </td>
               </tr>
@@ -343,7 +367,7 @@ export function GroupsPage() {
                   </div>
                 </div>
                 <div className={`status-pill ${group.is_active ? "status-online" : ""}`}>
-                  {group.is_active ? "Enabled" : "Disabled"}
+                  {group.is_active ? t("common.enabled", "Enabled") : t("common.disabled", "Disabled")}
                 </div>
               </div>
               <div className="mobile-record-actions">
@@ -351,30 +375,34 @@ export function GroupsPage() {
                   className={`toggle-chip ${group.is_active ? "toggle-chip-on" : ""}`}
                   onClick={() => toggleMutation.mutate(group)}
                 >
-                  {group.is_active ? "On" : "Off"}
+                  {group.is_active ? t("common.on", "On") : t("common.off", "Off")}
                 </button>
                 <button className="ghost-button" onClick={() => openEditModal(group)}>
-                  Edit
+                  {t("common.edit", "Edit")}
                 </button>
                 <MobileInfoPopover>
                   <div className="mobile-info-grid">
-                    <div><strong>Allowed IPs</strong></div>
+                    <div><strong>{t("groups.allowed_ips", "Allowed IPs")}</strong></div>
                     <div>{group.default_allowed_ips.join(", ")}</div>
-                    <div><strong>DNS</strong></div>
+                    <div><strong>{t("groups.dns", "DNS")}</strong></div>
                     <div>{group.dns_servers?.join(", ") || "—"}</div>
-                    <div><strong>Description</strong></div>
+                    <div><strong>{t("common.description", "Description")}</strong></div>
                     <div>{group.description || "—"}</div>
                   </div>
                 </MobileInfoPopover>
                 <button
                   className="danger-button"
                   onClick={() => {
-                    if (window.confirm(`Delete group "${group.name}"?`)) {
+                    if (
+                      window.confirm(
+                        `${t("groups.delete_confirm_prefix", "Delete group: ")}"${group.name}"?`,
+                      )
+                    ) {
                       deleteMutation.mutate(group.id);
                     }
                   }}
                 >
-                  Delete
+                  {t("common.delete", "Delete")}
                 </button>
               </div>
             </article>
@@ -385,14 +413,14 @@ export function GroupsPage() {
         <div className="modal-backdrop" onClick={closeCreateModal}>
           <div className="modal-card modal-compact" onClick={(event) => event.stopPropagation()}>
             <div className="panel-header">
-              <h2>Add group</h2>
+              <h2>{t("groups.add_title", "Add group")}</h2>
               <button className="ghost-button" onClick={closeCreateModal}>
-                Close
+                {t("common.close", "Close")}
               </button>
             </div>
             <div className="form-grid">
               <label className="field">
-                <span>Name</span>
+                <span>{t("groups.name", "Name")}</span>
                 <input
                   value={createForm.name}
                   autoComplete="off"
@@ -400,18 +428,18 @@ export function GroupsPage() {
                 />
               </label>
               <label className="field">
-                <span>Scope</span>
+                <span>{t("groups.scope", "Scope")}</span>
                 <select
                   value={createForm.scope}
                   onChange={(event) => updateCreateFormField("scope", event.target.value)}
                 >
-                  <option value="single_site">single_site</option>
-                  <option value="multi_site">multi_site</option>
-                  <option value="admin">admin</option>
+                  <option value="single_site">{t("groups.scope_single_site", "single_site")}</option>
+                  <option value="multi_site">{t("groups.scope_multi_site", "multi_site")}</option>
+                  <option value="admin">{t("groups.scope_admin", "admin")}</option>
                 </select>
               </label>
               <label className="field">
-                <span>Network CIDR</span>
+                <span>{t("groups.network_cidr", "Network CIDR")}</span>
                 <input
                   value={createForm.networkCidr}
                   autoComplete="off"
@@ -422,11 +450,11 @@ export function GroupsPage() {
                   placeholder={SCOPE_EXAMPLE[createForm.scope] ?? "10.10.1.0/24"}
                 />
                 <div className="muted-text">
-                  Required for this scope: /{SCOPE_PREFIX[createForm.scope] ?? 24}
+                  {t("groups.scope", "Scope")}: /{SCOPE_PREFIX[createForm.scope] ?? 24}
                 </div>
               </label>
               <label className="field">
-                <span>Allowed IPs</span>
+                <span>{t("groups.allowed_ips", "Allowed IPs")}</span>
                 <input
                   value={createForm.allowedIps}
                   autoComplete="off"
@@ -435,7 +463,7 @@ export function GroupsPage() {
                 />
               </label>
               <label className="field">
-                <span>DNS servers</span>
+                <span>{t("groups.dns_servers", "DNS servers")}</span>
                 <input
                   value={createForm.dnsServers}
                   autoComplete="off"
@@ -444,12 +472,12 @@ export function GroupsPage() {
                 />
               </label>
               <label className="field field-span-2">
-                <span>Description</span>
+                <span>{t("groups.description", "Description")}</span>
                 <input
                   value={createForm.description}
                   autoComplete="off"
                   onChange={(event) => updateCreateFormField("description", event.target.value)}
-                  placeholder="Optional note"
+                  placeholder={t("groups.create_note_placeholder", "Optional note")}
                 />
               </label>
               <label className="field-checkbox field-span-2">
@@ -459,8 +487,8 @@ export function GroupsPage() {
                   onChange={(event) => updateCreateFormField("isActive", event.target.checked)}
                 />
                 <div>
-                  <strong>Enabled</strong>
-                  <div className="muted-text">Create this group in an active state.</div>
+                  <strong>{t("common.enabled", "Enabled")}</strong>
+                  <div className="muted-text">{t("groups.create_active", "Create this group in an active state.")}</div>
                 </div>
               </label>
             </div>
@@ -478,7 +506,7 @@ export function GroupsPage() {
                 }
                 onClick={() => createMutation.mutate()}
               >
-                {createMutation.isPending ? "Creating..." : "Create group"}
+                {createMutation.isPending ? t("groups.creating", "Creating...") : t("groups.create", "Create group")}
               </button>
             </div>
           </div>
@@ -488,14 +516,14 @@ export function GroupsPage() {
         <div className="modal-backdrop" onClick={closeEditModal}>
           <div className="modal-card modal-compact" onClick={(event) => event.stopPropagation()}>
             <div className="panel-header">
-              <h2>Edit group</h2>
+              <h2>{t("groups.edit_title", "Edit group")}</h2>
               <button className="ghost-button" onClick={closeEditModal}>
-                Close
+                {t("common.close", "Close")}
               </button>
             </div>
             <div className="form-grid">
               <label className="field">
-                <span>Name</span>
+                <span>{t("groups.name", "Name")}</span>
                 <input
                   value={editForm.name}
                   autoComplete="off"
@@ -505,15 +533,15 @@ export function GroupsPage() {
                 />
               </label>
               <label className="field">
-                <span>Scope</span>
+                <span>{t("groups.scope", "Scope")}</span>
                 <input value={editForm.scope} disabled />
               </label>
               <label className="field">
-                <span>Network CIDR</span>
+                <span>{t("groups.network_cidr", "Network CIDR")}</span>
                 <input value={editForm.networkCidr} disabled />
               </label>
               <label className="field">
-                <span>Allowed IPs</span>
+                <span>{t("groups.allowed_ips", "Allowed IPs")}</span>
                 <input
                   value={editForm.allowedIps}
                   autoComplete="off"
@@ -523,7 +551,7 @@ export function GroupsPage() {
                 />
               </label>
               <label className="field">
-                <span>DNS servers</span>
+                <span>{t("groups.dns_servers", "DNS servers")}</span>
                 <input
                   value={editForm.dnsServers}
                   autoComplete="off"
@@ -533,7 +561,7 @@ export function GroupsPage() {
                 />
               </label>
               <label className="field field-span-2">
-                <span>Description</span>
+                <span>{t("groups.description", "Description")}</span>
                 <input
                   value={editForm.description}
                   autoComplete="off"
@@ -551,8 +579,8 @@ export function GroupsPage() {
                   }
                 />
                 <div>
-                  <strong>Enabled</strong>
-                  <div className="muted-text">Disable to stop new active use from this group.</div>
+                  <strong>{t("common.enabled", "Enabled")}</strong>
+                  <div className="muted-text">{t("groups.disable_hint", "Disable to stop new active use from this group.")}</div>
                 </div>
               </label>
             </div>
@@ -568,7 +596,7 @@ export function GroupsPage() {
                   })
                 }
               >
-                {updateMutation.isPending ? "Saving..." : "Save changes"}
+                {updateMutation.isPending ? t("groups.saving", "Saving...") : t("groups.save_changes", "Save changes")}
               </button>
             </div>
           </div>

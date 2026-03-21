@@ -76,6 +76,15 @@ Run a CLI command:
 docker compose run --rm wg-studio-cli group list
 ```
 
+Login-user related CLI examples:
+
+```bash
+docker compose run --rm wg-studio-cli setup-status
+docker compose run --rm wg-studio-cli setup --username admin --password supersecret123
+docker compose run --rm wg-studio-cli login-user list
+docker compose run --rm wg-studio-cli login-user set-password --login-user-id 1 --password newsecret123
+```
+
 ## Security Notes
 
 - The API is not published on a host port by default.

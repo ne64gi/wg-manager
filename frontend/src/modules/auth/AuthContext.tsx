@@ -11,7 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ApiError, getAuthMe, login, logout, refresh } from "../../lib/api";
 import { queryKeys } from "../queryKeys";
-import type { AuthLoginRequest, AuthenticatedLoginUser } from "../../types";
+import type { AuthLoginRequest, AuthenticatedLoginUser, TokenPair } from "../../types";
 
 type AuthState = {
   accessToken: string | null;
@@ -20,6 +20,7 @@ type AuthState = {
   isAuthenticated: boolean;
   isBootstrapping: boolean;
   loginAction: (payload: AuthLoginRequest) => Promise<void>;
+  acceptTokenPair: (pair: TokenPair) => Promise<void>;
   logoutAction: () => Promise<void>;
   getValidAccessToken: () => Promise<string | null>;
 };
@@ -129,6 +130,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   async function loginAction(payload: AuthLoginRequest) {
     const pair = await login(payload);
+    await acceptTokenPair(pair);
+  }
+
+  async function acceptTokenPair(pair: TokenPair) {
     setAccessToken(pair.access_token);
     setRefreshToken(pair.refresh_token);
     await queryClient.invalidateQueries({ queryKey: queryKeys.authMe });
@@ -154,6 +159,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       isAuthenticated: Boolean(accessToken && meQuery.data),
       isBootstrapping: Boolean(accessToken) && meQuery.isLoading,
       loginAction,
+      acceptTokenPair,
       logoutAction,
       getValidAccessToken: getValidAccessTokenInternal,
     }),

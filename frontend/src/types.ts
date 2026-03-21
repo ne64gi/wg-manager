@@ -6,6 +6,20 @@ export type AuthLoginRequest = {
   password: string;
 };
 
+export type AuthSetupStatus = {
+  has_login_users: boolean;
+};
+
+export type AuthSetupRequest = {
+  username: string;
+  password: string;
+};
+
+export type AuthChangePasswordRequest = {
+  current_password: string;
+  new_password: string;
+};
+
 export type TokenPair = {
   access_token: string;
   refresh_token: string;
