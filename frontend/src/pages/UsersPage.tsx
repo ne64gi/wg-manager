@@ -8,6 +8,7 @@ import { useAuth } from "../modules/auth/AuthContext";
 import { useGuiSettingsQuery } from "../modules/gui/useGuiSettingsQuery";
 import { queryKeys } from "../modules/queryKeys";
 import { Panel } from "../ui/Cards";
+import { MobileInfoPopover } from "../ui/MobileInfoPopover";
 import { DataTable } from "../ui/Table";
 import { useToast } from "../ui/ToastProvider";
 
@@ -225,24 +226,72 @@ export function UsersPage() {
         </label>
       </div>
       <Panel title="User list">
-        <DataTable headers={["Status", "Name", "Group", "Override routes", "Actions"]}>
+        <div className="desktop-table">
+          <DataTable headers={["Status", "Name", "Group", "Override routes", "Actions"]}>
+            {filteredUsers.map((user) => (
+              <tr key={user.id}>
+                <td>
+                  <button
+                    className={`toggle-chip ${user.is_active ? "toggle-chip-on" : ""}`}
+                    onClick={() => toggleMutation.mutate(user)}
+                  >
+                    {user.is_active ? "On" : "Off"}
+                  </button>
+                </td>
+                <td>{user.name}</td>
+                <td>{groupNames.get(user.group_id) ?? `Group ${user.group_id}`}</td>
+                <td>{user.allowed_ips_override?.join(", ") || "Inherit group defaults"}</td>
+                <td className="action-row">
+                  <button className="ghost-button" onClick={() => openEditModal(user)}>
+                    Edit
+                  </button>
+                  <button
+                    className="danger-button"
+                    onClick={() => {
+                      if (window.confirm(`Delete user "${user.name}"?`)) {
+                        deleteMutation.mutate(user.id);
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </DataTable>
+        </div>
+        <div className="mobile-list">
           {filteredUsers.map((user) => (
-            <tr key={user.id}>
-              <td>
+            <article key={user.id} className="mobile-record">
+              <div className="mobile-record-main">
+                <div>
+                  <div className="mobile-record-title">{user.name}</div>
+                  <div className="mobile-record-subtitle">
+                    {groupNames.get(user.group_id) ?? `Group ${user.group_id}`}
+                  </div>
+                </div>
+                <div className={`status-pill ${user.is_active ? "status-online" : ""}`}>
+                  {user.is_active ? "Enabled" : "Disabled"}
+                </div>
+              </div>
+              <div className="mobile-record-actions">
                 <button
                   className={`toggle-chip ${user.is_active ? "toggle-chip-on" : ""}`}
                   onClick={() => toggleMutation.mutate(user)}
                 >
                   {user.is_active ? "On" : "Off"}
                 </button>
-              </td>
-              <td>{user.name}</td>
-              <td>{groupNames.get(user.group_id) ?? `Group ${user.group_id}`}</td>
-              <td>{user.allowed_ips_override?.join(", ") || "Inherit group defaults"}</td>
-              <td className="action-row">
                 <button className="ghost-button" onClick={() => openEditModal(user)}>
                   Edit
                 </button>
+                <MobileInfoPopover>
+                  <div className="mobile-info-grid">
+                    <div><strong>Override routes</strong></div>
+                    <div>{user.allowed_ips_override?.join(", ") || "Inherit group defaults"}</div>
+                    <div><strong>Description</strong></div>
+                    <div>{user.description || "—"}</div>
+                  </div>
+                </MobileInfoPopover>
                 <button
                   className="danger-button"
                   onClick={() => {
@@ -253,10 +302,10 @@ export function UsersPage() {
                 >
                   Delete
                 </button>
-              </td>
-            </tr>
+              </div>
+            </article>
           ))}
-        </DataTable>
+        </div>
       </Panel>
       {isCreateOpen ? (
         <div className="modal-backdrop" onClick={closeCreateModal}>

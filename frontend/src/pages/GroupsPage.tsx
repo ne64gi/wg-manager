@@ -7,6 +7,7 @@ import type { Group } from "../types";
 import { useAuth } from "../modules/auth/AuthContext";
 import { useGuiSettingsQuery } from "../modules/gui/useGuiSettingsQuery";
 import { Panel } from "../ui/Cards";
+import { MobileInfoPopover } from "../ui/MobileInfoPopover";
 import { DataTable } from "../ui/Table";
 import { queryKeys } from "../modules/queryKeys";
 import { useToast } from "../ui/ToastProvider";
@@ -293,28 +294,78 @@ export function GroupsPage() {
         </button>
       </div>
       <Panel title="Group list">
-        <DataTable
-          headers={["Status", "Name", "Scope", "Network", "Allowed IPs", "DNS", "Actions"]}
-        >
+        <div className="desktop-table">
+          <DataTable
+            headers={["Status", "Name", "Scope", "Network", "Allowed IPs", "DNS", "Actions"]}
+          >
+            {groups.map((group) => (
+              <tr key={group.id}>
+                <td>
+                  <button
+                    className={`toggle-chip ${group.is_active ? "toggle-chip-on" : ""}`}
+                    onClick={() => toggleMutation.mutate(group)}
+                  >
+                    {group.is_active ? "On" : "Off"}
+                  </button>
+                </td>
+                <td>{group.name}</td>
+                <td>{group.scope}</td>
+                <td>{group.network_cidr}</td>
+                <td>{group.default_allowed_ips.join(", ")}</td>
+                <td>{group.dns_servers?.join(", ") || "—"}</td>
+                <td className="action-row">
+                  <button className="ghost-button" onClick={() => openEditModal(group)}>
+                    Edit
+                  </button>
+                  <button
+                    className="danger-button"
+                    onClick={() => {
+                      if (window.confirm(`Delete group "${group.name}"?`)) {
+                        deleteMutation.mutate(group.id);
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </DataTable>
+        </div>
+        <div className="mobile-list">
           {groups.map((group) => (
-            <tr key={group.id}>
-              <td>
+            <article key={group.id} className="mobile-record">
+              <div className="mobile-record-main">
+                <div>
+                  <div className="mobile-record-title">{group.name}</div>
+                  <div className="mobile-record-subtitle">
+                    {group.scope} / {group.network_cidr}
+                  </div>
+                </div>
+                <div className={`status-pill ${group.is_active ? "status-online" : ""}`}>
+                  {group.is_active ? "Enabled" : "Disabled"}
+                </div>
+              </div>
+              <div className="mobile-record-actions">
                 <button
                   className={`toggle-chip ${group.is_active ? "toggle-chip-on" : ""}`}
                   onClick={() => toggleMutation.mutate(group)}
                 >
                   {group.is_active ? "On" : "Off"}
                 </button>
-              </td>
-              <td>{group.name}</td>
-              <td>{group.scope}</td>
-              <td>{group.network_cidr}</td>
-              <td>{group.default_allowed_ips.join(", ")}</td>
-              <td>{group.dns_servers?.join(", ") || "—"}</td>
-              <td className="action-row">
                 <button className="ghost-button" onClick={() => openEditModal(group)}>
                   Edit
                 </button>
+                <MobileInfoPopover>
+                  <div className="mobile-info-grid">
+                    <div><strong>Allowed IPs</strong></div>
+                    <div>{group.default_allowed_ips.join(", ")}</div>
+                    <div><strong>DNS</strong></div>
+                    <div>{group.dns_servers?.join(", ") || "—"}</div>
+                    <div><strong>Description</strong></div>
+                    <div>{group.description || "—"}</div>
+                  </div>
+                </MobileInfoPopover>
                 <button
                   className="danger-button"
                   onClick={() => {
@@ -325,10 +376,10 @@ export function GroupsPage() {
                 >
                   Delete
                 </button>
-              </td>
-            </tr>
+              </div>
+            </article>
           ))}
-        </DataTable>
+        </div>
       </Panel>
       {isCreateOpen ? (
         <div className="modal-backdrop" onClick={closeCreateModal}>

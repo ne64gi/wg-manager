@@ -18,6 +18,7 @@ import { useGuiSettingsQuery } from "../modules/gui/useGuiSettingsQuery";
 import { queryKeys } from "../modules/queryKeys";
 import type { RevealedPeerArtifacts, User } from "../types";
 import { Panel, StatCard } from "../ui/Cards";
+import { MobileInfoPopover } from "../ui/MobileInfoPopover";
 import { RevealModal } from "../ui/RevealModal";
 import { DataTable } from "../ui/Table";
 import { useToast } from "../ui/ToastProvider";
@@ -277,30 +278,132 @@ export function PeersPage() {
             />
           </label>
         </div>
-        <DataTable
-          headers={[
-            "Status",
-            "Toggle",
-            "Peer",
-            "IP",
-            "Routes",
-            "Traffic",
-            "Reveal / Reissue",
-            "Delete",
-          ]}
-        >
+        <div className="desktop-table">
+          <DataTable
+            headers={[
+              "Status",
+              "Toggle",
+              "Peer",
+              "IP",
+              "Routes",
+              "Traffic",
+              "Reveal / Reissue",
+              "Delete",
+            ]}
+          >
+            {filteredPeers.map((peer) => {
+              const peerUser = userMap.get(peer.user_id);
+              const groupName = peerUser ? groupMap.get(peerUser.group_id) ?? "—" : "—";
+
+              return (
+                <tr key={peer.peer_id}>
+                  <td>
+                    <div className={`status-pill ${peer.is_online ? "status-online" : ""}`}>
+                      {peer.is_online ? "Online" : "Offline"}
+                    </div>
+                  </td>
+                  <td>
+                    <button
+                      className={`toggle-chip ${peer.is_active ? "toggle-chip-on" : ""}`}
+                      onClick={() =>
+                        toggleMutation.mutate({
+                          peerId: peer.peer_id,
+                          isActive: peer.is_active,
+                        })
+                      }
+                    >
+                      {peer.is_active ? "On" : "Off"}
+                    </button>
+                  </td>
+                  <td>
+                    <div>{peer.peer_name}</div>
+                    <div className="muted-text">
+                      {peer.user_name} / {groupName}
+                    </div>
+                  </td>
+                  <td>{peer.assigned_ip}</td>
+                  <td>{peer.effective_allowed_ips.join(", ")}</td>
+                  <td>{formatBytes(peer.total_bytes)}</td>
+                  <td className="action-row">
+                    {(() => {
+                      const userIsActive = peerUser?.is_active ?? false;
+                      const groupIsActive = peerUser
+                        ? groups.some((group) => group.id === peerUser.group_id && group.is_active)
+                        : false;
+                      const canManageSecrets = peer.is_active && userIsActive && groupIsActive;
+
+                      return (
+                        <>
+                          <button
+                            className="ghost-button"
+                            disabled={peer.is_revealed || revealMutation.isPending || !canManageSecrets}
+                            onClick={() => revealMutation.mutate(peer.peer_id)}
+                          >
+                            Reveal
+                          </button>
+                          <button
+                            className="secondary-button"
+                            disabled={!canManageSecrets || reissueMutation.isPending}
+                            onClick={() => reissueMutation.mutate(peer.peer_id)}
+                          >
+                            Reissue
+                          </button>
+                          <div className="muted-text">
+                            {peer.is_revealed
+                              ? "Consumed"
+                              : !canManageSecrets
+                                ? "Inactive upstream"
+                                : "Pending"}
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </td>
+                  <td>
+                    <button
+                      className="danger-button"
+                      onClick={() => {
+                        if (window.confirm(`Delete peer "${peer.peer_name}"?`)) {
+                          deleteMutation.mutate(peer.peer_id);
+                        }
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </DataTable>
+        </div>
+        <div className="mobile-list">
           {filteredPeers.map((peer) => {
             const peerUser = userMap.get(peer.user_id);
             const groupName = peerUser ? groupMap.get(peerUser.group_id) ?? "—" : "—";
+            const userIsActive = peerUser?.is_active ?? false;
+            const groupIsActive = peerUser
+              ? groups.some((group) => group.id === peerUser.group_id && group.is_active)
+              : false;
+            const canManageSecrets = peer.is_active && userIsActive && groupIsActive;
 
             return (
-              <tr key={peer.peer_id}>
-                <td>
+              <article key={peer.peer_id} className="mobile-record">
+                <div className="mobile-record-main">
+                  <div>
+                    <div className="mobile-record-title">{peer.peer_name}</div>
+                    <div className="mobile-record-subtitle">
+                      {peer.user_name} / {groupName}
+                    </div>
+                  </div>
                   <div className={`status-pill ${peer.is_online ? "status-online" : ""}`}>
                     {peer.is_online ? "Online" : "Offline"}
                   </div>
-                </td>
-                <td>
+                </div>
+                <div className="mobile-record-meta">
+                  <span>{peer.assigned_ip}</span>
+                  <span>{formatBytes(peer.total_bytes)}</span>
+                </div>
+                <div className="mobile-record-actions">
                   <button
                     className={`toggle-chip ${peer.is_active ? "toggle-chip-on" : ""}`}
                     onClick={() =>
@@ -312,24 +415,24 @@ export function PeersPage() {
                   >
                     {peer.is_active ? "On" : "Off"}
                   </button>
-                </td>
-                <td>
-                  <div>{peer.peer_name}</div>
-                  <div className="muted-text">
-                    {peer.user_name} / {groupName}
-                  </div>
-                </td>
-                <td>{peer.assigned_ip}</td>
-                <td>{peer.effective_allowed_ips.join(", ")}</td>
-                <td>{formatBytes(peer.total_bytes)}</td>
-                <td className="action-row">
-                  {(() => {
-                    const userIsActive = peerUser?.is_active ?? false;
-                    const groupIsActive = peerUser ? groups.some((group) => group.id === peerUser.group_id && group.is_active) : false;
-                    const canManageSecrets = peer.is_active && userIsActive && groupIsActive;
-
-                    return (
-                      <>
+                  <MobileInfoPopover>
+                    <div className="mobile-info-grid">
+                      <div><strong>IP</strong></div>
+                      <div>{peer.assigned_ip}</div>
+                      <div><strong>Routes</strong></div>
+                      <div>{peer.effective_allowed_ips.join(", ")}</div>
+                      <div><strong>Traffic</strong></div>
+                      <div>{formatBytes(peer.total_bytes)}</div>
+                      <div><strong>Status</strong></div>
+                      <div>
+                        {peer.is_revealed
+                          ? "Consumed"
+                          : !canManageSecrets
+                            ? "Inactive upstream"
+                            : "Pending"}
+                      </div>
+                    </div>
+                  </MobileInfoPopover>
                   <button
                     className="ghost-button"
                     disabled={peer.is_revealed || revealMutation.isPending || !canManageSecrets}
@@ -344,18 +447,6 @@ export function PeersPage() {
                   >
                     Reissue
                   </button>
-                  <div className="muted-text">
-                    {peer.is_revealed
-                      ? "Consumed"
-                      : !canManageSecrets
-                        ? "Inactive upstream"
-                        : "Pending"}
-                  </div>
-                      </>
-                    );
-                  })()}
-                </td>
-                <td>
                   <button
                     className="danger-button"
                     onClick={() => {
@@ -366,11 +457,11 @@ export function PeersPage() {
                   >
                     Delete
                   </button>
-                </td>
-              </tr>
+                </div>
+              </article>
             );
           })}
-        </DataTable>
+        </div>
       </Panel>
 
       {revealed ? (
