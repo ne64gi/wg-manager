@@ -32,7 +32,11 @@ const AuthContext = createContext<AuthState | undefined>(undefined);
 type PersistedAuth = {
   accessToken: string;
   refreshToken: string;
+  accessTokenExpiresAt: string | null;
+  refreshTokenExpiresAt: string | null;
 };
+
+const REFRESH_SKEW_MS = 60_000;
 
 function readPersistedAuth(): PersistedAuth | null {
   try {
@@ -63,25 +67,37 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [refreshToken, setRefreshToken] = useState<string | null>(
     persisted?.refreshToken ?? null,
   );
+  const [accessTokenExpiresAt, setAccessTokenExpiresAt] = useState<string | null>(
+    persisted?.accessTokenExpiresAt ?? null,
+  );
+  const [refreshTokenExpiresAt, setRefreshTokenExpiresAt] = useState<string | null>(
+    persisted?.refreshTokenExpiresAt ?? null,
+  );
   const refreshPromiseRef = useRef<Promise<string | null> | null>(null);
 
   useEffect(() => {
     if (accessToken && refreshToken) {
-      writePersistedAuth({ accessToken, refreshToken });
+      writePersistedAuth({
+        accessToken,
+        refreshToken,
+        accessTokenExpiresAt,
+        refreshTokenExpiresAt,
+      });
     } else {
       writePersistedAuth(null);
     }
-  }, [accessToken, refreshToken]);
+  }, [accessToken, refreshToken, accessTokenExpiresAt, refreshTokenExpiresAt]);
 
   const meQuery = useQuery({
     queryKey: queryKeys.authMe,
     queryFn: async () => {
-      if (!accessToken) {
+      const token = await getValidAccessTokenInternal();
+      if (!token) {
         return null;
       }
 
       try {
-        return await getAuthMe(accessToken);
+        return await getAuthMe(token);
       } catch (error) {
         if (error instanceof ApiError && error.status === 401) {
           const nextToken = await getValidAccessTokenInternal();
@@ -100,11 +116,35 @@ export function AuthProvider({ children }: PropsWithChildren) {
   function clearAuth() {
     setAccessToken(null);
     setRefreshToken(null);
+    setAccessTokenExpiresAt(null);
+    setRefreshTokenExpiresAt(null);
     queryClient.removeQueries();
   }
 
+  function isTokenUsable(expiresAt: string | null) {
+    if (!expiresAt) {
+      return false;
+    }
+
+    const expiry = Date.parse(expiresAt);
+    if (Number.isNaN(expiry)) {
+      return false;
+    }
+
+    return expiry - Date.now() > REFRESH_SKEW_MS;
+  }
+
   async function getValidAccessTokenInternal(): Promise<string | null> {
+    if (accessToken && (!accessTokenExpiresAt || isTokenUsable(accessTokenExpiresAt))) {
+      return accessToken;
+    }
+
     if (!refreshToken) {
+      clearAuth();
+      return null;
+    }
+
+    if (refreshTokenExpiresAt && !isTokenUsable(refreshTokenExpiresAt)) {
       clearAuth();
       return null;
     }
@@ -114,6 +154,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
         .then((pair) => {
           setAccessToken(pair.access_token);
           setRefreshToken(pair.refresh_token);
+          setAccessTokenExpiresAt(pair.access_token_expires_at);
+          setRefreshTokenExpiresAt(pair.refresh_token_expires_at);
           return pair.access_token;
         })
         .catch(() => {
@@ -136,6 +178,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   async function acceptTokenPair(pair: TokenPair) {
     setAccessToken(pair.access_token);
     setRefreshToken(pair.refresh_token);
+    setAccessTokenExpiresAt(pair.access_token_expires_at);
+    setRefreshTokenExpiresAt(pair.refresh_token_expires_at);
     await queryClient.invalidateQueries({ queryKey: queryKeys.authMe });
   }
 
