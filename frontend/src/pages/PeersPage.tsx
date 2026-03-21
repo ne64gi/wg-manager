@@ -40,6 +40,10 @@ const DEFAULT_CREATE_FORM: PeerFormState = {
   isActive: true,
 };
 
+function formatDeleteConfirm(name: string) {
+  return t("peers.delete_confirm_named", `Delete "${name}"?`).replace("{name}", name);
+}
+
 export function PeersPage() {
   const auth = useAuth();
   const queryClient = useQueryClient();
@@ -374,10 +378,10 @@ export function PeersPage() {
                           </button>
                           <div className="muted-text">
                             {peer.is_revealed
-                              ? t("peers.consumed", "Consumed")
+                              ? t("peers.revealed", "Revealed")
                               : !canManageSecrets
                                 ? t("peers.inactive_upstream", "Inactive upstream")
-                                : t("peers.pending", "Pending")}
+                                : t("peers.not_revealed", "Not revealed")}
                           </div>
                         </>
                       );
@@ -387,7 +391,7 @@ export function PeersPage() {
                     <button
                       className="danger-button"
                       onClick={() => {
-                        if (window.confirm(`${t("peers.delete_confirm_prefix", "Delete peer: ")}"${peer.peer_name}"?`)) {
+                        if (window.confirm(formatDeleteConfirm(peer.peer_name))) {
                           deleteMutation.mutate(peer.peer_id);
                         }
                       }}
@@ -450,10 +454,10 @@ export function PeersPage() {
                       <div><strong>{t("common.status", "Status")}</strong></div>
                       <div>
                         {peer.is_revealed
-                          ? t("peers.consumed", "Consumed")
+                          ? t("peers.revealed", "Revealed")
                           : !canManageSecrets
                             ? t("peers.inactive_upstream", "Inactive upstream")
-                            : t("peers.pending", "Pending")}
+                            : t("peers.not_revealed", "Not revealed")}
                       </div>
                     </div>
                   </MobileInfoPopover>
@@ -474,7 +478,7 @@ export function PeersPage() {
                   <button
                     className="danger-button"
                     onClick={() => {
-                      if (window.confirm(`${t("peers.delete_confirm_prefix", "Delete peer: ")}"${peer.peer_name}"?`)) {
+                      if (window.confirm(formatDeleteConfirm(peer.peer_name))) {
                         deleteMutation.mutate(peer.peer_id);
                       }
                     }}

@@ -2,36 +2,37 @@
 
 `wg-studio` is a WireGuard control plane built around `Group -> User -> Peer`.
 
-Current beta status:
+Current product state:
 
 - PostgreSQL-backed source of truth
 - FastAPI API
-- Typer CLI for admin/dev use
-- separate audit database
+- Typer CLI for admin and development use
+- bundled React/Vite GUI served through `nginx`
 - policy-aware config generation
+- one-time peer reveal with QR output
 - WireGuard apply flow
-- live WireGuard status API
-- verified handshake on a real VPS
+- live WireGuard status and GUI audit logs
 
 ## Docs
 
 English docs live under [`docs/en/`](docs/en/README.md).
 
-Available pages:
+Recommended starting points:
 
 - [`docs/en/README.md`](docs/en/README.md)
 - [`docs/en/quick-start.md`](docs/en/quick-start.md)
 - [`docs/en/overview.md`](docs/en/overview.md)
-- [`docs/en/architecture.md`](docs/en/architecture.md)
-- [`docs/en/domain-model.md`](docs/en/domain-model.md)
-- [`docs/en/config-and-apply.md`](docs/en/config-and-apply.md)
 - [`docs/en/api.md`](docs/en/api.md)
 - [`docs/en/auth-and-api-rules.md`](docs/en/auth-and-api-rules.md)
-- [`docs/en/development.md`](docs/en/development.md)
 - [`docs/en/roadmap.md`](docs/en/roadmap.md)
 - [`docs/ai/README.md`](docs/ai/README.md)
 
-Japanese docs will later live under `docs/jp/`.
+Documentation roles:
+
+- `docs/en`: human-facing product and operator documentation
+- `docs/ai`: low-ambiguity operational notes for coding and review agents
+
+Japanese docs are not published yet in this branch.
 
 ## Quick Start
 
@@ -41,12 +42,15 @@ Copy the checked-in env template and adjust local values:
 cp .env.example .env
 ```
 
-Minimum values to change before first login:
+Minimum values to change:
 
 - `WG_SERVER_ENDPOINT`
+- `WG_JWT_SECRET_KEY`
+
+Optional but recommended for first login bootstrapping:
+
 - `WG_BOOTSTRAP_ADMIN_USERNAME`
 - `WG_BOOTSTRAP_ADMIN_PASSWORD`
-- `WG_JWT_SECRET_KEY`
 
 Start the stack:
 
@@ -60,9 +64,12 @@ Open the GUI:
 http://localhost:3900/wg-studio/
 ```
 
-Sign in with the bootstrap admin credentials from `.env`.
+First login behavior:
 
-For a more complete GUI-first startup flow, see [`docs/en/quick-start.md`](docs/en/quick-start.md).
+- if `WG_BOOTSTRAP_ADMIN_USERNAME` and `WG_BOOTSTRAP_ADMIN_PASSWORD` are set, startup creates the first login user automatically
+- if no login users exist, the login screen switches into first-admin setup mode
+
+For the complete GUI-first startup flow, see [`docs/en/quick-start.md`](docs/en/quick-start.md).
 
 Check API health from inside the stack:
 
@@ -87,7 +94,7 @@ docker compose run --rm wg-studio-cli login-user set-password --login-user-id 1 
 
 ## Security Notes
 
-- The API is not published on a host port by default.
+- The API is internal-only by default in Compose.
 - The GUI is published through `nginx` on port `3900`.
 - Generated artifacts live in the Docker named volume `wg_config`.
 - Keep the real `.env` local-only and commit changes only to `.env.example`.

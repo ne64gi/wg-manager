@@ -51,7 +51,7 @@ export function DashboardPage() {
       <div className="page-header">
         <div>
           <div className="eyebrow">{t("nav.dashboard", "Dashboard")}</div>
-          <h1>{t("dashboard.title", "WireGuard fleet overview")}</h1>
+          <h1>{t("dashboard.title", "System overview")}</h1>
         </div>
       </div>
 

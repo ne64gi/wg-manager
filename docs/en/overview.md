@@ -1,8 +1,8 @@
 # Overview
 
-`wg-studio` manages desired state outside the WireGuard data plane.
+`wg-studio` manages WireGuard desired state outside the WireGuard data plane.
 
-It stores groups, users, peers, allocation policy, and initial endpoint settings in PostgreSQL, then generates and applies WireGuard configuration from that state.
+It stores groups, users, peers, allocation policy, login users, and endpoint settings in PostgreSQL, then generates and applies WireGuard configuration from that state.
 
 Core goals:
 
@@ -10,20 +10,21 @@ Core goals:
 - support group defaults plus per-user overrides
 - generate server and client artifacts from DB state
 - apply changes to a live WireGuard runtime
-- expose runtime status for a future GUI
+- expose runtime status through the bundled GUI and the API
 
-Current beta capabilities:
+Current product capabilities:
 
 - PostgreSQL-backed domain state
-- separate audit database
+- separate audit-oriented GUI log stream
 - group, user, and peer lifecycle operations
-- peer config and QR generation
-- server config generation
-- Docker-based apply flow
+- peer config and QR generation with one-time reveal semantics
+- server config generation and apply flow
+- Docker-based deployment path
 - live peer traffic and handshake status
+- bundled React/Vite GUI through `nginx`
 
-Non-goals for the current beta:
+Current non-goals:
 
-- GUI
 - firewall enforcement plugins
-- localized documentation
+- multi-server or multi-tenant orchestration inside one control plane
+- WebSocket-based realtime updates

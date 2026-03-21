@@ -29,6 +29,10 @@ const DEFAULT_CREATE_FORM: UserFormState = {
   isActive: true,
 };
 
+function formatDeleteConfirm(name: string) {
+  return t("users.delete_confirm_named", `Delete "${name}"?`).replace("{name}", name);
+}
+
 export function UsersPage() {
   const auth = useAuth();
   const queryClient = useQueryClient();
@@ -209,7 +213,7 @@ export function UsersPage() {
       <div className="page-header">
         <div>
           <div className="eyebrow">{t("nav.users", "Users")}</div>
-          <h1>{t("users.title", "User policy assignments")}</h1>
+          <h1>{t("users.title", "User management")}</h1>
         </div>
       </div>
       <div className="stats-grid stats-grid-compact">
@@ -266,7 +270,7 @@ export function UsersPage() {
                   <button
                     className="danger-button"
                     onClick={() => {
-                      if (window.confirm(`${t("users.delete_confirm_prefix", "Delete user: ")}"${user.name}"?`)) {
+                      if (window.confirm(formatDeleteConfirm(user.name))) {
                         deleteMutation.mutate(user.id);
                       }
                     }}
@@ -313,7 +317,7 @@ export function UsersPage() {
                 <button
                   className="danger-button"
                   onClick={() => {
-                    if (window.confirm(`${t("users.delete_confirm_prefix", "Delete user: ")}"${user.name}"?`)) {
+                    if (window.confirm(formatDeleteConfirm(user.name))) {
                       deleteMutation.mutate(user.id);
                     }
                   }}

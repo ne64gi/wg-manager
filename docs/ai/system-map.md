@@ -35,7 +35,7 @@ Cardinality:
 
 ## Route Ownership
 
-- `app/api/routes/auth.py`: login, refresh, logout, me
+- `app/api/routes/auth.py`: setup-status, setup, login, refresh, logout, me, change-password
 - `app/api/routes/domain.py`: groups, users, peers, initial settings
 - `app/api/routes/config.py`: config generation, reveal, apply
 - `app/api/routes/status.py`: overview, peers, summaries, history
@@ -60,6 +60,7 @@ From `.env`:
 - bootstrap admin username/password
 - JWT secret and TTLs
 - optional CORS origins
+- optional bootstrap admin username/password for startup auto-bootstrap
 
 From `GuiSettings`:
 

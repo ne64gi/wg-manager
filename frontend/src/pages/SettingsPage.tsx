@@ -157,7 +157,7 @@ export function SettingsPage() {
       <div className="page-header">
         <div>
           <div className="eyebrow">{t("settings.eyebrow", "Settings")}</div>
-          <h1>{t("settings.heading", "GUI and bootstrap settings")}</h1>
+          <h1>{t("settings.heading", "Settings")}</h1>
         </div>
       </div>
 

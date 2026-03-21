@@ -13,9 +13,12 @@ cp .env.example .env
 Change at least these values:
 
 - `WG_SERVER_ENDPOINT`
+- `WG_JWT_SECRET_KEY`
+
+Optional but recommended:
+
 - `WG_BOOTSTRAP_ADMIN_USERNAME`
 - `WG_BOOTSTRAP_ADMIN_PASSWORD`
-- `WG_JWT_SECRET_KEY`
 
 Recommended:
 
@@ -44,10 +47,10 @@ The bundled GUI is served by `nginx` on host port `3900`.
 http://localhost:3900/wg-studio/
 ```
 
-Sign in with:
+First login behavior:
 
-- `WG_BOOTSTRAP_ADMIN_USERNAME`
-- `WG_BOOTSTRAP_ADMIN_PASSWORD`
+- if `WG_BOOTSTRAP_ADMIN_USERNAME` and `WG_BOOTSTRAP_ADMIN_PASSWORD` are set, startup creates the first login user automatically
+- if no login users exist, the login screen switches into first-admin setup mode
 
 ## 4. Sanity Checks
 

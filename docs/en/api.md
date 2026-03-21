@@ -11,15 +11,19 @@ For behavior rules that are not obvious from the route list, also read:
 
 - `GET /health`
 - `POST /groups`
+- `PATCH /groups/{group_id}`
 - `PATCH /groups/{group_id}/allocation`
 - `GET /groups`
 - `GET /groups/{group_id}`
 - `DELETE /groups/{group_id}`
 - `POST /users`
+- `PATCH /users/{user_id}`
 - `GET /users`
 - `GET /users/{user_id}`
 - `DELETE /users/{user_id}`
 - `POST /peers`
+- `PATCH /peers/{peer_id}`
+- `POST /peers/{peer_id}/reissue`
 - `GET /peers`
 - `GET /peers/{peer_id}`
 - `POST /peers/{peer_id}/revoke`
@@ -37,10 +41,13 @@ For behavior rules that are not obvious from the route list, also read:
 
 ## Auth Endpoints
 
+- `GET /auth/setup-status`
+- `POST /auth/setup`
 - `POST /auth/login`
 - `POST /auth/refresh`
 - `POST /auth/logout`
 - `GET /auth/me`
+- `POST /auth/change-password`
 
 ## Settings Endpoints
 
@@ -58,10 +65,10 @@ For behavior rules that are not obvious from the route list, also read:
 ## Status Endpoints
 
 - `GET /status/overview`
+- `GET /status/overview-history`
 - `GET /status/peers`
 - `GET /status/users-summary`
 - `GET /status/groups-summary`
-- `GET /status/overview-history`
 
 The status layer currently exposes:
 
@@ -72,4 +79,4 @@ The status layer currently exposes:
 - per-peer traffic counters
 - resolved effective access
 
-The config endpoints are intentionally internal-facing in the default compose setup.
+The API is internal-only by default in Compose.

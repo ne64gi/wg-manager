@@ -16,7 +16,7 @@ Suggested reading order:
 
 Current project state:
 
-- `v1.0.0-beta`
+- release-readiness stage toward `v1.0.0`
 - PostgreSQL-backed runtime
 - internal-only API network by default
 - bundled React/Vite GUI served through `nginx` on port `3900`

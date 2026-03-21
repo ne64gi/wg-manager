@@ -5,6 +5,8 @@
 Public:
 
 - `GET /health`
+- `GET /auth/setup-status`
+- `POST /auth/setup`
 - `POST /auth/login`
 - `POST /auth/refresh`
 
@@ -16,6 +18,7 @@ Protected with `Authorization: Bearer <access_token>`:
 - all `/gui/*`
 - `GET /auth/me`
 - `POST /auth/logout`
+- `POST /auth/change-password`
 
 No role differentiation exists. Any authenticated login user is admin-equivalent.
 

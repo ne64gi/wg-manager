@@ -80,6 +80,10 @@ function normalizeNetworkCidr(value: string) {
   ].join(".") + `/${prefix}`;
 }
 
+function formatDeleteConfirm(name: string) {
+  return t("groups.delete_confirm_named", `Delete "${name}"?`).replace("{name}", name);
+}
+
 function getScopeValidationMessage(scope: string, networkCidr: string) {
   const expectedPrefix = SCOPE_PREFIX[scope];
   if (!networkCidr.trim()) {
@@ -295,7 +299,7 @@ export function GroupsPage() {
       <div className="page-header">
         <div>
           <div className="eyebrow">{t("nav.groups", "Groups")}</div>
-          <h1>{t("groups.title", "Network groups")}</h1>
+          <h1>{t("groups.title", "Group management")}</h1>
         </div>
       </div>
       <div className="stats-grid stats-grid-compact">
@@ -337,7 +341,7 @@ export function GroupsPage() {
                   </button>
                 </td>
                 <td>{group.name}</td>
-                <td>{group.scope}</td>
+                <td>{t(`groups.scope_${group.scope}`, group.scope)}</td>
                 <td>{group.network_cidr}</td>
                 <td>{group.default_allowed_ips.join(", ")}</td>
                 <td>{group.dns_servers?.join(", ") || "—"}</td>
@@ -349,9 +353,7 @@ export function GroupsPage() {
                     className="danger-button"
                     onClick={() => {
                       if (
-                        window.confirm(
-                          `${t("groups.delete_confirm_prefix", "Delete group: ")}"${group.name}"?`,
-                        )
+                        window.confirm(formatDeleteConfirm(group.name))
                       ) {
                         deleteMutation.mutate(group.id);
                       }
@@ -375,7 +377,7 @@ export function GroupsPage() {
                   </div>
                 </div>
                 <div className={`status-pill ${group.is_active ? "status-online" : ""}`}>
-                  {group.is_active ? t("common.enabled", "Enabled") : t("common.disabled", "Disabled")}
+                      {group.is_active ? t("common.enabled", "Enabled") : t("common.disabled", "Disabled")}
                 </div>
               </div>
               <div className="mobile-record-actions">
@@ -402,9 +404,7 @@ export function GroupsPage() {
                   className="danger-button"
                   onClick={() => {
                     if (
-                      window.confirm(
-                        `${t("groups.delete_confirm_prefix", "Delete group: ")}"${group.name}"?`,
-                      )
+                      window.confirm(formatDeleteConfirm(group.name))
                     ) {
                       deleteMutation.mutate(group.id);
                     }
@@ -441,9 +441,9 @@ export function GroupsPage() {
                   value={createForm.scope}
                   onChange={(event) => updateCreateFormField("scope", event.target.value)}
                 >
-                  <option value="single_site">{t("groups.scope_single_site", "single_site")}</option>
-                  <option value="multi_site">{t("groups.scope_multi_site", "multi_site")}</option>
-                  <option value="admin">{t("groups.scope_admin", "admin")}</option>
+                  <option value="single_site">{t("groups.scope_single_site", "Single site")}</option>
+                  <option value="multi_site">{t("groups.scope_multi_site", "Multi site")}</option>
+                  <option value="admin">{t("groups.scope_admin", "Admin")}</option>
                 </select>
               </label>
               <label className="field">
@@ -458,7 +458,7 @@ export function GroupsPage() {
                   placeholder={SCOPE_EXAMPLE[createForm.scope] ?? "10.10.1.0/24"}
                 />
                 <div className="muted-text">
-                  {t("groups.scope", "Scope")}: /{SCOPE_PREFIX[createForm.scope] ?? 24}
+                  {t("groups.scope", "Scope")}: {t(`groups.scope_${createForm.scope}`, createForm.scope)} /{SCOPE_PREFIX[createForm.scope] ?? 24}
                 </div>
               </label>
               <label className="field">
@@ -541,7 +541,7 @@ export function GroupsPage() {
               </label>
               <label className="field">
                 <span>{t("groups.scope", "Scope")}</span>
-                <input value={editForm.scope} disabled />
+                <input value={t(`groups.scope_${editForm.scope}`, editForm.scope)} disabled />
               </label>
               <label className="field">
                 <span>{t("groups.network_cidr", "Network CIDR")}</span>

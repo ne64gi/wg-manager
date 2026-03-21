@@ -28,7 +28,12 @@ export function LogsPage() {
       <div className="toolbar-card">
         <div className="muted-text">
           {t("logs.current_level", "Current error log level")}:{" "}
-          <strong>{guiSettingsQuery.data?.error_log_level ?? "warning"}</strong>
+          <strong>
+            {t(
+              `log_level.${guiSettingsQuery.data?.error_log_level ?? "warning"}`,
+              guiSettingsQuery.data?.error_log_level ?? "warning",
+            )}
+          </strong>
         </div>
       </div>
       <Panel title={t("logs.recent", "Recent logs")}>
@@ -38,7 +43,7 @@ export function LogsPage() {
               <td>{formatDateTime(entry.occurred_at)}</td>
               <td>
                 <span className={`log-level-pill log-level-${entry.level}`}>
-                  {entry.level}
+                  {t(`log_level.${entry.level}`, entry.level)}
                 </span>
               </td>
               <td>{entry.category}</td>

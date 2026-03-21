@@ -8,18 +8,23 @@ This page documents API behavior that is easy to miss if you only read the endpo
 
 Main flow:
 
-1. `POST /auth/login`
-2. receive `access_token` and `refresh_token`
-3. call protected endpoints with `Authorization: Bearer <access_token>`
-4. renew with `POST /auth/refresh`
-5. revoke the session with `POST /auth/logout`
+1. if startup created no login user, check `GET /auth/setup-status`
+2. create the first login user with `POST /auth/setup`
+3. sign in with `POST /auth/login`
+4. receive `access_token` and `refresh_token`
+5. call protected endpoints with `Authorization: Bearer <access_token>`
+6. renew with `POST /auth/refresh`
+7. revoke the session with `POST /auth/logout`
 
 Relevant endpoints:
 
+- `GET /auth/setup-status`
+- `POST /auth/setup`
 - `POST /auth/login`
 - `POST /auth/refresh`
 - `POST /auth/logout`
 - `GET /auth/me`
+- `POST /auth/change-password`
 
 ## Protected Routes
 
@@ -40,6 +45,8 @@ Protected route groups:
 Public route:
 
 - `GET /health`
+- `GET /auth/setup-status`
+- `POST /auth/setup`
 
 Current auth check behavior:
 
@@ -47,6 +54,16 @@ Current auth check behavior:
 - invalid or expired access token -> `401` with a string `detail`
 
 There is no role model today. Any authenticated login user is treated as an administrator.
+
+Bootstrap note:
+
+- if `WG_BOOTSTRAP_ADMIN_USERNAME` and `WG_BOOTSTRAP_ADMIN_PASSWORD` are set, startup creates the first login user automatically
+- if startup creates no login user, the GUI and API setup flow stay available until the first login user exists
+
+Password update:
+
+- authenticated users can rotate their own password through `POST /auth/change-password`
+- the current password must be supplied
 
 ## One-Time Reveal Rules
 

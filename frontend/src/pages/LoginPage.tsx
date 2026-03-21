@@ -69,7 +69,7 @@ export function LoginPage() {
       setError(
         submissionError instanceof Error
           ? translateErrorMessage(submissionError.message)
-          : t("auth.setup_submit", "Setup failed"),
+          : t("auth.setup_failed", "Setup failed"),
       );
     } finally {
       setIsSubmitting(false);
@@ -91,7 +91,7 @@ export function LoginPage() {
               className="login-settings-button"
               onClick={() => setIsSettingsOpen((current) => !current)}
             >
-              UI
+              {t("auth.display_settings_button", "Display")}
             </button>
             {isSettingsOpen ? (
               <div className="login-settings-popover">
@@ -130,8 +130,8 @@ export function LoginPage() {
                       setLocale(nextLocale);
                     }}
                   >
-                    <option value="en">English</option>
-                    <option value="ja">日本語</option>
+                    <option value="en">{t("locale.en", "English")}</option>
+                    <option value="ja">{t("locale.ja", "Japanese")}</option>
                   </select>
                 </label>
               </div>

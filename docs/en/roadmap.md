@@ -1,35 +1,101 @@
 # Roadmap
 
-## Verified Beta State
+## Version Target
 
-The current beta has been verified with:
+- `v1.0.0`
 
-- local Docker-based test suite
-- generated peer config and QR output
-- generated server config
-- live `config apply`
-- successful WireGuard handshake on a VPS
-- live peer removal followed by apply
+## Goal
 
-## Next High-Value Work
+WireGuard peers can be safely created, managed, and applied through a web UI with consistent state and minimal operational friction.
 
-- GUI
-- richer dashboard and read-model APIs
-- firewall / nftables plugin model
-- richer initial settings and server settings management
-- runtime status history beyond direct `wg show`
-- localization for docs and GUI
+## Included
 
-## Scope Note
+These items must be complete for `v1.0.0`.
 
-The project no longer plans to add multiple WireGuard interfaces such as `wg1` and `wg2`
-inside a single stack as a roadmap target.
+### Core
 
-If multiple interfaces are needed later, the preferred direction is to run another
-WireGuard container or another `wg-studio` stack instead of expanding one control plane
-into multi-interface orchestration.
+- peer management: create, delete, revoke
+- `Group -> User -> Peer` structure
+- config generation: `wg0.conf`, peer `.conf`
+- apply operation via `syncconf`
 
-## Documentation Plan
+### Security
 
-- `docs/en`: active source documentation
-- `docs/jp`: future Japanese translation after the GUI stabilizes
+- JWT-based authentication
+- JWT secret managed through environment variables
+- one-time reveal for peer config and QR
+
+### UX
+
+- basic dashboard: overview and peers
+- polling-based status updates
+- `401` handling: auto logout and redirect to login
+- minimal API failure feedback
+
+### State Consistency
+
+- apply state visibility: applied vs not applied
+- drift detection between DB state and runtime `wg` state
+
+### Observability
+
+- audit log: who did what
+- peer status: online, traffic, handshake
+
+## Explicitly Excluded
+
+These are not part of `v1.0.0`.
+
+### Infrastructure / Scale
+
+- multi-instance orchestration inside one control plane
+- multi-server or multi-tenant support
+- Kubernetes or Helm deployment
+
+### Realtime
+
+- WebSocket or push updates
+
+### Security Advanced
+
+- rate limiting
+- encryption at rest
+- fine-grained RBAC
+
+### UX Advanced
+
+- full i18n
+- advanced filtering and search UX
+- bulk operations
+
+### Testing
+
+- E2E test suite
+- full coverage
+
+## Acceptable Limitations
+
+- polling instead of realtime updates
+- basic error messages
+- limited test coverage
+- manual deployment flow
+
+## Release Criteria
+
+`v1.0.0` is releasable when all conditions are true:
+
+- all Included items are implemented and working
+- no critical bugs remain in peer creation, deletion, or apply
+- apply state is visible and understandable
+- authentication flow is stable: login, logout, expiration
+- system recovers from restart without inconsistency
+
+## Post 1.0 Ideas
+
+- status history for graphs or Grafana
+- notification integration: Discord, LINE, others
+- improved logging UI: filters, search
+- advanced security hardening
+- better mobile UX
+
+For the low-ambiguity planning version used by agents, see [`../ai/roadmap.md`](../ai/roadmap.md).

@@ -3,9 +3,11 @@
 ## Bootstrap
 
 1. copy `.env.example` to `.env`
-2. set bootstrap admin and JWT secret
-3. `docker compose up -d --build`
-4. login to `http://localhost:3900/wg-studio/`
+2. set JWT secret
+3. optionally set bootstrap admin username/password
+4. `docker compose up -d --build`
+5. if no login users exist, complete first-admin setup in the GUI
+6. login to `http://localhost:3900/wg-studio/`
 
 ## Normal Operator Flow
 
