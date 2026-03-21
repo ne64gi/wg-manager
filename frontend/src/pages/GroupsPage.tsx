@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { createGroup, deleteGroup, listGroups, updateGroup } from "../lib/api";
 import { applyServerConfig } from "../lib/api";
-import { t } from "../lib/i18n";
+import { formatApplyFailureMessage, t } from "../lib/i18n";
 import type { Group } from "../types";
 import { useAuth } from "../modules/auth/AuthContext";
 import { useGuiSettingsQuery } from "../modules/gui/useGuiSettingsQuery";
@@ -100,7 +100,10 @@ function getScopeValidationMessage(scope: string, networkCidr: string) {
 
   const actualPrefix = Number(match[1]);
   if (actualPrefix !== expectedPrefix) {
-    return `${scope} groups must use /${expectedPrefix}.`;
+    const scopeLabel = t(`groups.scope_${scope}`, scope);
+    return t("groups.prefix_rule", "{scope} groups must use /{prefix}.")
+      .replace("{scope}", scopeLabel)
+      .replace("{prefix}", String(expectedPrefix));
   }
 
   return null;
@@ -174,9 +177,10 @@ export function GroupsPage() {
       pushToast(successNotice ?? t("common.config_applied", "Config applied."));
     } catch (error) {
       pushToast(
-        error instanceof Error
-          ? `${successNotice ?? t("common.change_saved", "Change saved.")} ${t("common.apply_failed", "Apply failed.")} ${error.message}`
-          : `${successNotice ?? t("common.change_saved", "Change saved.")} ${t("common.apply_failed", "Apply failed.")}`,
+        formatApplyFailureMessage(
+          successNotice ?? t("common.change_saved", "Change saved."),
+          error instanceof Error ? error.message : undefined,
+        ),
         "error",
       );
     }
@@ -373,7 +377,7 @@ export function GroupsPage() {
                 <div>
                   <div className="mobile-record-title">{group.name}</div>
                   <div className="mobile-record-subtitle">
-                    {group.scope} / {group.network_cidr}
+                    {t(`groups.scope_${group.scope}`, group.scope)} / {group.network_cidr}
                   </div>
                 </div>
                 <div className={`status-pill ${group.is_active ? "status-online" : ""}`}>

@@ -6,8 +6,8 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "nav.settings": "設定",
   "nav.logs": "ログ",
   "auth.logout": "ログアウト",
-  "auth.settings": "表示設定",
-  "auth.display_settings_button": "表示",
+  "auth.settings": "表示とテーマ",
+  "auth.display_settings_button": "表示設定",
   "auth.login_title": "コントロールプレーンへログイン",
   "auth.login_description": "ピア管理、トラフィック集計、適用操作にアクセスします。",
   "auth.username": "ユーザー名",
@@ -54,6 +54,8 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "common.config_applied": "設定を適用しました。",
   "common.change_saved": "変更を保存しました。",
   "common.apply_failed": "適用に失敗しました。",
+  "common.apply_failed_after_change": "{action} ただし、適用に失敗しました: {error}",
+  "common.apply_failed_after_change_no_error": "{action} ただし、適用に失敗しました。",
   "common.on": "オン",
   "common.off": "オフ",
   "common.online": "オンライン",
@@ -218,10 +220,14 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "settings.eyebrow": "設定",
   "settings.theme_mode": "テーマ",
   "settings.default_locale": "既定の表示言語",
-  "settings.error_log_level": "GUI エラーログの記録レベル",
-  "settings.gui_heading": "GUI 設定",
+  "settings.error_log_level": "エラーログ記録レベル",
+  "settings.gui_heading": "画面設定",
   "settings.endpoint_heading": "WireGuard エンドポイント設定",
-  "settings.login_users_heading": "GUI ログインユーザー",
+  "settings.login_users_heading": "ログインユーザー",
+  "settings.version_heading": "ビルド情報",
+  "settings.system_version": "システムバージョン",
+  "settings.frontend_version": "フロントエンドバージョン",
+  "settings.version_hint": "このビルドに埋め込まれている現在のバージョンです。",
   "settings.overview_refresh": "ダッシュボード更新間隔 (秒)",
   "settings.peers_refresh": "ピア一覧更新間隔 (秒)",
   "settings.snapshot_interval": "トラフィックスナップショット取得間隔 (秒)",
@@ -230,8 +236,8 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "settings.error_log_path": "エラーログ保存先",
   "settings.apply_after_change": "ピア変更後に自動適用する",
   "settings.apply_after_change_hint": "有効にすると、ピアの作成・失効・削除後にサーバー設定を自動で適用します。",
-  "settings.saved": "GUI 設定を保存しました。",
-  "settings.save_failed": "GUI 設定の保存に失敗しました。",
+  "settings.saved": "画面設定を保存しました。",
+  "settings.save_failed": "画面設定の保存に失敗しました。",
   "settings.endpoint_saved": "エンドポイント設定を保存しました。",
   "settings.endpoint_save_failed": "エンドポイント設定の保存に失敗しました。",
   "settings.endpoint_address": "エンドポイントアドレス",
@@ -242,19 +248,19 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "settings.add_user_failed": "ログインユーザーの追加に失敗しました。",
   "settings.change_password": "パスワード変更",
   "settings.last_login": "最終ログイン",
-  "settings.theme_hint": "GUI の配色テーマを切り替えます。",
+  "settings.theme_hint": "画面の配色テーマを切り替えます。",
   "settings.locale_hint": "新しく開く画面の既定言語です。",
-  "settings.log_level_hint": "どのレベル以上の GUI エラーを記録対象にするかを決めます。",
+  "settings.log_level_hint": "どのレベル以上のエラーを記録対象にするかを決めます。",
   "settings.endpoint_hint": "Peer 設定に埋め込む接続先アドレスとポートです。",
   "settings.system_label": "システム設定に従う",
   "settings.login_user_username_placeholder": "例: admin",
   "settings.login_user_password_placeholder": "8文字以上のパスワード",
   "settings.status_active": "有効",
   "settings.status_disabled": "無効",
-  "logs.title": "GUI アクティビティログ",
+  "logs.title": "操作ログ",
   "logs.current_level": "現在のエラーログレベル",
   "logs.recent": "最近のログ",
-  "logs.system": "System",
+  "logs.system": "システム",
 };
 
 export function getUiLocale(): "en" | "ja" {
@@ -290,6 +296,22 @@ export function translateErrorMessage(message: string): string {
   }
 
   return message;
+}
+
+export function formatApplyFailureMessage(
+  action: string,
+  errorMessage?: string,
+): string {
+  const templateKey = errorMessage
+    ? "common.apply_failed_after_change"
+    : "common.apply_failed_after_change_no_error";
+  const fallback = errorMessage
+    ? `${action} Change saved, but apply failed: ${errorMessage}`
+    : `${action} Change saved, but apply failed.`;
+
+  return t(templateKey, fallback)
+    .replace("{action}", action)
+    .replace("{error}", errorMessage ?? "");
 }
 
 const PREVIEW_LOCALE_KEY = "wg-studio-preview-locale";

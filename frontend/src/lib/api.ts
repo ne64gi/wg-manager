@@ -24,6 +24,7 @@ import type {
   PeerStatus,
   PeerUpdateInput,
   RevealedPeerArtifacts,
+  SystemVersion,
   TokenPair,
   User,
   UserCreateInput,
@@ -320,6 +321,10 @@ export function applyServerConfig(accessToken: string): Promise<ApplyResult> {
 
 export function getGuiSettings(accessToken: string): Promise<GuiSettings> {
   return request<GuiSettings>("/gui/settings", { accessToken });
+}
+
+export function getSystemVersion(accessToken: string): Promise<SystemVersion> {
+  return request<SystemVersion>("/gui/version", { accessToken });
 }
 
 export function updateGuiSettings(

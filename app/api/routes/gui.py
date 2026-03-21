@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import require_authenticated_login_user
 from app.db import get_session
 from app.models import LoginUser
+from app.core import get_system_version
 from app.schemas import (
     GuiLogRead,
     GuiSettingsRead,
@@ -13,6 +14,7 @@ from app.schemas import (
     LoginUserCreate,
     LoginUserRead,
     LoginUserUpdate,
+    SystemVersionRead,
 )
 from app.services import (
     create_login_user,
@@ -26,6 +28,14 @@ from app.services import (
 )
 
 router = APIRouter()
+
+
+@router.get("/gui/version", response_model=SystemVersionRead)
+def get_system_version_endpoint(
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+) -> SystemVersionRead:
+    version = get_system_version()
+    return SystemVersionRead(version=version, frontend_version=version)
 
 
 @router.get("/gui/settings", response_model=GuiSettingsRead)

@@ -12,6 +12,7 @@ import {
   translateErrorMessage,
 } from "../lib/i18n";
 import { useAuth } from "../modules/auth/AuthContext";
+import { BrandIcon, GlobeIcon, SettingsIcon } from "../ui/Icons";
 
 export function LoginPage() {
   const auth = useAuth();
@@ -91,12 +92,15 @@ export function LoginPage() {
               className="login-settings-button"
               onClick={() => setIsSettingsOpen((current) => !current)}
             >
-              {t("auth.display_settings_button", "Display")}
+              <SettingsIcon className="icon login-settings-icon" />
+              <span className="login-settings-button-text">
+                {t("auth.display_settings_button", "Display settings")}
+              </span>
             </button>
             {isSettingsOpen ? (
               <div className="login-settings-popover">
                 <div className="login-settings-heading">
-                  {t("auth.settings", "Display settings")}
+                  {t("auth.settings", "Appearance")}
                 </div>
                 <div className="login-settings-row">
                   <span>{t("theme.quick_toggle", "Theme")}</span>
@@ -122,17 +126,20 @@ export function LoginPage() {
                 </div>
                 <label className="field login-settings-field">
                   <span>{t("auth.language", "Language")}</span>
-                  <select
-                    value={locale}
-                    onChange={(event) => {
-                      const nextLocale = event.target.value === "ja" ? "ja" : "en";
-                      setPreviewLocale(nextLocale);
-                      setLocale(nextLocale);
-                    }}
-                  >
-                    <option value="en">{t("locale.en", "English")}</option>
-                    <option value="ja">{t("locale.ja", "Japanese")}</option>
-                  </select>
+                  <div className="login-language-shell">
+                    <GlobeIcon className="icon login-language-icon" />
+                    <select
+                      value={locale}
+                      onChange={(event) => {
+                        const nextLocale = event.target.value === "ja" ? "ja" : "en";
+                        setPreviewLocale(nextLocale);
+                        setLocale(nextLocale);
+                      }}
+                    >
+                      <option value="en">{t("locale.en", "English")}</option>
+                      <option value="ja">{t("locale.ja", "Japanese")}</option>
+                    </select>
+                  </div>
                 </label>
               </div>
             ) : null}
@@ -140,7 +147,9 @@ export function LoginPage() {
         </div>
         <div className="login-hero">
           <div className="login-logo-orb">
-            <span className="brand-badge">wg</span>
+            <span className="brand-badge">
+              <BrandIcon className="brand-icon" />
+            </span>
           </div>
           <div className="login-hero-copy">
             <h1>

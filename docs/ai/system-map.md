@@ -24,6 +24,13 @@ Cardinality:
 - `Group 1 -> many User`
 - `User 1 -> many Peer`
 
+Hierarchy:
+
+- `Group` is the top-level network and policy boundary
+- `User` is a logical owner inside one group
+- `Peer` is one concrete device inside one user
+- there is no `Instance` model in `v1.0.0`
+
 ## Operational Invariants
 
 - source of truth is PostgreSQL, not generated files
@@ -32,6 +39,8 @@ Cardinality:
 - peer secret reveal is one-time until reissue
 - access tokens are JWT; refresh tokens are DB sessions
 - GUI is the normal operator entry point
+- the group network is the allocation boundary for descendant peers
+- users do not own subnets; peers own concrete assigned addresses
 
 ## Route Ownership
 

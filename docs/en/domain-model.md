@@ -18,6 +18,14 @@ Scope convention currently used:
 - `multi_site`: `/16`
 - `single_site`: `/24`
 
+IP design notes:
+
+- the group network is the allocation boundary for all descendant peers
+- scope decides the required group prefix length
+- peer addresses must belong to the parent group network
+- host bits in submitted CIDR values are normalized before persistence
+- `Group` is the highest IP-planning unit in `v1.0.0`; there is no extra `Instance` layer
+
 ## User
 
 A user belongs to a group and can either inherit group access or override it.
@@ -75,3 +83,5 @@ Rules:
 - network and broadcast addresses are never allocated
 - manual `assigned_ip` uses the same validation rules
 - allocation is integer-based and scales for `/8`, `/16`, and `/24`
+- users do not own subnets; they only inherit or override routes
+- peers own one concrete assigned VPN address inside the parent group network

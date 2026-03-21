@@ -7,6 +7,7 @@ import {
   deleteLoginUser,
   getGuiSettings,
   getInitialSettings,
+  getSystemVersion,
   listLoginUsers,
   updateGuiSettings,
   updateInitialSettings,
@@ -35,6 +36,10 @@ export function SettingsPage() {
   const loginUsersQuery = useQuery({
     queryKey: queryKeys.loginUsers,
     queryFn: async () => listLoginUsers((await auth.getValidAccessToken()) ?? ""),
+  });
+  const versionQuery = useQuery({
+    queryKey: ["gui", "version"],
+    queryFn: async () => getSystemVersion((await auth.getValidAccessToken()) ?? ""),
   });
 
   const [formState, setFormState] = useState<GuiSettingsUpdate>({});
@@ -71,7 +76,7 @@ export function SettingsPage() {
       pushToast(
         error instanceof Error
           ? error.message
-          : t("settings.save_failed", "Failed to save GUI settings."),
+          : t("settings.save_failed", "Failed to save interface settings."),
         "error",
       );
     },
@@ -425,8 +430,8 @@ export function SettingsPage() {
               <td>{loginUser.username}</td>
               <td>
                 {loginUser.is_active
-                  ? t("settings.status_active", "Active")
-                  : t("settings.status_disabled", "Disabled")}
+                  ? t("common.enabled", "Enabled")
+                  : t("common.disabled", "Disabled")}
               </td>
               <td>{formatDateTime(loginUser.last_login_at)}</td>
               <td>
@@ -450,6 +455,32 @@ export function SettingsPage() {
             </tr>
           ))}
         </DataTable>
+      </Panel>
+      <Panel title={t("settings.version_heading", "Build information")}>
+        <div className="form-grid">
+          <div className="field">
+            <span>{t("settings.system_version", "System version")}</span>
+            <input
+              value={versionQuery.data?.version ?? ""}
+              readOnly
+              placeholder="0.0.0"
+            />
+          </div>
+          <div className="field">
+            <span>{t("settings.frontend_version", "Frontend version")}</span>
+            <input
+              value={versionQuery.data?.frontend_version ?? __WG_STUDIO_VERSION__}
+              readOnly
+              placeholder="0.0.0"
+            />
+          </div>
+          <div className="muted-text field-span-2">
+            {t(
+              "settings.version_hint",
+              "Current version embedded into this running build.",
+            )}
+          </div>
+        </div>
       </Panel>
       {passwordModalOpen ? (
         <div className="modal-backdrop" onClick={() => setPasswordModalOpen(false)}>

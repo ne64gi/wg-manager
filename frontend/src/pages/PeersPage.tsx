@@ -13,7 +13,7 @@ import {
   updatePeer,
 } from "../lib/api";
 import { formatBytes } from "../lib/format";
-import { t } from "../lib/i18n";
+import { formatApplyFailureMessage, t } from "../lib/i18n";
 import { useAuth } from "../modules/auth/AuthContext";
 import { useGuiSettingsQuery } from "../modules/gui/useGuiSettingsQuery";
 import { queryKeys } from "../modules/queryKeys";
@@ -95,9 +95,10 @@ export function PeersPage() {
       pushToast(successNotice ?? t("common.config_applied", "Config applied."));
     } catch (error) {
       pushToast(
-        error instanceof Error
-          ? `${successNotice ?? t("common.change_saved", "Change saved.")} ${t("common.apply_failed", "Apply failed.")} ${error.message}`
-          : `${successNotice ?? t("common.change_saved", "Change saved.")} ${t("common.apply_failed", "Apply failed.")}`,
+        formatApplyFailureMessage(
+          successNotice ?? t("common.change_saved", "Change saved."),
+          error instanceof Error ? error.message : undefined,
+        ),
         "error",
       );
     }

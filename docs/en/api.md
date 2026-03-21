@@ -54,6 +54,7 @@ For behavior rules that are not obvious from the route list, also read:
 - `GET /initial-settings`
 - `PUT /initial-settings`
 - `GET /gui/settings`
+- `GET /gui/version`
 - `PUT /gui/settings`
 - `GET /gui/login-users`
 - `POST /gui/login-users`

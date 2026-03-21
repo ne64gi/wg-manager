@@ -20,6 +20,11 @@ export type AuthChangePasswordRequest = {
   new_password: string;
 };
 
+export type SystemVersion = {
+  version: string;
+  frontend_version: string;
+};
+
 export type TokenPair = {
   access_token: string;
   refresh_token: string;

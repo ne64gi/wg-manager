@@ -22,7 +22,7 @@ export function LogsPage() {
       <div className="page-header">
         <div>
           <div className="eyebrow">{t("nav.logs", "Logs")}</div>
-          <h1>{t("logs.title", "GUI activity log")}</h1>
+          <h1>{t("logs.title", "Activity log")}</h1>
         </div>
       </div>
       <div className="toolbar-card">

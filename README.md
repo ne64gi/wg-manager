@@ -34,6 +34,12 @@ Documentation roles:
 
 Japanese docs are not published yet in this branch.
 
+## Icon Sources
+
+- navigation, settings, menu, and globe icons are repo-local inline SVG components defined in [`frontend/src/ui/Icons.tsx`](frontend/src/ui/Icons.tsx)
+- the brand mark used in the sidebar and login screen is a repo-local WireGuard-inspired SVG drawn for this project, not a bundled third-party icon file
+- no external icon package or CDN icon asset is required at runtime
+
 ## Quick Start
 
 Copy the checked-in env template and adjust local values:

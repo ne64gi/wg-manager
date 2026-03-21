@@ -495,6 +495,11 @@ class GuiLogRead(BaseModel):
     details: dict
 
 
+class SystemVersionRead(BaseModel):
+    version: str
+    frontend_version: str
+
+
 class PeerStatusRead(BaseModel):
     peer_id: int
     peer_name: str

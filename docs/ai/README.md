@@ -14,7 +14,8 @@ Recommended read order:
 2. [`api-contracts.md`](api-contracts.md)
 3. [`workflows.md`](workflows.md)
 4. [`roadmap.md`](roadmap.md)
-5. [`ui-consistency-audit.md`](ui-consistency-audit.md)
+5. [`versioning-policy.md`](versioning-policy.md)
+6. [`ui-consistency-audit.md`](ui-consistency-audit.md)
 
 Rules:
 

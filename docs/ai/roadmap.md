@@ -49,6 +49,7 @@ These are not part of `v1.0.0`.
 ### Infrastructure / Scale
 
 - multi-instance orchestration inside one control plane
+- introducing an `Instance` model above `Group`
 - multi-server or multi-tenant support
 - Kubernetes or Helm deployment
 
@@ -113,5 +114,6 @@ Interpretation rules for automation and AI contributors:
 - Explicitly Excluded = do not expand scope into this for `v1.0.0`
 - Acceptable Limitations = known rough edges that do not block release
 - Release Criteria = finish line definition, not suggestion
+- after `v1.0.0`, use [`versioning-policy.md`](versioning-policy.md) for `x.y.z` updates
 
 When planning work, prefer closing Included gaps over polishing excluded areas.

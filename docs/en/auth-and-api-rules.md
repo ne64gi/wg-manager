@@ -25,6 +25,7 @@ Relevant endpoints:
 - `POST /auth/logout`
 - `GET /auth/me`
 - `POST /auth/change-password`
+- `GET /gui/version`
 
 ## Protected Routes
 
@@ -80,6 +81,7 @@ Behavior:
 - sets `is_revealed = true`
 - sets `revealed_at`
 - rejects a second reveal for the same peer until keys are reissued
+- cached artifact files must not bypass one-time reveal behavior
 
 Disabled direct retrieval endpoints:
 

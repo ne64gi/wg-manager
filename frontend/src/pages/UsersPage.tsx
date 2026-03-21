@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { createUser, deleteUser, listGroups, listUsers, updateUser } from "../lib/api";
 import { applyServerConfig } from "../lib/api";
-import { t } from "../lib/i18n";
+import { formatApplyFailureMessage, t } from "../lib/i18n";
 import type { User } from "../types";
 import { useAuth } from "../modules/auth/AuthContext";
 import { useGuiSettingsQuery } from "../modules/gui/useGuiSettingsQuery";
@@ -73,9 +73,10 @@ export function UsersPage() {
       pushToast(successNotice ?? t("common.config_applied", "Config applied."));
     } catch (error) {
       pushToast(
-        error instanceof Error
-          ? `${successNotice ?? t("common.change_saved", "Change saved.")} ${t("common.apply_failed", "Apply failed.")} ${error.message}`
-          : `${successNotice ?? t("common.change_saved", "Change saved.")} ${t("common.apply_failed", "Apply failed.")}`,
+        formatApplyFailureMessage(
+          successNotice ?? t("common.change_saved", "Change saved."),
+          error instanceof Error ? error.message : undefined,
+        ),
         "error",
       );
     }

@@ -27,4 +27,10 @@ Current non-goals:
 
 - firewall enforcement plugins
 - multi-server or multi-tenant orchestration inside one control plane
+- multi-interface or multi-instance orchestration inside one domain model
 - WebSocket-based realtime updates
+
+Scope note:
+
+- `v1.0.0` does not introduce an `Instance` model above `Group`
+- if multiple WireGuard runtimes are needed, the preferred direction is another container or another `wg-studio` stack

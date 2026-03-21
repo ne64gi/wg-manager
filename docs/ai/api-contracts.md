@@ -19,8 +19,14 @@ Protected with `Authorization: Bearer <access_token>`:
 - `GET /auth/me`
 - `POST /auth/logout`
 - `POST /auth/change-password`
+- `GET /gui/version`
 
 No role differentiation exists. Any authenticated login user is admin-equivalent.
+
+Version contract:
+
+- `GET /gui/version`
+- returns the active system version sourced from `VERSION`
 
 ## Secret Lifecycle
 
@@ -38,6 +44,7 @@ Reveal effects:
 - returns config text and QR SVG
 - sets `peer.is_revealed = true`
 - sets `peer.revealed_at`
+- artifact caching must not bypass one-time reveal policy
 
 Reissue route:
 
