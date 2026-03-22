@@ -11,8 +11,9 @@
 5. [`config-and-apply.md`](config-and-apply.md)
 6. [`api.md`](api.md)
 7. [`auth-and-api-rules.md`](auth-and-api-rules.md)
-8. [`development.md`](development.md)
-9. [`roadmap.md`](roadmap.md)
+8. [`release-notes-v1.0.0.md`](release-notes-v1.0.0.md)
+9. [`development.md`](development.md)
+10. [`roadmap.md`](roadmap.md)
 
 補足:
 

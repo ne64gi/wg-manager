@@ -46,3 +46,12 @@ WireGuard peer を Web UI から安全に作成・管理・適用でき、状態
 - bundle ZIP と JSON export / import が通る
 - login / logout / token expiration が安定している
 - 再起動後に状態不整合が起きない
+
+## `v1.0.0` 以降にやりたいこと
+
+- グラフや Grafana 向けの状態履歴
+- グラフのクリック拡大などの操作改善
+- Discord や LINE などの通知連携
+- ログ UI の改善
+- セキュリティ強化
+- Playwright を smoke から段階的に広げる

@@ -11,13 +11,14 @@ Suggested reading order:
 5. [`config-and-apply.md`](config-and-apply.md)
 6. [`api.md`](api.md)
 7. [`auth-and-api-rules.md`](auth-and-api-rules.md)
-8. [`development.md`](development.md)
-9. [`roadmap.md`](roadmap.md)
-10. [`../jp/README.md`](../jp/README.md) for Japanese operators
+8. [`release-notes-v1.0.0.md`](release-notes-v1.0.0.md)
+9. [`development.md`](development.md)
+10. [`roadmap.md`](roadmap.md)
+11. [`../jp/README.md`](../jp/README.md) for Japanese operators
 
 Current project state:
 
-- release-readiness stage toward `v1.0.0`
+- release-candidate stage for `v1.0.0`
 - PostgreSQL-backed runtime
 - internal-only API network by default
 - bundled React/Vite GUI served through `nginx` on port `3900`

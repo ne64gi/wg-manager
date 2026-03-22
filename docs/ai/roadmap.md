@@ -102,6 +102,7 @@ These are not part of `v1.0.0`.
 ## Post 1.0 Ideas
 
 - status history for graphs or Grafana
+- graph interaction improvements such as click-to-expand drill-down views
 - notification integration: Discord, LINE, others
 - improved logging UI: filters, search
 - advanced security hardening

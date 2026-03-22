@@ -16,6 +16,7 @@ Current product state:
 - current-state JSON export and import
 - WireGuard apply flow
 - live WireGuard status and GUI audit logs
+- release-candidate documentation for `v1.0.0`
 
 ## Docs
 
@@ -28,6 +29,7 @@ Recommended starting points:
 - [`docs/en/overview.md`](docs/en/overview.md)
 - [`docs/en/api.md`](docs/en/api.md)
 - [`docs/en/auth-and-api-rules.md`](docs/en/auth-and-api-rules.md)
+- [`docs/en/release-notes-v1.0.0.md`](docs/en/release-notes-v1.0.0.md)
 - [`docs/en/roadmap.md`](docs/en/roadmap.md)
 - [`docs/ai/README.md`](docs/ai/README.md)
 - [`docs/jp/README.md`](docs/jp/README.md)
