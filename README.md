@@ -50,6 +50,7 @@ AI contributors should start with [`docs/ai/README.md`](docs/ai/README.md) befor
   - direct SVG used in-repo: `https://images.icon-icons.com/2699/SVG/wireguard_logo_icon_168760.svg`
   - local file: [`frontend/src/ui/wireguard-logo.svg`](frontend/src/ui/wireguard-logo.svg)
 - no external icon package or CDN icon asset is required at runtime
+- third-party asset notes live in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)
 
 ## Quick Start
 
@@ -135,4 +136,5 @@ docker compose --profile tools run --rm wg-studio-cli login-user set-password --
 
 ## License
 
-MIT
+- project code: [`MIT`](LICENSE)
+- third-party asset attribution and reuse notes: [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)
