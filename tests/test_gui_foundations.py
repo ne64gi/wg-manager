@@ -9,6 +9,7 @@ from app.models import GroupScope
 from app.schemas import (
     GroupCreate,
     GuiSettingsUpdate,
+    InitialSettingsUpdate,
     LoginUserCreate,
     LoginUserUpdate,
     PeerCreate,
@@ -32,7 +33,6 @@ from app.services import (
     init_db,
 )
 from app.services.gui import verify_password
-from app.schemas import InitialSettingsUpdate
 
 
 def reset_db() -> None:
@@ -150,9 +150,9 @@ def test_login_users_and_gui_settings_are_persisted() -> None:
 
     gui_logs = list_gui_logs(limit=20)
     messages = [entry.message for entry in gui_logs]
-    assert "GUI login user created" in messages
-    assert "GUI settings updated" in messages
-    assert "GUI login user deleted" in messages
+    assert "GUI login user created" not in messages
+    assert "GUI settings updated" not in messages
+    assert "GUI login user deleted" not in messages
 
 
 def test_initial_settings_include_interface_mtu() -> None:
@@ -171,6 +171,73 @@ def test_initial_settings_include_interface_mtu() -> None:
             ),
         )
         assert updated.interface_mtu == 1380
+
+
+def test_gui_log_threshold_filters_info_entries() -> None:
+    reset_db()
+
+    with SessionLocal() as session:
+        update_gui_settings(
+            session,
+            GuiSettingsUpdate(
+                theme_mode="system",
+                default_locale="en",
+                overview_refresh_seconds=5,
+                peers_refresh_seconds=10,
+                traffic_snapshot_interval_seconds=300,
+                refresh_after_apply=True,
+                online_threshold_seconds=120,
+                error_log_level="warning",
+                access_log_path="none",
+                error_log_path="none",
+            ),
+        )
+        create_login_user(
+            session,
+            LoginUserCreate(
+                username="audited-admin",
+                password="supersecret123",
+            ),
+        )
+
+    gui_logs = list_gui_logs(limit=20)
+    messages = [entry.message for entry in gui_logs]
+    assert "GUI login user created" not in messages
+    assert "GUI settings updated" not in messages
+
+
+def test_gui_log_threshold_keeps_warning_entries() -> None:
+    reset_db()
+
+    with SessionLocal() as session:
+        update_gui_settings(
+            session,
+            GuiSettingsUpdate(
+                theme_mode="system",
+                default_locale="en",
+                overview_refresh_seconds=5,
+                peers_refresh_seconds=10,
+                traffic_snapshot_interval_seconds=300,
+                refresh_after_apply=True,
+                online_threshold_seconds=120,
+                error_log_level="warning",
+                access_log_path="none",
+                error_log_path="none",
+            ),
+        )
+        login_user = create_login_user(
+            session,
+            LoginUserCreate(
+                username="warning-admin",
+                password="supersecret123",
+            ),
+        )
+        delete_login_user(session, login_user.id)
+
+    gui_logs = list_gui_logs(limit=20)
+    messages = [entry.message for entry in gui_logs]
+    assert "GUI login user created" not in messages
+    assert "GUI login user deleted" in messages
 
 
 def test_bootstrap_login_user_from_env(monkeypatch) -> None:
@@ -199,6 +266,9 @@ def test_init_db_registers_login_user_tables() -> None:
     assert "login_users" in inspector.get_table_names()
     assert "login_sessions" in inspector.get_table_names()
     assert "gui_settings" in inspector.get_table_names()
+    assert "initial_settings" in inspector.get_table_names()
+    initial_columns = {column["name"] for column in inspector.get_columns("initial_settings")}
+    assert "interface_mtu" in initial_columns
 
 
 def test_gui_version_payload_includes_runtime_adapter(monkeypatch) -> None:
