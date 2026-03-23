@@ -31,7 +31,7 @@ Recommended starting points:
 - [`docs/en/current/overview.md`](docs/en/current/overview.md)
 - [`docs/en/current/api.md`](docs/en/current/api.md)
 - [`docs/en/current/auth-and-api-rules.md`](docs/en/current/auth-and-api-rules.md)
-- [`docs/en/guide/release-notes-v1.0.0.md`](docs/en/guide/release-notes-v1.0.0.md)
+- [`docs/en/release-notes/README.md`](docs/en/release-notes/README.md)
 - [`docs/en/planning/roadmap.md`](docs/en/planning/roadmap.md)
 - [`docs/ai/README.md`](docs/ai/README.md)
 - [`docs/jp/README.md`](docs/jp/README.md)

@@ -17,7 +17,7 @@
 5. [`current/config-and-apply.md`](current/config-and-apply.md)
 6. [`current/api.md`](current/api.md)
 7. [`current/auth-and-api-rules.md`](current/auth-and-api-rules.md)
-8. [`guide/release-notes-v1.0.0.md`](guide/release-notes-v1.0.0.md)
+8. [`release-notes/README.md`](release-notes/README.md)
 9. [`guide/development.md`](guide/development.md)
 10. [`planning/roadmap.md`](planning/roadmap.md)
 
