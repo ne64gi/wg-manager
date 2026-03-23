@@ -72,6 +72,10 @@ http://localhost:3900/wg-studio/
 5. `Apply` で WireGuard ランタイムに反映する
 6. Dashboard でドリフト状態と通信状態を確認する
 
+Reveal 画面の例:
+
+![Peer Reveal スクリーンショット](../../image/view-peer.png)
+
 ## 補足
 
 - `wg-studio` `v1.0.0` は 1 スタックにつき 1 WireGuard ランタイム前提です

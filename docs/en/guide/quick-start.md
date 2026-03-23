@@ -96,6 +96,10 @@ Suggested first pass:
 5. download the peer `.conf` or QR directly from the reveal modal
 6. use `Apply config` to sync the server config into WireGuard
 
+Example reveal view:
+
+![Peer reveal screenshot](../../image/view-peer.png)
+
 Optional admin workflows:
 
 - use the dashboard to confirm drift state before and after apply

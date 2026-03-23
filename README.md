@@ -2,6 +2,8 @@
 
 `wg-studio` is a WireGuard control plane built around `Group -> User -> Peer`.
 
+![wg-studio dashboard](docs/image/dashboard.png)
+
 Current product state:
 
 - PostgreSQL-backed source of truth
