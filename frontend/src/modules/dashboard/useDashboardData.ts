@@ -87,6 +87,18 @@ export function useDashboardData() {
     }
     return result;
   }, [users]);
+  const topologyGroups = useMemo(
+    () =>
+      groups.map((group) => ({
+        groupId: group.group_id,
+        groupName: group.group_name,
+        scope: group.group_scope,
+        userCount: group.user_count,
+        peerCount: group.peer_count,
+        users: (userSummariesByGroup.get(group.group_id) ?? []).slice(0, 4),
+      })),
+    [groups, userSummariesByGroup],
+  );
 
   function toggleGroup(groupId: number) {
     setExpandedGroupIds((current) =>
@@ -112,6 +124,7 @@ export function useDashboardData() {
     timelinePath,
     onlinePath,
     userSummariesByGroup,
+    topologyGroups,
     expandedGroupIds,
     toggleGroup,
     expandAllGroups,

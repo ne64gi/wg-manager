@@ -150,6 +150,7 @@ test.describe.serial("v1 smoke", () => {
     await ensureAuthenticated(page);
 
     await page.getByTestId("nav-dashboard").click();
+    await expect(page.getByTestId("dashboard-topology-preview")).toBeVisible();
     const accordion = page
       .locator(`[data-testid^="dashboard-group-accordion-"]`, { hasText: names.group })
       .first();

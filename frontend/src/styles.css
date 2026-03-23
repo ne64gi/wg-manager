@@ -628,6 +628,85 @@ h2 {
   gap: 12px;
 }
 
+.topology-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.topology-group {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--table-border);
+  background: color-mix(in srgb, var(--surface-soft) 92%, transparent);
+}
+
+.topology-user-list {
+  display: grid;
+  gap: 10px;
+}
+
+.topology-user-branch {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
+.topology-connector {
+  position: relative;
+}
+
+.topology-connector::before,
+.topology-connector::after {
+  content: "";
+  position: absolute;
+  background: color-mix(in srgb, var(--text-muted) 36%, transparent);
+}
+
+.topology-connector::before {
+  left: 7px;
+  top: -8px;
+  bottom: 50%;
+  width: 2px;
+}
+
+.topology-connector::after {
+  left: 7px;
+  top: 50%;
+  width: 10px;
+  height: 2px;
+}
+
+.topology-node {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--field-border);
+}
+
+.topology-node-group {
+  background: color-mix(in srgb, var(--wg-red-soft) 46%, var(--surface-strong));
+}
+
+.topology-node-user {
+  background: color-mix(in srgb, var(--nav-hover) 60%, var(--surface-strong));
+}
+
+.topology-node-title {
+  color: var(--text-strong);
+  font-weight: 700;
+}
+
+.topology-node-subtitle {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
 .accordion-card {
   border: 1px solid var(--table-border);
   border-radius: 18px;

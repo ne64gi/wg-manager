@@ -15,6 +15,7 @@ export function DashboardPage() {
     timelinePath,
     onlinePath,
     userSummariesByGroup,
+    topologyGroups,
     expandedGroupIds,
     toggleGroup,
     expandAllGroups,
@@ -257,6 +258,49 @@ export function DashboardPage() {
                   </div>
                 </details>
               ))}
+            </div>
+          </Panel>
+        </div>
+        <div className="dashboard-panel-span-12">
+          <Panel title={t("dashboard.topology_preview", "Network topology preview")}>
+            <div className="topology-preview" data-testid="dashboard-topology-preview">
+              {topologyGroups.length ? (
+                topologyGroups.map((group) => (
+                  <section className="topology-group" key={group.groupId}>
+                    <div className="topology-node topology-node-group">
+                      <div className="topology-node-title">{group.groupName}</div>
+                      <div className="topology-node-subtitle">
+                        {group.scope} · {group.userCount} {t("nav.users", "Users")} · {group.peerCount}{" "}
+                        {t("table.peers", "Peers")}
+                      </div>
+                    </div>
+                    <div className="topology-user-list">
+                      {group.users.length ? (
+                        group.users.map((user) => (
+                          <div className="topology-user-branch" key={user.user_id}>
+                            <div className="topology-connector" aria-hidden="true" />
+                            <div className="topology-node topology-node-user">
+                              <div className="topology-node-title">{user.user_name}</div>
+                              <div className="topology-node-subtitle">
+                                {user.peer_count} {t("table.peers", "Peers")} · {user.online_peer_count}{" "}
+                                {t("table.online", "Online")}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="muted-text">
+                          {t("dashboard.no_topology_users", "No user nodes available for this group yet.")}
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                ))
+              ) : (
+                <div className="muted-text">
+                  {t("dashboard.no_topology_data", "Topology preview will appear once groups and users exist.")}
+                </div>
+              )}
             </div>
           </Panel>
         </div>
