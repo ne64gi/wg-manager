@@ -24,6 +24,8 @@ export function SettingsPage() {
     setEndpointAddress,
     endpointPort,
     setEndpointPort,
+    interfaceMtu,
+    setInterfaceMtu,
     newUsername,
     setNewUsername,
     newPassword,
@@ -274,6 +276,24 @@ export function SettingsPage() {
                 {t(
                   "settings.endpoint_port_hint",
                   "Public port number embedded in generated peer configs.",
+                )}
+              </div>
+            </label>
+            <label className="field">
+              <span>{t("settings.interface_mtu", "Interface MTU")}</span>
+              <input
+                data-testid="settings-interface-mtu"
+                type="number"
+                min="576"
+                max="9000"
+                value={interfaceMtu}
+                onChange={(event) => setInterfaceMtu(event.target.value)}
+                placeholder={t("settings.interface_mtu_placeholder", "optional")}
+              />
+              <div className="muted-text">
+                {t(
+                  "settings.interface_mtu_hint",
+                  "Optional MTU embedded into generated WireGuard interface configs.",
                 )}
               </div>
             </label>

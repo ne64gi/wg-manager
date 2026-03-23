@@ -11,6 +11,7 @@ class Settings(BaseModel):
     server_endpoint: str = "vpn.example.com"
     server_listen_port: int = 51820
     server_address: str = "10.255.255.1/32"
+    server_interface_mtu: int | None = None
     server_dns: list[str] = ["1.1.1.1"]
     docker_socket_path: str = "/var/run/docker.sock"
     runtime_adapter: str = "docker_container"
@@ -42,6 +43,11 @@ settings = Settings(
     server_endpoint=os.getenv("WG_SERVER_ENDPOINT", "vpn.example.com"),
     server_listen_port=int(os.getenv("WG_SERVER_LISTEN_PORT", "51820")),
     server_address=os.getenv("WG_SERVER_ADDRESS", "10.255.255.1/32"),
+    server_interface_mtu=(
+        int(os.getenv("WG_SERVER_INTERFACE_MTU"))
+        if os.getenv("WG_SERVER_INTERFACE_MTU")
+        else None
+    ),
     server_dns=[
         value.strip()
         for value in os.getenv("WG_SERVER_DNS", "1.1.1.1").split(",")

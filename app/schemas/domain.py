@@ -327,6 +327,7 @@ class StateExportServerState(BaseModel):
     listen_port: int
     server_address: str
     dns: list[str]
+    interface_mtu: int | None = None
     private_key: str
     public_key: str
 
@@ -394,6 +395,7 @@ class ServerStateRead(BaseModel):
 class InitialSettingsUpdate(BaseModel):
     endpoint_address: str = Field(min_length=1, max_length=255)
     endpoint_port: int = Field(ge=1, le=65535)
+    interface_mtu: int | None = Field(default=None, ge=576, le=9000)
 
 
 class InitialSettingsRead(BaseModel):
@@ -402,6 +404,7 @@ class InitialSettingsRead(BaseModel):
     id: int
     endpoint_address: str
     endpoint_port: int
+    interface_mtu: int | None
     created_at: datetime
     updated_at: datetime
 

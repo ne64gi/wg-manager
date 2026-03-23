@@ -52,6 +52,7 @@ export function useSettingsPageData() {
   const [formState, setFormState] = useState<GuiSettingsUpdate>({});
   const [endpointAddress, setEndpointAddress] = useState("");
   const [endpointPort, setEndpointPort] = useState("51820");
+  const [interfaceMtu, setInterfaceMtu] = useState("");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
@@ -88,6 +89,11 @@ export function useSettingsPageData() {
     if (initialSettingsQuery.data) {
       setEndpointAddress(initialSettingsQuery.data.endpoint_address);
       setEndpointPort(String(initialSettingsQuery.data.endpoint_port));
+      setInterfaceMtu(
+        initialSettingsQuery.data.interface_mtu === null
+          ? ""
+          : String(initialSettingsQuery.data.interface_mtu),
+      );
     }
   }, [initialSettingsQuery.data]);
 
@@ -121,6 +127,7 @@ export function useSettingsPageData() {
       updateInitialSettings((await auth.getValidAccessToken()) ?? "", {
         endpoint_address: endpointAddress,
         endpoint_port: Number(endpointPort),
+        interface_mtu: interfaceMtu.trim() ? Number(interfaceMtu) : null,
       }),
     onSuccess: async () => {
       pushToast(t("settings.endpoint_saved", "Endpoint settings saved."));
@@ -278,6 +285,8 @@ export function useSettingsPageData() {
     setEndpointAddress,
     endpointPort,
     setEndpointPort,
+    interfaceMtu,
+    setInterfaceMtu,
     newUsername,
     setNewUsername,
     newPassword,
