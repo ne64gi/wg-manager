@@ -396,7 +396,7 @@ export function SettingsPage() {
                 placeholder={t("common.none", "none")}
               />
             </label>
-            <label className="field field-span-2 field-checkbox">
+            <label className="field-span-2 field-checkbox settings-checkbox-row">
               <input
                 type="checkbox"
                 checked={formState.refresh_after_apply ?? true}
@@ -407,8 +407,8 @@ export function SettingsPage() {
                   }))
                 }
               />
-              <div>
-                <span>
+              <div className="settings-checkbox-copy">
+                <span className="settings-checkbox-title">
                   {t(
                     "settings.apply_after_change",
                     "Apply immediately after peer changes",

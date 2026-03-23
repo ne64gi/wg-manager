@@ -449,6 +449,10 @@ h2 {
   gap: 16px;
 }
 
+.dashboard-stats-grid {
+  align-items: stretch;
+}
+
 .stats-grid-compact {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -502,6 +506,17 @@ h2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
+}
+
+.dashboard-top-grid > *,
+.dashboard-bottom-grid > * {
+  min-width: 0;
+}
+
+.dashboard-side-stack {
+  display: grid;
+  gap: 20px;
+  align-content: start;
 }
 
 .table-shell {
@@ -1118,6 +1133,27 @@ h2 {
   margin-top: 4px;
 }
 
+.settings-checkbox-row {
+  align-items: center;
+}
+
+.settings-checkbox-row input {
+  margin-top: 0;
+  flex: 0 0 auto;
+}
+
+.settings-checkbox-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.settings-checkbox-title {
+  color: var(--text-soft);
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
 .info-banner {
   margin-top: 16px;
   padding: 12px 14px;
@@ -1320,6 +1356,29 @@ h2 {
   .form-grid,
   .reveal-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1081px) {
+  .dashboard-top-grid,
+  .dashboard-bottom-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .dashboard-panel-span-3 {
+    grid-column: span 3;
+  }
+
+  .dashboard-panel-span-4 {
+    grid-column: span 4;
+  }
+
+  .dashboard-panel-span-5 {
+    grid-column: span 5;
+  }
+
+  .dashboard-panel-span-7 {
+    grid-column: span 7;
   }
 }
 

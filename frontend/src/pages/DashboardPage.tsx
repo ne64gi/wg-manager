@@ -124,7 +124,7 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <div className="stats-grid">
+      <div className="stats-grid dashboard-stats-grid">
         <StatCard title={t("dashboard.total_peers", "Total peers")} value={`${overview?.peer_count ?? 0}`} />
         <StatCard
           title={t("dashboard.online_peers", "Online peers")}
@@ -140,176 +140,184 @@ export function DashboardPage() {
         <StatCard title={t("dashboard.total_usage", "Total usage")} value={formatBytes(overview?.total_usage_bytes ?? 0)} />
       </div>
 
-      <div className="two-column-grid">
-        <Panel title={t("dashboard.sync_state", "Apply and drift status")}>
-          <div className="page-stack" data-testid="dashboard-sync-state">
-            <div className="action-row">
-              <div className={`status-pill ${syncState?.status === "synced" ? "status-online" : ""}`}>
-                {syncState?.status === "synced"
-                  ? t("dashboard.sync_synced", "Synced")
-                  : syncState?.status === "runtime_unavailable"
-                    ? t("dashboard.sync_unavailable", "Runtime unavailable")
-                    : t("dashboard.sync_drifted", "Apply required")}
-              </div>
-              {hasRuntimeDrift ? (
-                <button
-                  className="secondary-button"
-                  onClick={() => applyMutation.mutate()}
-                  disabled={applyMutation.isPending}
-                  data-testid="dashboard-apply-button"
-                >
-                  {applyMutation.isPending
-                    ? t("peers.applying", "Applying...")
-                    : t("peers.apply", "Apply config")}
-                </button>
-              ) : null}
-            </div>
-            <div className="muted-text">
-              {t("dashboard.sync_counts", "Desired peers:")} {syncState?.desired_peer_count ?? 0} /{" "}
-              {t("dashboard.sync_runtime", "Runtime peers:")} {syncState?.runtime_peer_count ?? 0}
-            </div>
-            <div className="muted-text">
-              {t("dashboard.sync_pending_generation", "Pending config generation:")}{" "}
-              {syncState?.pending_generation_count ?? 0}
-            </div>
-            <div className="muted-text">
-              {t("dashboard.sync_last_generated", "Last generated:")}{" "}
-              {formatDateTime(syncState?.last_generated_at ?? null)}
-            </div>
-            {hasPendingGeneration ? (
-              <div className="info-banner">
-                {t(
-                  "dashboard.pending_generation_notice",
-                  "{count} peer configurations have not been revealed or downloaded yet. Use Reveal or bulk download when needed.",
-                ).replace("{count}", String(syncState?.pending_generation_count ?? 0))}
-              </div>
-            ) : null}
-            {hasRuntimeDrift ? (
-              <div className="page-stack">
-                {syncState?.drift_reasons.map((reason) => (
-                  <div className="warning-banner" key={reason}>
-                    {translateDriftReason(reason)}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="muted-text">
-                {syncState?.status === "runtime_unavailable"
-                  ? t("dashboard.sync_runtime_unavailable_detail", "Could not read the WireGuard runtime state. Check runtime connectivity.")
-                  : t("dashboard.sync_healthy", "Runtime state matches the desired WireGuard state.")}
-              </div>
-            )}
-          </div>
-        </Panel>
-        <Panel title={t("dashboard.timeline", "Traffic timeline (24h)")}>
-          <div className="chart-placeholder">
-            <div className="chart-grid" />
-            {timelinePath ? (
-              <svg
-                className="chart-svg"
-                viewBox="0 0 100 100"
-                preserveAspectRatio="none"
-                aria-hidden="true"
-              >
-                <path className="chart-area" d={`${timelinePath} L 100 100 L 0 100 Z`} />
-                <path className="chart-stroke" d={timelinePath} />
-                <path className="chart-stroke-secondary" d={onlinePath ?? timelinePath} />
-              </svg>
-            ) : null}
-            <div className="chart-overlay">
-              <div className="chart-overlay-title">
-                {historyPoints.length > 0
-                  ? `${historyPoints.length} ${t("dashboard.timeline_recorded", "traffic snapshots recorded")}`
-                  : t("dashboard.timeline_ready", "History collection warming up")}
-              </div>
-              <div className="muted-text">
-                {historyPoints.length > 0
-                  ? `${t("dashboard.timeline_latest", "Latest total usage")}: ${formatBytes(
-                      historyPoints[historyPoints.length - 1]?.total_usage_bytes ?? 0,
-                    )}`
-                  : t(
-                      "dashboard.timeline_ready_desc",
-                      "The chart area is ready and will populate as snapshot points accumulate.",
-                    )}
-              </div>
-            </div>
-          </div>
-        </Panel>
-        <Panel title={t("dashboard.group_online", "Online peers by group")}>
-          <div className="bar-list">
-            {(groupsQuery.data ?? []).map((item) => {
-              const width =
-                item.peer_count > 0
-                  ? Math.max(8, Math.round((item.online_peer_count / item.peer_count) * 100))
-                  : 0;
-              return (
-                <div className="bar-row" key={item.group_id}>
-                  <div className="bar-row-header">
-                    <span>{item.group_name}</span>
-                    <span>
-                      {item.online_peer_count}/{item.peer_count}
-                    </span>
-                  </div>
-                  <div className="bar-track">
-                    <div className="bar-fill" style={{ width: `${width}%` }} />
-                  </div>
+      <div className="two-column-grid dashboard-top-grid">
+        <div className="dashboard-panel-span-5">
+          <Panel title={t("dashboard.sync_state", "Apply and drift status")}>
+            <div className="page-stack" data-testid="dashboard-sync-state">
+              <div className="action-row">
+                <div className={`status-pill ${syncState?.status === "synced" ? "status-online" : ""}`}>
+                  {syncState?.status === "synced"
+                    ? t("dashboard.sync_synced", "Synced")
+                    : syncState?.status === "runtime_unavailable"
+                      ? t("dashboard.sync_unavailable", "Runtime unavailable")
+                      : t("dashboard.sync_drifted", "Apply required")}
                 </div>
-              );
-            })}
-            {groupsQuery.data?.length ? null : (
-              <div className="muted-text">{t("dashboard.no_group_data", "No group summary data yet.")}</div>
-            )}
-          </div>
-        </Panel>
-      </div>
-
-      <div className="two-column-grid">
-        <Panel title={t("dashboard.group_traffic", "Group traffic")}>
-          <div className="accordion-list" data-testid="dashboard-group-traffic-accordion">
-            {(groupsQuery.data ?? []).map((item) => (
-              <details
-                key={item.group_id}
-                className="accordion-card"
-                data-testid={`dashboard-group-accordion-${item.group_id}`}
-              >
-                <summary className="accordion-summary">
-                  <div>
-                    <div className="accordion-title">{item.group_name}</div>
-                    <div className="accordion-subtitle">
-                      {item.group_scope} · {item.user_count} {t("nav.users", "Users")} · {item.peer_count} {t("table.peers", "Peers")}
+                {hasRuntimeDrift ? (
+                  <button
+                    className="secondary-button"
+                    onClick={() => applyMutation.mutate()}
+                    disabled={applyMutation.isPending}
+                    data-testid="dashboard-apply-button"
+                  >
+                    {applyMutation.isPending
+                      ? t("peers.applying", "Applying...")
+                      : t("peers.apply", "Apply config")}
+                  </button>
+                ) : null}
+              </div>
+              <div className="muted-text">
+                {t("dashboard.sync_counts", "Desired peers:")} {syncState?.desired_peer_count ?? 0} /{" "}
+                {t("dashboard.sync_runtime", "Runtime peers:")} {syncState?.runtime_peer_count ?? 0}
+              </div>
+              <div className="muted-text">
+                {t("dashboard.sync_pending_generation", "Pending config generation:")}{" "}
+                {syncState?.pending_generation_count ?? 0}
+              </div>
+              <div className="muted-text">
+                {t("dashboard.sync_last_generated", "Last generated:")}{" "}
+                {formatDateTime(syncState?.last_generated_at ?? null)}
+              </div>
+              {hasPendingGeneration ? (
+                <div className="info-banner">
+                  {t(
+                    "dashboard.pending_generation_notice",
+                    "{count} peer configurations have not been revealed or downloaded yet. Use Reveal or bulk download when needed.",
+                  ).replace("{count}", String(syncState?.pending_generation_count ?? 0))}
+                </div>
+              ) : null}
+              {hasRuntimeDrift ? (
+                <div className="page-stack">
+                  {syncState?.drift_reasons.map((reason) => (
+                    <div className="warning-banner" key={reason}>
+                      {translateDriftReason(reason)}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="muted-text">
+                  {syncState?.status === "runtime_unavailable"
+                    ? t("dashboard.sync_runtime_unavailable_detail", "Could not read the WireGuard runtime state. Check runtime connectivity.")
+                    : t("dashboard.sync_healthy", "Runtime state matches the desired WireGuard state.")}
+                </div>
+              )}
+            </div>
+          </Panel>
+        </div>
+        <div className="dashboard-panel-span-4">
+          <Panel title={t("dashboard.timeline", "Traffic timeline (24h)")}>
+            <div className="chart-placeholder">
+              <div className="chart-grid" />
+              {timelinePath ? (
+                <svg
+                  className="chart-svg"
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                >
+                  <path className="chart-area" d={`${timelinePath} L 100 100 L 0 100 Z`} />
+                  <path className="chart-stroke" d={timelinePath} />
+                  <path className="chart-stroke-secondary" d={onlinePath ?? timelinePath} />
+                </svg>
+              ) : null}
+              <div className="chart-overlay">
+                <div className="chart-overlay-title">
+                  {historyPoints.length > 0
+                    ? `${historyPoints.length} ${t("dashboard.timeline_recorded", "traffic snapshots recorded")}`
+                    : t("dashboard.timeline_ready", "History collection warming up")}
+                </div>
+                <div className="muted-text">
+                  {historyPoints.length > 0
+                    ? `${t("dashboard.timeline_latest", "Latest total usage")}: ${formatBytes(
+                        historyPoints[historyPoints.length - 1]?.total_usage_bytes ?? 0,
+                      )}`
+                    : t(
+                        "dashboard.timeline_ready_desc",
+                        "The chart area is ready and will populate as snapshot points accumulate.",
+                      )}
+                </div>
+              </div>
+            </div>
+          </Panel>
+        </div>
+        <div className="dashboard-panel-span-3 dashboard-side-stack">
+          <Panel title={t("dashboard.group_online", "Online peers by group")}>
+            <div className="bar-list">
+              {(groupsQuery.data ?? []).map((item) => {
+                const width =
+                  item.peer_count > 0
+                    ? Math.max(8, Math.round((item.online_peer_count / item.peer_count) * 100))
+                    : 0;
+                return (
+                  <div className="bar-row" key={item.group_id}>
+                    <div className="bar-row-header">
+                      <span>{item.group_name}</span>
+                      <span>
+                        {item.online_peer_count}/{item.peer_count}
+                      </span>
+                    </div>
+                    <div className="bar-track">
+                      <div className="bar-fill" style={{ width: `${width}%` }} />
                     </div>
                   </div>
-                  <div className="accordion-summary-metrics">
-                    <span>{formatBytes(item.total_usage_bytes)}</span>
-                    <span className="accordion-summary-chevron" aria-hidden="true">+</span>
+                );
+              })}
+              {groupsQuery.data?.length ? null : (
+                <div className="muted-text">{t("dashboard.no_group_data", "No group summary data yet.")}</div>
+              )}
+            </div>
+          </Panel>
+          <Panel title={t("dashboard.group_traffic", "Group traffic")}>
+            <div className="accordion-list" data-testid="dashboard-group-traffic-accordion">
+              {(groupsQuery.data ?? []).map((item) => (
+                <details
+                  key={item.group_id}
+                  className="accordion-card"
+                  data-testid={`dashboard-group-accordion-${item.group_id}`}
+                >
+                  <summary className="accordion-summary">
+                    <div>
+                      <div className="accordion-title">{item.group_name}</div>
+                      <div className="accordion-subtitle">
+                        {item.group_scope} · {item.user_count} {t("nav.users", "Users")} · {item.peer_count}{" "}
+                        {t("table.peers", "Peers")}
+                      </div>
+                    </div>
+                    <div className="accordion-summary-metrics">
+                      <span>{formatBytes(item.total_usage_bytes)}</span>
+                      <span className="accordion-summary-chevron" aria-hidden="true">
+                        +
+                      </span>
+                    </div>
+                  </summary>
+                  <div className="accordion-content">
+                    <DataTable
+                      headers={[
+                        t("table.user", "User"),
+                        t("table.peers", "Peers"),
+                        t("table.online", "Online"),
+                        t("table.traffic", "Traffic"),
+                      ]}
+                    >
+                      {(userSummariesByGroup.get(item.group_id) ?? []).map((user) => (
+                        <tr key={user.user_id}>
+                          <td>{user.user_name}</td>
+                          <td>{user.peer_count}</td>
+                          <td>{user.online_peer_count}</td>
+                          <td>{formatBytes(user.total_usage_bytes)}</td>
+                        </tr>
+                      ))}
+                    </DataTable>
+                    {(userSummariesByGroup.get(item.group_id) ?? []).length === 0 ? (
+                      <div className="muted-text">
+                        {t("dashboard.no_user_data_for_group", "No user traffic data for this group yet.")}
+                      </div>
+                    ) : null}
                   </div>
-                </summary>
-                <div className="accordion-content">
-                  <DataTable
-                    headers={[
-                      t("table.user", "User"),
-                      t("table.peers", "Peers"),
-                      t("table.online", "Online"),
-                      t("table.traffic", "Traffic"),
-                    ]}
-                  >
-                    {(userSummariesByGroup.get(item.group_id) ?? []).map((user) => (
-                      <tr key={user.user_id}>
-                        <td>{user.user_name}</td>
-                        <td>{user.peer_count}</td>
-                        <td>{user.online_peer_count}</td>
-                        <td>{formatBytes(user.total_usage_bytes)}</td>
-                      </tr>
-                    ))}
-                  </DataTable>
-                  {(userSummariesByGroup.get(item.group_id) ?? []).length === 0 ? (
-                    <div className="muted-text">{t("dashboard.no_user_data_for_group", "No user traffic data for this group yet.")}</div>
-                  ) : null}
-                </div>
-              </details>
-            ))}
-          </div>
-        </Panel>
+                </details>
+              ))}
+            </div>
+          </Panel>
+        </div>
       </div>
     </div>
   );
