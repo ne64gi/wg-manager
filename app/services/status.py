@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import Integer, cast, func, select
 from sqlalchemy.orm import Session, joinedload
 
-from app.runtime import get_wireguard_runtime
+from app.runtime import get_wireguard_runtime, parse_wg_dump
 from app.models import Peer, PeerTrafficSnapshot, User
 from app.schemas import (
     GroupTrafficSummaryRead,
@@ -17,46 +16,6 @@ from app.schemas import (
     WireGuardOverviewRead,
 )
 from app.services.gui import get_gui_settings
-
-
-@dataclass
-class RuntimePeerStats:
-    public_key: str
-    endpoint: str | None
-    allowed_ips: list[str]
-    latest_handshake_at: datetime | None
-    received_bytes: int
-    sent_bytes: int
-
-
-def _parse_handshake_epoch(value: str) -> datetime | None:
-    epoch = int(value)
-    if epoch <= 0:
-        return None
-    return datetime.fromtimestamp(epoch, tz=timezone.utc)
-
-
-def _parse_wg_dump(raw: str) -> list[RuntimePeerStats]:
-    lines = [line.strip() for line in raw.splitlines() if line.strip()]
-    if not lines:
-        return []
-
-    peers: list[RuntimePeerStats] = []
-    for line in lines[1:]:
-        columns = line.split("\t")
-        if len(columns) < 8:
-            continue
-        peers.append(
-            RuntimePeerStats(
-                public_key=columns[0],
-                endpoint=None if columns[2] == "(none)" else columns[2],
-                allowed_ips=[] if columns[3] == "(none)" else columns[3].split(","),
-                latest_handshake_at=_parse_handshake_epoch(columns[4]),
-                received_bytes=int(columns[5]),
-                sent_bytes=int(columns[6]),
-            )
-        )
-    return peers
 
 
 def _is_online(latest_handshake_at: datetime | None, threshold_seconds: int) -> bool:
@@ -109,7 +68,7 @@ def get_wireguard_peer_statuses(session: Session) -> list[PeerStatusRead]:
         raise ValueError(stderr)
 
     runtime_by_key = {
-        peer.public_key: peer for peer in _parse_wg_dump(result.stdout) if peer.public_key
+        peer.public_key: peer for peer in parse_wg_dump(result.stdout) if peer.public_key
     }
     peers = list(
         session.scalars(
@@ -214,7 +173,7 @@ def get_wireguard_sync_state(session: Session) -> SyncStateRead:
             last_runtime_sync_at=None,
         )
 
-    runtime_peers = _parse_wg_dump(result.stdout)
+    runtime_peers = parse_wg_dump(result.stdout)
     runtime_by_key = {
         peer.public_key: peer
         for peer in runtime_peers

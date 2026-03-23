@@ -13,6 +13,12 @@ Important defaults include:
 - WireGuard container/runtime wiring
 - artifact root
 
+Current runtime boundary note:
+
+- `WG_RUNTIME_ADAPTER` exists so runtime selection has a single entry point
+- `docker_container` is the only supported adapter in `1.1.1`
+- the intent is early separation of runtime assumptions, not full cross-platform support yet
+
 Keep the real `.env` local-only.
 
 ## Default Stack

@@ -14,6 +14,12 @@ Recommended read order:
 3. `architecture/` when shaping how a future implementation should be structured
 4. `audit/` when checking consistency, cleanup debt, or release polish
 
+Current `1.1` starting point:
+
+- read [`backlog/1.x-plan.md`](backlog/1.x-plan.md) for sequencing
+- then read [`architecture/runtime-separation.md`](architecture/runtime-separation.md) for the current runtime-separation seam
+- read [`architecture/v1.1-authorization-notes.md`](architecture/v1.1-authorization-notes.md) only as a future seam, not as the lead topic for `1.1.1`
+
 Interpretation rules:
 
 - `strategy/` answers "which phase is this work part of?"
