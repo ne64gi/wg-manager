@@ -155,3 +155,32 @@ export function GlobeIcon(props: IconProps) {
     </BaseIcon>
   );
 }
+
+export function LockIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <rect x="5" y="10" width="14" height="10" rx="2" />
+      <path d="M8 10V7.8A4 4 0 0 1 12 4a4 4 0 0 1 4 3.8V10" />
+    </BaseIcon>
+  );
+}
+
+export function EyeIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M2.5 12s3.4-5.5 9.5-5.5S21.5 12 21.5 12 18.1 17.5 12 17.5 2.5 12 2.5 12Z" />
+      <circle cx="12" cy="12" r="2.6" />
+    </BaseIcon>
+  );
+}
+
+export function EyeOffIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M3.5 3.5 20.5 20.5" />
+      <path d="M10 6.8a10.4 10.4 0 0 1 2-.3c6.1 0 9.5 5.5 9.5 5.5a17.5 17.5 0 0 1-3.1 3.8" />
+      <path d="M6.4 8.4A16.8 16.8 0 0 0 2.5 12s3.4 5.5 9.5 5.5c1 0 2-.1 2.9-.4" />
+      <path d="M9.9 9.9A3 3 0 0 0 9 12a3 3 0 0 0 4.8 2.4" />
+    </BaseIcon>
+  );
+}

@@ -12,7 +12,15 @@ import {
   translateErrorMessage,
 } from "../lib/i18n";
 import { useAuth } from "../modules/auth/AuthContext";
-import { BrandIcon, GlobeIcon, SettingsIcon } from "../ui/Icons";
+import {
+  BrandIcon,
+  EyeIcon,
+  EyeOffIcon,
+  GlobeIcon,
+  LockIcon,
+  SettingsIcon,
+  UserIcon,
+} from "../ui/Icons";
 
 export function LoginPage() {
   const auth = useAuth();
@@ -23,6 +31,7 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [locale, setLocale] = useState<"en" | "ja">(getPreviewLocale());
   const [theme, setTheme] = useState<"light" | "dark">(() => getPreviewTheme() ?? "dark");
   const setupStatusQuery = useQuery({
@@ -95,39 +104,30 @@ export function LoginPage() {
               type="button"
               className="login-settings-button"
               onClick={() => setIsSettingsOpen((current) => !current)}
+              aria-label={t("auth.display_settings_button", "Display settings")}
+              title={t("auth.display_settings_button", "Display settings")}
             >
               <SettingsIcon className="icon login-settings-icon" />
-              <span className="login-settings-button-text">
-                {t("auth.display_settings_button", "Display settings")}
-              </span>
             </button>
             {isSettingsOpen ? (
               <div className="login-settings-popover">
-                <div className="login-settings-heading">
-                  {t("auth.settings", "Appearance")}
-                </div>
-                <div className="login-settings-row">
-                  <span>{t("theme.quick_toggle", "Theme")}</span>
-                  <button
-                    type="button"
-                    className={`theme-toggle ${theme === "dark" ? "theme-toggle-on" : ""}`}
-                    aria-pressed={theme === "dark"}
-                    onClick={() =>
-                      setTheme((current) => {
-                        const nextTheme = current === "dark" ? "light" : "dark";
-                        setPreviewTheme(nextTheme);
-                        return nextTheme;
-                      })
-                    }
-                  >
+                <button
+                  type="button"
+                  className="login-settings-toggle-row"
+                  aria-pressed={theme === "dark"}
+                  onClick={() =>
+                    setTheme((current) => {
+                      const nextTheme = current === "dark" ? "light" : "dark";
+                      setPreviewTheme(nextTheme);
+                      return nextTheme;
+                    })
+                  }
+                >
+                  <span>{t("auth.dark_mode", "Dark mode")}</span>
+                  <span className={`theme-toggle ${theme === "dark" ? "theme-toggle-on" : ""}`}>
                     <span className="theme-toggle-knob" />
-                  </button>
-                </div>
-                <div className="login-settings-caption">
-                  {theme === "dark"
-                    ? t("theme.dark", "Dark")
-                    : t("theme.light", "Light")}
-                </div>
+                  </span>
+                </button>
                 <label className="field login-settings-field">
                   <span>{t("auth.language", "Language")}</span>
                   <div className="login-language-shell">
@@ -140,8 +140,8 @@ export function LoginPage() {
                         setLocale(nextLocale);
                       }}
                     >
-                      <option value="en">{t("locale.en", "English")}</option>
-                      <option value="ja">{t("locale.ja", "Japanese")}</option>
+                      <option value="en">{t("locale.en_flag", "🇺🇸 English")}</option>
+                      <option value="ja">{t("locale.ja_flag", "🇯🇵 日本語")}</option>
                     </select>
                   </div>
                 </label>
@@ -159,7 +159,7 @@ export function LoginPage() {
             <h1>
               {needsSetup
                 ? t("auth.setup_title", "Create the first admin user")
-                : t("auth.login_title", "Control plane sign in")}
+                : t("auth.login_title", "Sign in")}
             </h1>
             <p className="muted-text">
               {needsSetup
@@ -176,7 +176,8 @@ export function LoginPage() {
         </div>
         <label className="field login-field">
           <span>{t("auth.username", "Username")}</span>
-          <div className="login-input-shell">
+          <div className="login-input-shell login-input-shell-icon">
+            <UserIcon className="icon login-input-icon" />
             <input
               data-testid="login-username"
               value={username}
@@ -186,22 +187,45 @@ export function LoginPage() {
         </label>
         <label className="field login-field">
           <span>{t("auth.password", "Password")}</span>
-          <div className="login-input-shell">
+          <div className="login-input-shell login-input-shell-icon">
+            <LockIcon className="icon login-input-icon" />
             <input
               data-testid="login-password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
+            <button
+              type="button"
+              className="login-password-toggle"
+              onClick={() => setShowPassword((current) => !current)}
+              aria-label={
+                showPassword
+                  ? t("auth.hide_password", "Hide password")
+                  : t("auth.show_password", "Show password")
+              }
+              title={
+                showPassword
+                  ? t("auth.hide_password", "Hide password")
+                  : t("auth.show_password", "Show password")
+              }
+            >
+              {showPassword ? (
+                <EyeOffIcon className="icon login-password-toggle-icon" />
+              ) : (
+                <EyeIcon className="icon login-password-toggle-icon" />
+              )}
+            </button>
           </div>
         </label>
         {needsSetup ? (
           <label className="field login-field">
             <span>{t("auth.confirm_password", "Confirm password")}</span>
-            <div className="login-input-shell">
+            <div className="login-input-shell login-input-shell-icon">
+              <LockIcon className="icon login-input-icon" />
               <input
                 data-testid="login-confirm-password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
               />

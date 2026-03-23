@@ -6,13 +6,16 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "nav.settings": "設定",
   "nav.logs": "ログ",
   "auth.logout": "ログアウト",
-  "auth.settings": "表示とテーマ",
+  "auth.settings": "表示設定",
   "auth.display_settings_button": "表示設定",
-  "auth.login_title": "コントロールプレーンへログイン",
+  "auth.login_title": "ログイン",
   "auth.login_description": "ピア管理、トラフィック集計、適用操作にアクセスします。",
   "auth.username": "ユーザー名",
   "auth.password": "パスワード",
   "auth.language": "言語",
+  "auth.dark_mode": "ダークモード",
+  "auth.show_password": "パスワードを表示",
+  "auth.hide_password": "パスワードを隠す",
   "auth.sign_in": "ログイン",
   "auth.signing_in": "ログイン中...",
   "auth.invalid_credentials": "ユーザー名またはパスワードが正しくありません",
@@ -65,6 +68,8 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "common.dark": "ダーク",
   "locale.en": "English",
   "locale.ja": "日本語",
+  "locale.en_flag": "🇺🇸 English",
+  "locale.ja_flag": "🇯🇵 日本語",
   "log_level.debug": "デバッグ",
   "log_level.info": "情報",
   "log_level.warning": "警告",
@@ -364,12 +369,19 @@ const PREVIEW_LOCALE_KEY = "wg-studio-preview-locale";
 const PREVIEW_THEME_KEY = "wg-studio-preview-theme";
 
 export function getPreviewLocale(): "en" | "ja" {
+  return getStoredPreviewLocale() ?? "en";
+}
+
+export function getStoredPreviewLocale(): "en" | "ja" | null {
   if (typeof window === "undefined") {
-    return "en";
+    return null;
   }
 
   const stored = window.localStorage.getItem(PREVIEW_LOCALE_KEY);
-  return stored === "ja" ? "ja" : "en";
+  if (stored === "ja" || stored === "en") {
+    return stored;
+  }
+  return null;
 }
 
 export function setPreviewLocale(locale: "en" | "ja"): void {
