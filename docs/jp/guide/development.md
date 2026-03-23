@@ -1,5 +1,9 @@
 # 開発
 
+目的:
+
+- ローカル開発時の基本的な起動と検証の流れをまとめる
+
 ## 環境
 
 ローカルの `.env` は `.env.example` をひな形に使います。
@@ -53,6 +57,22 @@ CLI コマンド実行:
 
 ```bash
 docker compose --profile tools run --rm wg-studio-cli group list
+```
+
+起動入口整理の下準備として、薄い wrapper も使えます。
+
+```bash
+./scripts/stack.sh up
+./scripts/stack.sh cli group list
+./scripts/stack.sh e2e
+```
+
+PowerShell では:
+
+```powershell
+pwsh ./scripts/stack.ps1 up
+pwsh ./scripts/stack.ps1 cli group list
+pwsh ./scripts/stack.ps1 e2e
 ```
 
 push 後に remote-tracking ref まで更新して確認する:

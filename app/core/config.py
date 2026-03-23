@@ -13,6 +13,7 @@ class Settings(BaseModel):
     server_address: str = "10.255.255.1/32"
     server_dns: list[str] = ["1.1.1.1"]
     docker_socket_path: str = "/var/run/docker.sock"
+    runtime_adapter: str = "docker_container"
     wireguard_container_name: str = "wg-studio-wireguard"
     wireguard_interface_name: str = "wg0"
     wireguard_config_path: str = "/config/wg_confs/wg0.conf"
@@ -47,6 +48,7 @@ settings = Settings(
         if value.strip()
     ],
     docker_socket_path=os.getenv("DOCKER_SOCKET_PATH", "/var/run/docker.sock"),
+    runtime_adapter=os.getenv("WG_RUNTIME_ADAPTER", "docker_container"),
     wireguard_container_name=os.getenv(
         "WG_CONTAINER_NAME", "wg-studio-wireguard"
     ),

@@ -3,6 +3,7 @@ from pathlib import Path
 from app.core import settings
 from app.db import AuditBase, AuditSessionLocal, Base, SessionLocal, audit_engine, engine
 from app.models import GroupScope, OperationLog
+from app.runtime import ExecResult
 from app.schemas import GroupCreate, PeerCreate, UserCreate
 from app.services import apply_server_config, create_group, create_peer, create_user
 
@@ -36,26 +37,21 @@ def test_apply_server_config_bootstraps_with_wg_quick(
 
     previous_root = settings.artifact_root
     previous_address = settings.server_address
-    previous_socket = settings.docker_socket_path
-    previous_container = settings.wireguard_container_name
-    previous_interface = settings.wireguard_interface_name
 
-    fake_socket = tmp_path / "docker.sock"
-    fake_socket.write_text("", encoding="utf-8")
     exec_calls: list[list[str]] = []
-    exit_codes = iter([1, 0])
 
-    def fake_run_exec(command: list[str]) -> int:
-        exec_calls.append(command)
-        return next(exit_codes)
+    class FakeRuntime:
+        container_name = "wg-studio-wireguard"
+        interface_name = "wg0"
+
+        def apply_config(self) -> None:
+            exec_calls.append(["sh", "-lc", "ip link show wg0 >/dev/null 2>&1"])
+            exec_calls.append(["wg-quick", "up", "/config/wg_confs/wg0.conf"])
 
     settings.artifact_root = str(tmp_path / "artifacts")
     settings.server_address = "10.99.0.1/24"
-    settings.docker_socket_path = str(fake_socket)
-    settings.wireguard_container_name = "wg-studio-wireguard"
-    settings.wireguard_interface_name = "wg0"
 
-    monkeypatch.setattr("app.services.apply._run_exec", fake_run_exec)
+    monkeypatch.setattr("app.services.apply.get_wireguard_runtime", lambda: FakeRuntime())
 
     try:
         create_apply_fixture()
@@ -84,9 +80,6 @@ def test_apply_server_config_bootstraps_with_wg_quick(
     finally:
         settings.artifact_root = previous_root
         settings.server_address = previous_address
-        settings.docker_socket_path = previous_socket
-        settings.wireguard_container_name = previous_container
-        settings.wireguard_interface_name = previous_interface
 
 
 def test_apply_server_config_updates_existing_interface(
@@ -96,26 +89,27 @@ def test_apply_server_config_updates_existing_interface(
 
     previous_root = settings.artifact_root
     previous_address = settings.server_address
-    previous_socket = settings.docker_socket_path
-    previous_container = settings.wireguard_container_name
-    previous_interface = settings.wireguard_interface_name
 
-    fake_socket = tmp_path / "docker.sock"
-    fake_socket.write_text("", encoding="utf-8")
     exec_calls: list[list[str]] = []
-    exit_codes = iter([0, 0])
 
-    def fake_run_exec(command: list[str]) -> int:
-        exec_calls.append(command)
-        return next(exit_codes)
+    class FakeRuntime:
+        container_name = "wg-studio-wireguard"
+        interface_name = "wg0"
+
+        def apply_config(self) -> None:
+            exec_calls.append(["sh", "-lc", "ip link show wg0 >/dev/null 2>&1"])
+            exec_calls.append(
+                [
+                    "sh",
+                    "-lc",
+                    "wg-quick strip /config/wg_confs/wg0.conf | wg syncconf wg0 /dev/stdin",
+                ]
+            )
 
     settings.artifact_root = str(tmp_path / "artifacts")
     settings.server_address = "10.99.0.1/24"
-    settings.docker_socket_path = str(fake_socket)
-    settings.wireguard_container_name = "wg-studio-wireguard"
-    settings.wireguard_interface_name = "wg0"
 
-    monkeypatch.setattr("app.services.apply._run_exec", fake_run_exec)
+    monkeypatch.setattr("app.services.apply.get_wireguard_runtime", lambda: FakeRuntime())
 
     try:
         create_apply_fixture()
@@ -134,6 +128,3 @@ def test_apply_server_config_updates_existing_interface(
     finally:
         settings.artifact_root = previous_root
         settings.server_address = previous_address
-        settings.docker_socket_path = previous_socket
-        settings.wireguard_container_name = previous_container
-        settings.wireguard_interface_name = previous_interface

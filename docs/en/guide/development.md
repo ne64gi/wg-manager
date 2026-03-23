@@ -1,5 +1,7 @@
 # Development
 
+Purpose: describe the local development and verification workflow.
+
 ## Environment
 
 Use `.env.example` as the template for your local `.env`.
@@ -53,6 +55,22 @@ Run a CLI command:
 
 ```bash
 docker compose --profile tools run --rm wg-studio-cli group list
+```
+
+Wrapper entry points are also available as early launch-abstraction prep:
+
+```bash
+./scripts/stack.sh up
+./scripts/stack.sh cli group list
+./scripts/stack.sh e2e
+```
+
+On PowerShell:
+
+```powershell
+pwsh ./scripts/stack.ps1 up
+pwsh ./scripts/stack.ps1 cli group list
+pwsh ./scripts/stack.ps1 e2e
 ```
 
 Push and refresh the local remote-tracking ref in one step:

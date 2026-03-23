@@ -3,14 +3,13 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
-import tempfile
 
 import qrcode
 import qrcode.image.svg
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
-from app.core import settings
+from app.runtime import ArtifactStore, get_artifact_store
 from app.models import Group, Peer, User
 from app.schemas import (
     GeneratedPeerArtifacts,
@@ -21,36 +20,24 @@ from app.services.audit import log_gui_event, log_operation
 from app.services.domain import ensure_peer_keys, get_initial_settings, get_server_state
 
 
-def _artifact_root() -> Path:
-    root = Path(settings.artifact_root)
-    root.mkdir(parents=True, exist_ok=True)
-    return root
+def _server_config_path(store: ArtifactStore):
+    return store.server_config_path()
 
 
-def _server_config_path() -> Path:
-    path = _artifact_root() / "wg_confs" / "wg0.conf"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    return path
+def _peer_config_path(store: ArtifactStore, peer_name: str):
+    return store.peer_config_path(peer_name)
 
 
-def _peer_config_path(peer_name: str) -> Path:
-    path = _artifact_root() / "peers" / f"{peer_name}.conf"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    return path
-
-
-def _peer_qr_path(peer_name: str) -> Path:
-    path = _artifact_root() / "peers" / f"{peer_name}.svg"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    return path
+def _peer_qr_path(store: ArtifactStore, peer_name: str):
+    return store.peer_qr_path(peer_name)
 
 
 def get_peer_config_path(peer_name: str) -> Path:
-    return _peer_config_path(peer_name)
+    return _peer_config_path(get_artifact_store(), peer_name)
 
 
 def get_peer_qr_path(peer_name: str) -> Path:
-    return _peer_qr_path(peer_name)
+    return _peer_qr_path(get_artifact_store(), peer_name)
 
 
 def _effective_allowed_ips(peer: Peer) -> list[str]:
@@ -145,38 +132,11 @@ def _render_server_config(server_address: str, listen_port: int, private_key: st
     return "\n".join(lines)
 
 
-def _write_qr_svg(contents: str, path: Path) -> None:
+def _write_qr_svg(store: ArtifactStore, contents: str, path: Path) -> None:
     image = qrcode.make(contents, image_factory=qrcode.image.svg.SvgImage)
     buffer = BytesIO()
     image.save(buffer)
-    _atomic_write_bytes(path, buffer.getvalue())
-
-
-def _atomic_write_text(path: Path, contents: str) -> None:
-    with tempfile.NamedTemporaryFile(
-        mode="w",
-        encoding="utf-8",
-        delete=False,
-        dir=path.parent,
-        prefix=f"{path.name}.",
-        suffix=".tmp",
-    ) as handle:
-        handle.write(contents)
-        temp_path = Path(handle.name)
-    temp_path.replace(path)
-
-
-def _atomic_write_bytes(path: Path, contents: bytes) -> None:
-    with tempfile.NamedTemporaryFile(
-        mode="wb",
-        delete=False,
-        dir=path.parent,
-        prefix=f"{path.name}.",
-        suffix=".tmp",
-    ) as handle:
-        handle.write(contents)
-        temp_path = Path(handle.name)
-    temp_path.replace(path)
+    store.write_bytes(path, buffer.getvalue())
 
 
 def generate_peer_artifacts(session: Session, peer_id: int) -> GeneratedPeerArtifacts:
@@ -195,10 +155,11 @@ def generate_peer_artifacts(session: Session, peer_id: int) -> GeneratedPeerArti
         initial_settings.endpoint_port,
         server.public_key,
     )
-    config_path = _peer_config_path(peer.name)
-    qr_path = _peer_qr_path(peer.name)
-    _atomic_write_text(config_path, config_contents)
-    _write_qr_svg(config_contents, qr_path)
+    store = get_artifact_store()
+    config_path = _peer_config_path(store, peer.name)
+    qr_path = _peer_qr_path(store, peer.name)
+    store.write_text(config_path, config_contents)
+    _write_qr_svg(store, config_contents, qr_path)
 
     peer.last_config_generated_at = datetime.now(timezone.utc)
     peer.updated_at = datetime.now(timezone.utc)
@@ -244,8 +205,9 @@ def generate_server_config(session: Session) -> GeneratedServerArtifacts:
     for peer in peers:
         ensure_peer_keys(session, peer)
 
-    config_path = _server_config_path()
-    _atomic_write_text(
+    store = get_artifact_store()
+    config_path = _server_config_path(store)
+    store.write_text(
         config_path,
         _render_server_config(
             server.server_address,
@@ -279,8 +241,9 @@ def get_or_generate_peer_config_text(session: Session, peer_id: int) -> tuple[Pe
     _ensure_peer_can_generate(peer)
 
     initial_settings = get_initial_settings(session)
-    config_path = _peer_config_path(peer.name)
-    qr_path = _peer_qr_path(peer.name)
+    store = get_artifact_store()
+    config_path = _peer_config_path(store, peer.name)
+    qr_path = _peer_qr_path(store, peer.name)
     if _peer_artifacts_need_regeneration(
         peer,
         initial_settings.updated_at,
@@ -289,7 +252,7 @@ def get_or_generate_peer_config_text(session: Session, peer_id: int) -> tuple[Pe
     ):
         generate_peer_artifacts(session, peer_id)
         peer = _load_peer_with_context(session, peer_id) or peer
-        config_path = _peer_config_path(peer.name)
+        config_path = _peer_config_path(store, peer.name)
     return peer, config_path.read_text(encoding="utf-8")
 
 
@@ -300,8 +263,9 @@ def get_or_generate_peer_qr_svg(session: Session, peer_id: int) -> tuple[Peer, s
     _ensure_peer_can_generate(peer)
 
     initial_settings = get_initial_settings(session)
-    config_path = _peer_config_path(peer.name)
-    qr_path = _peer_qr_path(peer.name)
+    store = get_artifact_store()
+    config_path = _peer_config_path(store, peer.name)
+    qr_path = _peer_qr_path(store, peer.name)
     if _peer_artifacts_need_regeneration(
         peer,
         initial_settings.updated_at,
@@ -310,7 +274,7 @@ def get_or_generate_peer_qr_svg(session: Session, peer_id: int) -> tuple[Peer, s
     ):
         generate_peer_artifacts(session, peer_id)
         peer = _load_peer_with_context(session, peer_id) or peer
-        qr_path = _peer_qr_path(peer.name)
+        qr_path = _peer_qr_path(store, peer.name)
     return peer, qr_path.read_text(encoding="utf-8")
 
 
@@ -323,8 +287,9 @@ def reveal_peer_artifacts(session: Session, peer_id: int) -> RevealedPeerArtifac
         raise ValueError(f"peer id={peer_id} has already been revealed")
 
     initial_settings = get_initial_settings(session)
-    config_path = _peer_config_path(peer.name)
-    qr_path = _peer_qr_path(peer.name)
+    store = get_artifact_store()
+    config_path = _peer_config_path(store, peer.name)
+    qr_path = _peer_qr_path(store, peer.name)
     if _peer_artifacts_need_regeneration(
         peer,
         initial_settings.updated_at,
@@ -333,8 +298,8 @@ def reveal_peer_artifacts(session: Session, peer_id: int) -> RevealedPeerArtifac
     ):
         generate_peer_artifacts(session, peer_id)
         peer = _load_peer_with_context(session, peer_id) or peer
-        config_path = _peer_config_path(peer.name)
-        qr_path = _peer_qr_path(peer.name)
+        config_path = _peer_config_path(store, peer.name)
+        qr_path = _peer_qr_path(store, peer.name)
 
     revealed_at = datetime.now(timezone.utc)
     peer.is_revealed = True

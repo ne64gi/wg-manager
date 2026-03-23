@@ -14,7 +14,7 @@ from app.services import (
     get_wireguard_peer_statuses,
 )
 from app.services.gui import get_gui_settings
-from app.services.docker_runtime import ExecResult
+from app.runtime import ExecResult
 
 
 def reset_db() -> None:
@@ -34,12 +34,13 @@ def test_get_wireguard_peer_statuses_and_overview(monkeypatch) -> None:
         "pub-offline\t(psk)\t(none)\t10.10.1.2/32\t0\t0\t0\toff\n"
     )
 
-    def fake_docker_exec(command: list[str], *, capture_output: bool = False) -> ExecResult:
-        assert command == ["wg", "show", "wg0", "dump"]
-        assert capture_output is True
-        return ExecResult(exit_code=0, stdout=dump_output, stderr="")
+    class FakeRuntime:
+        interface_name = "wg0"
 
-    monkeypatch.setattr("app.services.status.docker_exec", fake_docker_exec)
+        def read_dump(self) -> ExecResult:
+            return ExecResult(exit_code=0, stdout=dump_output, stderr="")
+
+    monkeypatch.setattr("app.services.status.get_wireguard_runtime", lambda: FakeRuntime())
 
     with SessionLocal() as session:
         group = create_group(
@@ -116,12 +117,13 @@ def test_capture_and_read_overview_history(monkeypatch) -> None:
         f"pub-beta\t(psk)\t198.51.100.11:51820\t10.10.1.2/32\t{now}\t400\t500\t25\n"
     )
 
-    def fake_docker_exec(command: list[str], *, capture_output: bool = False) -> ExecResult:
-        assert command == ["wg", "show", "wg0", "dump"]
-        assert capture_output is True
-        return ExecResult(exit_code=0, stdout=dump_output, stderr="")
+    class FakeRuntime:
+        interface_name = "wg0"
 
-    monkeypatch.setattr("app.services.status.docker_exec", fake_docker_exec)
+        def read_dump(self) -> ExecResult:
+            return ExecResult(exit_code=0, stdout=dump_output, stderr="")
+
+    monkeypatch.setattr("app.services.status.get_wireguard_runtime", lambda: FakeRuntime())
 
     with SessionLocal() as session:
         gui_settings = get_gui_settings(session)

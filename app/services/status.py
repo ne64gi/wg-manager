@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import Integer, cast, func, select
 from sqlalchemy.orm import Session, joinedload
 
-from app.core import settings
+from app.runtime import get_wireguard_runtime
 from app.models import Peer, PeerTrafficSnapshot, User
 from app.schemas import (
     GroupTrafficSummaryRead,
@@ -16,7 +16,6 @@ from app.schemas import (
     WireGuardOverviewHistoryPointRead,
     WireGuardOverviewRead,
 )
-from app.services.docker_runtime import docker_exec
 from app.services.gui import get_gui_settings
 
 
@@ -103,7 +102,8 @@ def _capture_peer_snapshots(
 
 def get_wireguard_peer_statuses(session: Session) -> list[PeerStatusRead]:
     gui_settings = get_gui_settings(session)
-    result = docker_exec(["wg", "show", settings.wireguard_interface_name, "dump"], capture_output=True)
+    runtime = get_wireguard_runtime()
+    result = runtime.read_dump()
     if result.exit_code != 0:
         stderr = result.stderr.strip() or "wg show dump failed"
         raise ValueError(stderr)
@@ -158,8 +158,9 @@ def get_wireguard_overview(session: Session) -> WireGuardOverviewRead:
     statuses = get_wireguard_peer_statuses(session)
     total_received = sum(status.received_bytes for status in statuses)
     total_sent = sum(status.sent_bytes for status in statuses)
+    runtime = get_wireguard_runtime()
     return WireGuardOverviewRead(
-        interface_name=settings.wireguard_interface_name,
+        interface_name=runtime.interface_name,
         total_received_bytes=total_received,
         total_sent_bytes=total_sent,
         total_usage_bytes=total_received + total_sent,
@@ -170,6 +171,7 @@ def get_wireguard_overview(session: Session) -> WireGuardOverviewRead:
 
 
 def get_wireguard_sync_state(session: Session) -> SyncStateRead:
+    runtime = get_wireguard_runtime()
     desired_peers = list(
         session.scalars(
             select(Peer)
@@ -197,14 +199,11 @@ def get_wireguard_sync_state(session: Session) -> SyncStateRead:
         default=None,
     )
 
-    result = docker_exec(
-        ["wg", "show", settings.wireguard_interface_name, "dump"],
-        capture_output=True,
-    )
+    result = runtime.read_dump()
     if result.exit_code != 0:
         stderr = result.stderr.strip() or "wg show dump failed"
         return SyncStateRead(
-            interface_name=settings.wireguard_interface_name,
+            interface_name=runtime.interface_name,
             status="runtime_unavailable",
             desired_peer_count=len(desired_by_key),
             runtime_peer_count=0,
@@ -251,7 +250,7 @@ def get_wireguard_sync_state(session: Session) -> SyncStateRead:
 
     drift_detected = bool(drift_reasons)
     return SyncStateRead(
-        interface_name=settings.wireguard_interface_name,
+        interface_name=runtime.interface_name,
         status="drifted" if drift_detected else "synced",
         desired_peer_count=len(desired_by_key),
         runtime_peer_count=len(runtime_by_key),
