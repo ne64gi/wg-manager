@@ -118,6 +118,8 @@ Interpretation:
 - make the frontend structurally portable before any framework migration
 - improve operator UX after the main seams are cleaner
 - harden authorization after the runtime and frontend boundaries are less fragile
+- allow `1.1` to introduce only the earliest authz seams, such as a no-op plugin, minimal action vocabulary, and audit-visible authz decisions
+- keep real deny/allow policy behavior and broader authorization enforcement for the later hardening phase
 
 ### Cross-cutting quality work
 
@@ -141,6 +143,8 @@ These should advance alongside `1.1` through `1.4`, rather than becoming their o
 - advanced security hardening
 - better mobile UX
 - expand Playwright from smoke coverage into broader regression coverage
+- practical use-case docs such as home VPN, team VPN, and small office VPN
+- lightweight visual walkthroughs such as short GIFs or step-by-step screenshots
 
 ## Post-`v1.0.0` Version Direction
 

@@ -68,6 +68,8 @@ WireGuard peer を Web UI から安全に作成・管理・適用でき、状態
 - 次にフロントを Next へ移しやすい構造に寄せる
 - その上で運用 UX と可視化を強くする
 - 認可と監査の本格強化は、その後に行う
+- ただし `1.1` の段階で、no-op plugin や最小 action vocabulary、authz decision をログへ流せる入口だけは先に作ってよい
+- deny / allow の本格運用や広い認可適用は、後半の hardening フェーズへ回す
 
 ### `1.x` を横断する品質トラック
 
@@ -90,6 +92,8 @@ WireGuard peer を Web UI から安全に作成・管理・適用でき、状態
 - ログ UI の改善
 - セキュリティ強化
 - Playwright を smoke から段階的に広げる
+- 家庭 VPN / チーム VPN / 小規模オフィス VPN のようなユースケース docs
+- 短い GIF やスクリーンショット中心の視覚的な操作ガイド
 
 ## `v1.0.0` 以降の育て方
 
