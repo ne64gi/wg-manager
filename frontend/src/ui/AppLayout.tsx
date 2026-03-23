@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import type { PropsWithChildren } from "react";
 
@@ -6,8 +6,11 @@ import { t } from "../lib/i18n";
 import { useAuth } from "../modules/auth/AuthContext";
 import {
   BrandIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   DashboardIcon,
   GroupIcon,
+  LogoutIcon,
   LogsIcon,
   MenuIcon,
   PeerIcon,
@@ -27,13 +30,26 @@ const navItems = [
 export function AppLayout({ children }: PropsWithChildren) {
   const auth = useAuth();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isDesktopNavCollapsed, setIsDesktopNavCollapsed] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+    return window.localStorage.getItem("wg-studio.desktop-nav-collapsed") === "true";
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      "wg-studio.desktop-nav-collapsed",
+      String(isDesktopNavCollapsed),
+    );
+  }, [isDesktopNavCollapsed]);
 
   function closeMobileNav() {
     setIsMobileNavOpen(false);
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${isDesktopNavCollapsed ? " app-shell-sidebar-collapsed" : ""}`}>
       <header className="mobile-topbar">
         <button
           className="mobile-menu-button"
@@ -56,16 +72,34 @@ export function AppLayout({ children }: PropsWithChildren) {
           onClick={closeMobileNav}
         />
       ) : null}
-      <aside className={`sidebar${isMobileNavOpen ? " sidebar-mobile-open" : ""}`}>
+      <aside
+        className={`sidebar${isMobileNavOpen ? " sidebar-mobile-open" : ""}${
+          isDesktopNavCollapsed ? " sidebar-desktop-collapsed" : ""
+        }`}
+      >
         <div>
-          <div className="brand">
-            <span className="brand-badge brand-badge-logo">
-              <BrandIcon className="brand-icon" />
-            </span>
-            <div>
-              <div className="brand-title">wg-studio</div>
-              <div className="brand-subtitle">WireGuard control plane</div>
+          <div className="sidebar-brand-row">
+            <div className="brand">
+              <span className="brand-badge brand-badge-logo">
+                <BrandIcon className="brand-icon" />
+              </span>
+              <div className={isDesktopNavCollapsed ? "sidebar-collapsed-hidden" : ""}>
+                <div className="brand-title">wg-studio</div>
+                <div className="brand-subtitle">WireGuard control plane</div>
+              </div>
             </div>
+            <button
+              className="sidebar-toggle-button"
+              type="button"
+              aria-label={isDesktopNavCollapsed ? "Expand navigation" : "Collapse navigation"}
+              onClick={() => setIsDesktopNavCollapsed((current) => !current)}
+            >
+              {isDesktopNavCollapsed ? (
+                <ChevronRightIcon className="icon" />
+              ) : (
+                <ChevronLeftIcon className="icon" />
+              )}
+            </button>
           </div>
           <nav className="nav-list">
             {navItems.map((item) => (
@@ -78,24 +112,35 @@ export function AppLayout({ children }: PropsWithChildren) {
                 }
                 end={item.to === "/"}
                 onClick={closeMobileNav}
+                title={isDesktopNavCollapsed ? t(item.labelKey, item.label) : undefined}
               >
                 <item.icon className="icon nav-icon" />
-                <span>{t(item.labelKey, item.label)}</span>
+                <span className={isDesktopNavCollapsed ? "sidebar-collapsed-hidden" : ""}>
+                  {t(item.labelKey, item.label)}
+                </span>
               </NavLink>
             ))}
           </nav>
         </div>
         <div className="sidebar-footer">
-          <div className="sidebar-user">{auth.currentUser?.username}</div>
+          <div className={`sidebar-user${isDesktopNavCollapsed ? " sidebar-collapsed-hidden" : ""}`}>
+            {auth.currentUser?.username}
+          </div>
           <button
-            className="secondary-button"
+            className={`secondary-button sidebar-logout-button${
+              isDesktopNavCollapsed ? " sidebar-logout-button-collapsed" : ""
+            }`}
             data-testid="nav-logout"
             onClick={() => {
               closeMobileNav();
               auth.logoutAction();
             }}
+            title={isDesktopNavCollapsed ? t("auth.logout", "Log out") : undefined}
           >
-            {t("auth.logout", "Log out")}
+            <LogoutIcon className="icon" />
+            <span className={isDesktopNavCollapsed ? "sidebar-collapsed-hidden" : ""}>
+              {t("auth.logout", "Log out")}
+            </span>
           </button>
         </div>
       </aside>

@@ -48,6 +48,22 @@ export function MenuIcon(props: IconProps) {
   );
 }
 
+export function ChevronLeftIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="m15 18-6-6 6-6" />
+    </BaseIcon>
+  );
+}
+
+export function ChevronRightIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="m9 18 6-6-6-6" />
+    </BaseIcon>
+  );
+}
+
 export function DashboardIcon(props: IconProps) {
   return (
     <BaseIcon {...props}>
@@ -116,6 +132,16 @@ export function LogsIcon(props: IconProps) {
       <path d="M5 9h.01" />
       <path d="M5 13.5h.01" />
       <rect x="4" y="3.5" width="16" height="17" rx="2.5" />
+    </BaseIcon>
+  );
+}
+
+export function LogoutIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <path d="M9 20H6.5A2.5 2.5 0 0 1 4 17.5v-11A2.5 2.5 0 0 1 6.5 4H9" />
+      <path d="M14 8l4 4-4 4" />
+      <path d="M10 12h8" />
     </BaseIcon>
   );
 }

@@ -18,7 +18,7 @@
 現時点の runtime 境界メモ:
 
 - `WG_RUNTIME_ADAPTER` は runtime 選択の入口として用意しています
-- `1.1.1` 時点で対応している adapter は `docker_container` のみです
+- `1.1.2` 時点で対応している adapter は `docker_container` のみです
 - 目的は早い段階で runtime 依存を分離することであり、まだ完全な cross-platform 対応ではありません
 
 実際の `.env` はローカル専用で保持してください。

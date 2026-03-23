@@ -1,5 +1,12 @@
 from app.core import settings
-from app.runtime import get_artifact_store, get_wireguard_runtime, parse_wg_dump
+from app.runtime import (
+    ExecResult,
+    get_artifact_store,
+    get_wireguard_runtime,
+    parse_wg_dump,
+    read_runtime_peers,
+)
+from app.runtime.artifacts import LocalFilesystemArtifactStore
 from app.runtime.wireguard import DockerWireGuardRuntime
 
 
@@ -8,6 +15,7 @@ def test_get_artifact_store_uses_configured_root(tmp_path) -> None:
     settings.artifact_root = str(tmp_path / "artifacts")
     try:
         store = get_artifact_store()
+        assert isinstance(store, LocalFilesystemArtifactStore)
         assert store.root == tmp_path / "artifacts"
         assert store.server_config_path() == tmp_path / "artifacts" / "wg_confs" / "wg0.conf"
         assert store.peer_config_path("alpha") == tmp_path / "artifacts" / "peers" / "alpha.conf"
@@ -49,3 +57,67 @@ def test_parse_wg_dump_returns_runtime_rows() -> None:
     assert rows[0].received_bytes == 42
     assert rows[0].sent_bytes == 84
     assert rows[0].latest_handshake_at is not None
+
+
+def test_read_runtime_peers_returns_runtime_and_rows() -> None:
+    class FakeRuntime:
+        container_name = "wg-test"
+        interface_name = "wg0"
+        config_path = "/config/wg0.conf"
+
+        def ensure_available(self) -> None:
+            return None
+
+        def exec(self, command: list[str], *, capture_output: bool = False) -> ExecResult:
+            raise AssertionError("not used in this test")
+
+        def interface_exists(self) -> bool:
+            return True
+
+        def read_dump(self) -> ExecResult:
+            return ExecResult(
+                exit_code=0,
+                stdout=(
+                    "private\tpublic\t51820\toff\n"
+                    "pubkey-2\tpsk\t198.51.100.11:51820\t10.0.0.4/32\t1710000100\t10\t20\t25\n"
+                ),
+                stderr="",
+            )
+
+        def apply_config(self) -> None:
+            return None
+
+    result = read_runtime_peers(FakeRuntime())
+
+    assert result.runtime.interface_name == "wg0"
+    assert len(result.peers) == 1
+    assert result.peers[0].public_key == "pubkey-2"
+
+
+def test_read_runtime_peers_raises_on_runtime_failure() -> None:
+    class FakeRuntime:
+        container_name = "wg-test"
+        interface_name = "wg0"
+        config_path = "/config/wg0.conf"
+
+        def ensure_available(self) -> None:
+            return None
+
+        def exec(self, command: list[str], *, capture_output: bool = False) -> ExecResult:
+            raise AssertionError("not used in this test")
+
+        def interface_exists(self) -> bool:
+            return True
+
+        def read_dump(self) -> ExecResult:
+            return ExecResult(exit_code=1, stdout="", stderr="wg failed")
+
+        def apply_config(self) -> None:
+            return None
+
+    try:
+        read_runtime_peers(FakeRuntime())
+    except ValueError as exc:
+        assert str(exc) == "wg failed"
+    else:
+        raise AssertionError("expected runtime dump failure to raise")

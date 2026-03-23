@@ -92,4 +92,16 @@ test.describe.serial("v1 smoke", () => {
     await expect(page.getByTestId("logs-search")).toBeVisible();
     await expect(page.getByTestId("logs-pagination")).toBeVisible();
   });
+
+  test("dashboard group traffic can expand to user breakdown", async ({ page }) => {
+    await ensureAuthenticated(page);
+
+    await page.getByTestId("nav-dashboard").click();
+    const accordion = page
+      .locator(`[data-testid^="dashboard-group-accordion-"]`, { hasText: names.group })
+      .first();
+
+    await accordion.locator("summary").click();
+    await expect(accordion.getByText(names.user).first()).toBeVisible();
+  });
 });

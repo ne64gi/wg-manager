@@ -18,7 +18,7 @@ Give AI contributors a low-ambiguity map from change type to the minimum require
 - role: catch cross-layer regressions that unit or service tests miss
 - scope: release smoke only for `v1.0.0`
 
-## Smoke Scope For v1.0.0
+## Current Smoke Scope
 
 Required browser paths:
 
@@ -27,6 +27,7 @@ Required browser paths:
 - reveal modal opens and shows direct download actions
 - apply button runs and dashboard sync-state remains visible
 - logs page loads with filters and pagination controls
+- dashboard group traffic expands into user traffic rows
 
 ## Selector Strategy
 

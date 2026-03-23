@@ -322,6 +322,7 @@ export function UsersPage() {
                 <td className="action-row">
                   <button
                     className="secondary-button"
+                    data-testid={`users-download-bundle-${user.id}`}
                     onClick={() => bundleMutation.mutate(user)}
                   >
                     {t("users.bundle", "Download bundle")}
@@ -367,6 +368,7 @@ export function UsersPage() {
                 </button>
                 <button
                   className="secondary-button"
+                  data-testid={`users-download-bundle-${user.id}`}
                   onClick={() => bundleMutation.mutate(user)}
                 >
                   {t("users.bundle", "Download bundle")}

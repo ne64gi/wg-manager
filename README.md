@@ -18,7 +18,7 @@ Current product state:
 - current-state JSON export and import
 - WireGuard apply flow
 - live WireGuard status and GUI audit logs
-- release documentation for `v1.0.0`
+- release documentation for `v1.0.0` and `1.1.x`
 
 ## Docs
 

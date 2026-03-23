@@ -2,7 +2,7 @@
 
 Purpose: define the intended `1.1` boundary between the core application and the current Linux/Docker-backed WireGuard runtime.
 
-Status: active `1.1.1` foundation note.
+Status: active `1.1.2` foundation note.
 
 Related docs:
 
@@ -91,7 +91,28 @@ Use this separation when planning changes:
 
 Natural next steps after the current foundation:
 
-- move any remaining runtime parsing helpers into the runtime layer
+- move remaining runtime-facing mechanics behind the shared runtime service facade
 - reduce remaining direct container/config assumptions in services
 - add a cleaner public runtime service facade if the adapter surface grows
 - prepare launch wrappers to become the preferred operator entry point
+
+## `1.1.2` Progress Notes
+
+This follow-up slice keeps the same `1.1` goal and does not widen into cross-platform support yet.
+
+Changes introduced in the `1.1.2` line:
+
+- `wg show ... dump` parsing moved into [`app/runtime/dump.py`](../../../app/runtime/dump.py)
+- runtime peer reads now flow through [`app/runtime/service.py`](../../../app/runtime/service.py)
+- artifact storage is expressed as a protocol with a local filesystem implementation
+- the old `app/services/docker_runtime.py` compatibility layer is removed
+- operator-facing launch wrappers remain early prep, not the only supported entry point yet
+
+Visible improvement paired with this slice:
+
+- dashboard group traffic now expands inline to show user traffic instead of forcing a second separate panel
+
+Validation added in this slice:
+
+- runtime/service-focused pytest coverage for dump parsing and runtime read failure handling
+- Playwright smoke coverage for expanding group traffic into user traffic rows

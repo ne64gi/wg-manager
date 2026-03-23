@@ -2,11 +2,27 @@ from __future__ import annotations
 
 from pathlib import Path
 import tempfile
+from typing import Protocol
 
 from app.core import settings
 
 
-class ArtifactStore:
+class ArtifactStore(Protocol):
+    @property
+    def root(self) -> Path: ...
+
+    def server_config_path(self) -> Path: ...
+
+    def peer_config_path(self, peer_name: str) -> Path: ...
+
+    def peer_qr_path(self, peer_name: str) -> Path: ...
+
+    def write_text(self, path: Path, contents: str) -> None: ...
+
+    def write_bytes(self, path: Path, contents: bytes) -> None: ...
+
+
+class LocalFilesystemArtifactStore:
     def __init__(self, root: str | Path) -> None:
         self._root = Path(root)
 
@@ -57,4 +73,4 @@ class ArtifactStore:
 
 
 def get_artifact_store() -> ArtifactStore:
-    return ArtifactStore(settings.artifact_root)
+    return LocalFilesystemArtifactStore(settings.artifact_root)

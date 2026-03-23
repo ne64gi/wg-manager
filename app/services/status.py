@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import Integer, cast, func, select
 from sqlalchemy.orm import Session, joinedload
 
-from app.runtime import get_wireguard_runtime, parse_wg_dump
+from app.runtime import get_wireguard_runtime, read_runtime_peers
 from app.models import Peer, PeerTrafficSnapshot, User
 from app.schemas import (
     GroupTrafficSummaryRead,
@@ -61,14 +61,10 @@ def _capture_peer_snapshots(
 
 def get_wireguard_peer_statuses(session: Session) -> list[PeerStatusRead]:
     gui_settings = get_gui_settings(session)
-    runtime = get_wireguard_runtime()
-    result = runtime.read_dump()
-    if result.exit_code != 0:
-        stderr = result.stderr.strip() or "wg show dump failed"
-        raise ValueError(stderr)
+    runtime_read = read_runtime_peers(get_wireguard_runtime())
 
     runtime_by_key = {
-        peer.public_key: peer for peer in parse_wg_dump(result.stdout) if peer.public_key
+        peer.public_key: peer for peer in runtime_read.peers if peer.public_key
     }
     peers = list(
         session.scalars(
@@ -80,10 +76,10 @@ def get_wireguard_peer_statuses(session: Session) -> list[PeerStatusRead]:
 
     statuses: list[PeerStatusRead] = []
     for peer in peers:
-        runtime = runtime_by_key.get(peer.public_key or "")
-        latest_handshake_at = runtime.latest_handshake_at if runtime else None
-        received_bytes = runtime.received_bytes if runtime else 0
-        sent_bytes = runtime.sent_bytes if runtime else 0
+        runtime_peer = runtime_by_key.get(peer.public_key or "")
+        latest_handshake_at = runtime_peer.latest_handshake_at if runtime_peer else None
+        received_bytes = runtime_peer.received_bytes if runtime_peer else 0
+        sent_bytes = runtime_peer.sent_bytes if runtime_peer else 0
         statuses.append(
             PeerStatusRead(
                 peer_id=peer.id,
@@ -92,7 +88,7 @@ def get_wireguard_peer_statuses(session: Session) -> list[PeerStatusRead]:
                 user_name=peer.user.name,
                 public_key=peer.public_key,
                 assigned_ip=peer.assigned_ip,
-                endpoint=runtime.endpoint if runtime else None,
+                endpoint=runtime_peer.endpoint if runtime_peer else None,
                 latest_handshake_at=latest_handshake_at,
                 received_bytes=received_bytes,
                 sent_bytes=sent_bytes,
@@ -158,9 +154,9 @@ def get_wireguard_sync_state(session: Session) -> SyncStateRead:
         default=None,
     )
 
-    result = runtime.read_dump()
-    if result.exit_code != 0:
-        stderr = result.stderr.strip() or "wg show dump failed"
+    try:
+        runtime_read = read_runtime_peers(runtime)
+    except ValueError as exc:
         return SyncStateRead(
             interface_name=runtime.interface_name,
             status="runtime_unavailable",
@@ -168,15 +164,14 @@ def get_wireguard_sync_state(session: Session) -> SyncStateRead:
             runtime_peer_count=0,
             pending_generation_count=pending_generation_count,
             drift_detected=True,
-            drift_reasons=[stderr],
+            drift_reasons=[str(exc)],
             last_generated_at=last_generated_at,
             last_runtime_sync_at=None,
         )
 
-    runtime_peers = parse_wg_dump(result.stdout)
     runtime_by_key = {
         peer.public_key: peer
-        for peer in runtime_peers
+        for peer in runtime_read.peers
         if peer.public_key
     }
     runtime_keys = set(runtime_by_key)

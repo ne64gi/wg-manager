@@ -6,7 +6,6 @@ import socket
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from datetime import datetime, timezone
 from typing import Protocol
 from urllib.parse import quote
 
@@ -18,16 +17,6 @@ class ExecResult:
     exit_code: int
     stdout: str
     stderr: str
-
-
-@dataclass
-class RuntimePeerDumpRow:
-    public_key: str
-    endpoint: str | None
-    allowed_ips: list[str]
-    latest_handshake_at: datetime | None
-    received_bytes: int
-    sent_bytes: int
 
 
 class WireGuardRuntime(Protocol):
@@ -249,38 +238,6 @@ class DockerWireGuardRuntime:
         )
         if result.exit_code != 0:
             raise ValueError(self._format_apply_error("wg syncconf failed", result))
-
-
-def _parse_handshake_epoch(value: str) -> datetime | None:
-    epoch = int(value)
-    if epoch <= 0:
-        return None
-    return datetime.fromtimestamp(epoch, tz=timezone.utc)
-
-
-def parse_wg_dump(raw: str) -> list[RuntimePeerDumpRow]:
-    lines = [line.strip() for line in raw.splitlines() if line.strip()]
-    if not lines:
-        return []
-
-    peers: list[RuntimePeerDumpRow] = []
-    for line in lines[1:]:
-        columns = line.split("\t")
-        if len(columns) < 8:
-            continue
-        peers.append(
-            RuntimePeerDumpRow(
-                public_key=columns[0],
-                endpoint=None if columns[2] == "(none)" else columns[2],
-                allowed_ips=[] if columns[3] == "(none)" else columns[3].split(","),
-                latest_handshake_at=_parse_handshake_epoch(columns[4]),
-                received_bytes=int(columns[5]),
-                sent_bytes=int(columns[6]),
-            )
-        )
-    return peers
-
-
 def get_wireguard_runtime() -> WireGuardRuntime:
     if settings.runtime_adapter != "docker_container":
         raise ValueError(
