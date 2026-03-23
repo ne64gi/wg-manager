@@ -20,7 +20,7 @@ import { useToast } from "../ui/ToastProvider";
 function translateDriftReason(reason: string): string {
   const missingMatch = reason.match(/^(\d+)\s+desired peers are missing from runtime$/);
   if (missingMatch) {
-    return t("dashboard.drift_missing_runtime", "{count} 件の必要なピアがランタイムに反映されていません。").replace(
+    return t("dashboard.drift_missing_runtime", "{count} required peers are not present in the runtime.").replace(
       "{count}",
       missingMatch[1],
     );
@@ -28,7 +28,7 @@ function translateDriftReason(reason: string): string {
 
   const unexpectedMatch = reason.match(/^(\d+)\s+runtime peers are not managed by current state$/);
   if (unexpectedMatch) {
-    return t("dashboard.drift_unmanaged_runtime", "{count} 件のランタイムピアが現在の管理状態に含まれていません。").replace(
+    return t("dashboard.drift_unmanaged_runtime", "{count} runtime peers are not part of the current managed state.").replace(
       "{count}",
       unexpectedMatch[1],
     );
@@ -40,7 +40,7 @@ function translateDriftReason(reason: string): string {
   if (allowedIpsMatch) {
     return t(
       "dashboard.drift_allowed_ips",
-      "{count} 件のピアでランタイムの AllowedIPs が期待値と一致していません。",
+      "{count} peers have runtime AllowedIPs that do not match the expected state.",
     ).replace("{count}", allowedIpsMatch[1]);
   }
 
@@ -173,7 +173,7 @@ export function DashboardPage() {
               <div className="info-banner">
                 {t(
                   "dashboard.pending_generation_notice",
-                  "{count} 件のピア設定はまだ表示またはダウンロードされていません。必要なときに Reveal や一括ダウンロードを実行してください。",
+                  "{count} peer configurations have not been revealed or downloaded yet. Use Reveal or bulk download when needed.",
                 ).replace("{count}", String(syncState?.pending_generation_count ?? 0))}
               </div>
             ) : null}
@@ -188,7 +188,7 @@ export function DashboardPage() {
             ) : (
               <div className="muted-text">
                 {syncState?.status === "runtime_unavailable"
-                  ? t("dashboard.sync_runtime_unavailable_detail", "WireGuard ランタイムの状態を取得できませんでした。接続状況を確認してください。")
+                  ? t("dashboard.sync_runtime_unavailable_detail", "Could not read the WireGuard runtime state. Check runtime connectivity.")
                   : t("dashboard.sync_healthy", "Runtime state matches the desired WireGuard state.")}
               </div>
             )}
