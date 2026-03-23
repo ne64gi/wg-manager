@@ -16,6 +16,10 @@ export function SettingsPage() {
     versionQuery,
     formState,
     setFormState,
+    effectiveThemeMode,
+    effectiveLocale,
+    setThemeMode,
+    setDefaultLocale,
     endpointAddress,
     setEndpointAddress,
     endpointPort,
@@ -49,7 +53,7 @@ export function SettingsPage() {
       <div className="page-header">
         <div>
           <div className="eyebrow">{t("settings.eyebrow", "Settings")}</div>
-          <h1>{t("settings.heading", "Settings")}</h1>
+          <h1 data-testid="settings-page-heading">{t("settings.heading", "Settings")}</h1>
         </div>
       </div>
 
@@ -66,13 +70,9 @@ export function SettingsPage() {
             <label className="field">
               <span>{t("settings.theme_mode", "Theme mode")}</span>
               <select
-                value={formState.theme_mode ?? "system"}
-                onChange={(event) =>
-                  setFormState((current) => ({
-                    ...current,
-                    theme_mode: event.target.value as GuiSettingsUpdate["theme_mode"],
-                  }))
-                }
+                data-testid="settings-theme-mode-select"
+                value={effectiveThemeMode}
+                onChange={(event) => setThemeMode(event.target.value as GuiSettingsUpdate["theme_mode"])}
               >
                 <option value="system">
                   {t("settings.system_label", "System")}
@@ -87,13 +87,9 @@ export function SettingsPage() {
             <label className="field">
               <span>{t("settings.default_locale", "Default locale")}</span>
               <select
-                value={formState.default_locale ?? "en"}
-                onChange={(event) =>
-                  setFormState((current) => ({
-                    ...current,
-                    default_locale: event.target.value as GuiSettingsUpdate["default_locale"],
-                  }))
-                }
+                data-testid="settings-default-locale-select"
+                value={effectiveLocale}
+                onChange={(event) => setDefaultLocale(event.target.value as GuiSettingsUpdate["default_locale"])}
               >
                 <option value="en">{t("locale.en", "English")}</option>
                 <option value="ja">{t("locale.ja", "Japanese")}</option>

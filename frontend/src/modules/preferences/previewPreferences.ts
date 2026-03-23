@@ -1,4 +1,8 @@
-import { readLocalStorage, writeLocalStorage } from "../../lib/browser/storage";
+import {
+  readLocalStorage,
+  removeLocalStorage,
+  writeLocalStorage,
+} from "../../lib/browser/storage";
 
 const PREVIEW_LOCALE_KEY = "wg-studio-preview-locale";
 const PREVIEW_THEME_KEY = "wg-studio-preview-theme";
@@ -35,6 +39,10 @@ export function setPreviewTheme(theme: "light" | "dark"): void {
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.themeMode = theme;
   }
+}
+
+export function clearPreviewTheme(): void {
+  removeLocalStorage(PREVIEW_THEME_KEY);
 }
 
 export function applyDocumentPreferences(options: {

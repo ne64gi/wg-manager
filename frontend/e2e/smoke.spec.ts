@@ -84,6 +84,11 @@ test.describe.serial("v1 smoke", () => {
     await expect(page.locator("html")).toHaveAttribute("lang", "ja");
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
     await expect(page.locator("html")).toHaveAttribute("data-theme-mode", "light");
+
+    await page.getByTestId("nav-settings").click();
+    await expect(page.getByTestId("settings-page-heading")).toContainText("設定");
+    await expect(page.getByTestId("settings-default-locale-select")).toHaveValue("ja");
+    await expect(page.getByTestId("settings-theme-mode-select")).toHaveValue("light");
   });
 
   test("login or first-user setup reaches the dashboard", async ({ page }) => {

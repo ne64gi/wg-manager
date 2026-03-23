@@ -20,6 +20,13 @@ import type { GuiSettingsUpdate, StateExport } from "../../types";
 import { useToast } from "../../ui/ToastProvider";
 import { useAuth } from "../auth/AuthContext";
 import { queryKeys } from "../queryKeys";
+import {
+  clearPreviewTheme,
+  getPreviewTheme,
+  getStoredPreviewLocale,
+  setPreviewLocale,
+  setPreviewTheme,
+} from "../preferences/previewPreferences";
 
 export function useSettingsPageData() {
   const auth = useAuth();
@@ -51,6 +58,25 @@ export function useSettingsPageData() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [nextPassword, setNextPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const effectiveThemeMode =
+    getPreviewTheme() ?? formState.theme_mode ?? "system";
+  const effectiveLocale = getStoredPreviewLocale() ?? formState.default_locale ?? "en";
+
+  function setThemeMode(nextThemeMode: GuiSettingsUpdate["theme_mode"]) {
+    if (nextThemeMode === "light" || nextThemeMode === "dark") {
+      setPreviewTheme(nextThemeMode);
+    } else {
+      clearPreviewTheme();
+    }
+    setFormState((current) => ({ ...current, theme_mode: nextThemeMode }));
+  }
+
+  function setDefaultLocale(nextLocale: GuiSettingsUpdate["default_locale"]) {
+    if (nextLocale === "ja" || nextLocale === "en") {
+      setPreviewLocale(nextLocale);
+    }
+    setFormState((current) => ({ ...current, default_locale: nextLocale }));
+  }
 
   useEffect(() => {
     if (settingsQuery.data) {
@@ -236,6 +262,10 @@ export function useSettingsPageData() {
     versionQuery,
     formState,
     setFormState,
+    effectiveThemeMode,
+    effectiveLocale,
+    setThemeMode,
+    setDefaultLocale,
     endpointAddress,
     setEndpointAddress,
     endpointPort,
