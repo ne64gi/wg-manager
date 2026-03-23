@@ -29,3 +29,4 @@ Rules:
 - if you are an AI agent changing this repo, start here before proposing architectural changes
 - treat `origin` as the canonical development remote
 - treat `github` as a public mirror unless a human explicitly says otherwise
+- prefer `pwsh ./scripts/push-and-sync.ps1` over plain `git push` when a human wants immediate local verification of remote state

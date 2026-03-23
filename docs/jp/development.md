@@ -55,6 +55,15 @@ CLI コマンド実行:
 docker compose --profile tools run --rm wg-studio-cli group list
 ```
 
+push 後に remote-tracking ref まで更新して確認する:
+
+```powershell
+pwsh ./scripts/push-and-sync.ps1
+```
+
+`git push` 自体は成功していても、手元の `origin/main` 表示は `git fetch`
+するまで古いままに見えることがあります。このスクリプトはそこまでまとめて行います。
+
 テスト実行:
 
 ```bash

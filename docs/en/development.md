@@ -55,6 +55,15 @@ Run a CLI command:
 docker compose --profile tools run --rm wg-studio-cli group list
 ```
 
+Push and refresh the local remote-tracking ref in one step:
+
+```powershell
+pwsh ./scripts/push-and-sync.ps1
+```
+
+This helps avoid the common confusion where `git push` succeeds but `origin/main`
+still looks stale locally until a later `git fetch`.
+
 Run tests:
 
 ```bash
