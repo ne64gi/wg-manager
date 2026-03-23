@@ -27,7 +27,7 @@ It only starts reducing frontend coupling in places that would become painful la
 - logs-page filter/paging/query orchestration now has a GUI feature-level hook boundary
 - login-page submit/setup/preview state now lives behind an auth module hook
 - group, user, and peer pages now push their query/mutation/form orchestration into feature modules, so the page files are closer to composition shells than controller files
-- dashboard now includes a lightweight topology preview for `Group -> User -> Peer` relationships, but it intentionally remains a read-only structural view rather than a rich graph implementation
+- dashboard now includes a lightweight topology preview for `Group -> User` structure, with peer counts as placeholders, and it intentionally remains a read-only structural view rather than a rich graph implementation
 
 ## Why This Matters
 
