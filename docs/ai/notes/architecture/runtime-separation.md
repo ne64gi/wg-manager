@@ -2,7 +2,7 @@
 
 Purpose: define the intended `1.1` boundary between the core application and the current Linux/Docker-backed WireGuard runtime.
 
-Status: active `1.1.4` foundation note.
+Status: active `1.1.5` foundation note.
 
 Related docs:
 
@@ -184,3 +184,36 @@ Validation added in this slice:
 
 - pytest coverage for runtime-service artifact writes
 - existing config-generation tests continue to verify peer/server artifact output
+
+## `1.1.5` Active Direction
+
+This slice continues the same `1.1` theme:
+
+- make `scripts/stack.*` more credible as the preferred operator entrypoint
+- harden smoke execution around bounded readiness checks instead of optimistic startup timing
+- keep visible improvements small and operationally relevant
+
+Current `1.1.5` direction:
+
+- add a dedicated `wait` wrapper command for API readiness
+- make `health` verify both API health and web reachability
+- make `smoke` run from a known-good preflight state instead of assuming the stack is already ready
+- expose the active runtime adapter in the settings UI as a small operator-facing confirmation
+
+## `1.1.5` Progress Notes
+
+Changes introduced in the `1.1.5` line:
+
+- `scripts/stack.sh` and `scripts/stack.ps1` now expose `wait`
+- `health` now performs bounded readiness polling before checking API and web reachability
+- `smoke` now reuses the same readiness path before launching Playwright
+- `/gui/version` now returns the active runtime adapter alongside the version fields
+
+Visible improvements paired with this slice:
+
+- settings now show the active runtime adapter in build information
+
+Validation added in this slice:
+
+- Playwright smoke now checks the runtime adapter field in settings
+- smoke setup uses a more deterministic root wait before driving login/setup flows

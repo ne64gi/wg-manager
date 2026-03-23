@@ -258,6 +258,7 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "settings.version_heading": "ビルド情報",
   "settings.system_version": "システムバージョン",
   "settings.frontend_version": "フロントエンドバージョン",
+  "settings.runtime_adapter": "ランタイムアダプター",
   "settings.version_hint": "このビルドに埋め込まれている現在のバージョンです。",
   "settings.transfer_heading": "状態のインポート / エクスポート",
   "settings.transfer_hint": "現在の control-plane 状態を JSON で保存するか、以前に出力した JSON で置き換えます。",

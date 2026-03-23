@@ -5,7 +5,7 @@ const username = process.env.E2E_USERNAME ?? "playwright-admin";
 const password = process.env.E2E_PASSWORD ?? "playwright-pass-123!";
 const runId = Date.now().toString();
 const subnetOctet = (Number(runId.slice(-3)) % 200) + 20;
-const networkCidr = `10.${subnetOctet}.0.1/24`;
+const networkCidr = `10.${subnetOctet}.0.0/24`;
 const allowedIps = `10.${subnetOctet}.0.0/24`;
 const names = {
   group: `smoke-group-${runId}`,
@@ -16,9 +16,13 @@ const names = {
 async function ensureAuthenticated(page: Parameters<typeof test>[0]["page"]) {
   let setupStatusResponse;
   for (let attempt = 0; attempt < 10; attempt += 1) {
-    setupStatusResponse = await page.request.get(`${origin}/api/auth/setup-status`);
-    if (setupStatusResponse.ok()) {
-      break;
+    try {
+      setupStatusResponse = await page.request.get(`${origin}/api/auth/setup-status`);
+      if (setupStatusResponse.ok()) {
+        break;
+      }
+    } catch {
+      // The web container can still be settling on the internal network for a moment.
     }
     await page.waitForTimeout(500);
   }
@@ -26,6 +30,27 @@ async function ensureAuthenticated(page: Parameters<typeof test>[0]["page"]) {
   const setupStatus = (await setupStatusResponse.json()) as { has_login_users: boolean };
 
   await page.goto("/");
+  await page.waitForLoadState("domcontentloaded");
+  await expect
+    .poll(
+      async () => {
+        const authVisible = await page.getByTestId("login-submit").isVisible().catch(() => false);
+        const dashboardVisible = await page
+          .getByTestId("dashboard-sync-state")
+          .isVisible()
+          .catch(() => false);
+
+        if (dashboardVisible) {
+          return "dashboard";
+        }
+        if (authVisible) {
+          return "auth";
+        }
+        return "loading";
+      },
+      { timeout: 10000 },
+    )
+    .not.toBe("loading");
 
   if (await page.getByTestId("dashboard-sync-state").isVisible().catch(() => false)) {
     return;
@@ -91,7 +116,7 @@ test.describe.serial("v1 smoke", () => {
     await page.getByTestId("reveal-close").click();
 
     await page.getByTestId("peers-apply-button").click();
-    await expect(page.getByTestId("toast-stack")).toBeVisible();
+    await expect(page.getByText(/Config applied\.|設定を適用しました。/).first()).toBeVisible();
 
     await page.getByTestId("nav-dashboard").click();
     await expect(page.getByTestId("dashboard-sync-state")).toBeVisible();
@@ -121,5 +146,12 @@ test.describe.serial("v1 smoke", () => {
     await page.setViewportSize({ width: 1440, height: 960 });
     await page.getByTestId("sidebar-toggle").click();
     await expect(page.getByTestId("app-shell")).toHaveClass(/app-shell-sidebar-collapsed/);
+  });
+
+  test("settings shows the runtime adapter in build information", async ({ page }) => {
+    await ensureAuthenticated(page);
+
+    await page.getByTestId("nav-settings").click();
+    await expect(page.getByTestId("settings-runtime-adapter")).toHaveValue("docker_container");
   });
 });

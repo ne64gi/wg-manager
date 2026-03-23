@@ -23,6 +23,7 @@ export type AuthChangePasswordRequest = {
 export type SystemVersion = {
   version: string;
   frontend_version: string;
+  runtime_adapter: string;
 };
 
 export type TokenPair = {

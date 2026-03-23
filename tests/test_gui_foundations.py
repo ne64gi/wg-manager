@@ -3,6 +3,7 @@ from pathlib import Path
 from sqlalchemy import inspect
 
 from app.core import settings
+from app.api.routes.gui import get_system_version_endpoint
 from app.db import AuditBase, Base, SessionLocal, audit_engine, engine
 from app.models import GroupScope
 from app.schemas import (
@@ -177,3 +178,14 @@ def test_init_db_registers_login_user_tables() -> None:
     assert "login_users" in inspector.get_table_names()
     assert "login_sessions" in inspector.get_table_names()
     assert "gui_settings" in inspector.get_table_names()
+
+
+def test_gui_version_payload_includes_runtime_adapter(monkeypatch) -> None:
+    monkeypatch.setattr("app.api.routes.gui.get_system_version", lambda: "1.1.5-test")
+    monkeypatch.setattr(settings, "runtime_adapter", "docker_container")
+
+    payload = get_system_version_endpoint(current_user=None)  # type: ignore[arg-type]
+
+    assert payload.version == "1.1.5-test"
+    assert payload.frontend_version == "1.1.5-test"
+    assert payload.runtime_adapter == "docker_container"

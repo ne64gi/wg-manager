@@ -603,6 +603,7 @@ class GuiLogListRead(BaseModel):
 class SystemVersionRead(BaseModel):
     version: str
     frontend_version: str
+    runtime_adapter: str
 
 
 class PeerStatusRead(BaseModel):

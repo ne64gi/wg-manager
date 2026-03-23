@@ -16,7 +16,7 @@ Important defaults include:
 Current runtime boundary note:
 
 - `WG_RUNTIME_ADAPTER` exists so runtime selection has a single entry point
-- `docker_container` is the only supported adapter in `1.1.4`
+- `docker_container` is the only supported adapter in `1.1.5`
 - the intent is early separation of runtime assumptions, not full cross-platform support yet
 
 Keep the real `.env` local-only.
@@ -69,6 +69,7 @@ Wrapper entry points are also available as early launch-abstraction prep:
 ./scripts/stack.sh up
 ./scripts/stack.sh up runtime
 ./scripts/stack.sh build api
+./scripts/stack.sh wait
 ./scripts/stack.sh health
 ./scripts/stack.sh smoke
 ./scripts/stack.sh cli group list
@@ -81,6 +82,7 @@ On PowerShell:
 pwsh ./scripts/stack.ps1 up
 pwsh ./scripts/stack.ps1 up runtime
 pwsh ./scripts/stack.ps1 build api
+pwsh ./scripts/stack.ps1 wait
 pwsh ./scripts/stack.ps1 health
 pwsh ./scripts/stack.ps1 smoke
 pwsh ./scripts/stack.ps1 cli group list
@@ -97,10 +99,12 @@ Current logical targets for `up`, `build`, and `restart`:
 
 Additional wrapper commands:
 
+- `wait`
+  - poll the API health endpoint until the stack is ready enough for follow-up operator commands
 - `health`
-  - show compose service state and query the API `/health` endpoint from inside the stack
+  - show compose service state, wait for API readiness, and verify both API health and web reachability from inside the stack
 - `smoke`
-  - run the Playwright smoke suite through the `test` profile
+  - wait for stack readiness first, then run the Playwright smoke suite through the `test` profile
 
 Push and refresh the local remote-tracking ref in one step:
 
@@ -148,7 +152,13 @@ npm install
 npx playwright install chromium
 ```
 
-Run the release smoke suite through Docker Compose:
+Preferred wrapper-first smoke path:
+
+```bash
+./scripts/stack.sh smoke
+```
+
+Or directly through Docker Compose:
 
 ```bash
 docker compose --profile test run --rm \
@@ -160,6 +170,7 @@ docker compose --profile test run --rm \
 
 Environment notes:
 
+- the wrapper-based `smoke` command now performs a bounded readiness wait before launching Playwright
 - if no login users exist, the smoke suite uses the setup screen and creates the first admin user from `E2E_USERNAME` and `E2E_PASSWORD`
 - if login users already exist, the suite expects those credentials to be valid
 - tests create uniquely named `Group`, `User`, and `Peer` records and do not currently clean them up automatically

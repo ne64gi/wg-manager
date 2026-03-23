@@ -545,6 +545,15 @@ export function SettingsPage() {
               placeholder="0.0.0"
             />
           </div>
+          <div className="field">
+            <span>{t("settings.runtime_adapter", "Runtime adapter")}</span>
+            <input
+              data-testid="settings-runtime-adapter"
+              value={versionQuery.data?.runtime_adapter ?? ""}
+              readOnly
+              placeholder="docker_container"
+            />
+          </div>
           <div className="muted-text field-span-2">
             {t(
               "settings.version_hint",

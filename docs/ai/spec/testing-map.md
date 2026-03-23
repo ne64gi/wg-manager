@@ -13,7 +13,8 @@ Give AI contributors a low-ambiguity map from change type to the minimum require
 
 ### Browser smoke tests
 
-- runner: `docker compose --profile test run --rm wg-studio-e2e`
+- preferred runner: `./scripts/stack.sh smoke` or `pwsh ./scripts/stack.ps1 smoke`
+- direct runner: `docker compose --profile test run --rm wg-studio-e2e`
 - framework: Playwright
 - role: catch cross-layer regressions that unit or service tests miss
 - scope: minimal release smoke, expanded incrementally through the `1.1.x` line
@@ -29,6 +30,7 @@ Required browser paths:
 - logs page loads with filters and pagination controls
 - dashboard group traffic expands into user traffic rows
 - desktop sidebar collapse works on large screens
+- settings build information shows the active runtime adapter
 
 ## Selector Strategy
 
@@ -45,6 +47,7 @@ Do not add broad `data-testid` coverage everywhere by default.
 ## Environment Rules
 
 - browser smoke targets an already-running stack
+- wrapper-based `smoke` should perform readiness waiting before Playwright starts
 - `E2E_BASE_URL` defaults to `http://127.0.0.1:3900/wg-studio/`
 - `E2E_USERNAME` and `E2E_PASSWORD` are the canonical credentials for existing stacks
 - if setup mode is active, the smoke suite will create the first login user from those credentials
