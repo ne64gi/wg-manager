@@ -1,0 +1,183 @@
+# Post-`v1.0.0` Major Version Strategy
+
+Purpose: capture the intended long-term growth order for `wg-studio` after `v1.0.0`.
+
+Status: planning memo only. This is directional guidance for roadmap decisions, not a locked implementation contract.
+
+## Core Principle
+
+Grow the product in this order:
+
+1. strengthen a single-runtime product
+2. introduce stronger boundaries and larger-scale ownership
+3. automate operations and integrate external systems
+
+This keeps each stage usable on its own and avoids building future-scale features on top of weak single-instance foundations.
+
+## Major Version Themes
+
+### `1.x.x`
+
+Theme: `Safe single-runtime operations`
+
+Japanese summary:
+
+- 小規模管理
+- 現状の地盤強化
+- 1台の WireGuard runtime を、複数人が安心して触れる状態へ近づける
+
+Primary goal:
+
+- finish the "safe and trustworthy single control plane" phase
+
+Expected focus areas:
+
+- authorization foundation
+- stronger audit log coverage
+- apply-before-change visibility such as diff support
+- desired / runtime drift visibility
+- stronger confirmation for dangerous operations
+- status and history improvements
+- settings management cleanup
+- backup / restore
+- GUI navigation and operator workflow cleanup
+
+Interpretation:
+
+- do not expand scope into multi-tenant orchestration yet
+- first make one runtime safe, understandable, and resilient
+
+Possible internal staging:
+
+- `1.1`: authz foundation, audit strengthening, diff visibility, safer apply
+- `1.2`: settings cleanup, backup/restore, history, UI flow cleanup
+- `1.3`: policy support, expiring peers, operator-assist features, pre-automation guardrails
+
+Exit condition for the `1.x` era:
+
+- one WireGuard runtime can be operated safely and confidently by multiple humans
+
+### `2.x.x`
+
+Theme: `Scoped multi-runtime operations`
+
+Japanese summary:
+
+- 大規模管理
+- マルチサーバー / マルチテナント対応
+- 境界、所有権、責務の分離
+
+Primary goal:
+
+- move from "one safe runtime" to "many bounded runtimes and tenants"
+
+Expected focus areas:
+
+- multiple runtimes
+- multiple organizations / tenants
+- multiple environments
+- multiple admin groups
+- tenant-scoped policy
+- tenant-scoped roles
+- tenant- and runtime-aware audit boundaries
+
+Interpretation:
+
+- this phase is mostly about boundary design, ownership, and data model evolution
+- this is not just "more servers"; it is about correct scope separation
+
+Design warning for `1.x` contributors:
+
+- avoid schema choices that make future tenant/runtime ownership impossible to add cleanly
+- important future questions include:
+  - which server/runtime owns a peer
+  - which tenant/workspace owns a server
+  - whether audit data is global or boundary-scoped
+  - whether roles are global or tenant-scoped
+  - whether policy is runtime-scoped or tenant-scoped
+
+Possible internal staging:
+
+- `2.0`: introduce server / tenant / workspace boundaries
+- `2.1`: tenant-scoped roles and policy boundaries
+- `2.2`: unified views across multiple runtimes and tenants
+
+### `3.x.x`
+
+Theme: `Autonomous and integrated operations`
+
+Japanese summary:
+
+- 自動運用
+- 外部連携
+- 統合と半自律化
+
+Primary goal:
+
+- reduce human operational load only after boundaries and control are mature
+
+Expected focus areas:
+
+- OIDC / SSO
+- LDAP / AD
+- webhook notifications
+- Slack / Discord integration
+- API tokens
+- scheduled apply
+- peer expiration
+- auto-disable / auto-expire
+- policy as code
+- external CMDB or asset integration
+- health automation and operational assistance
+
+Interpretation:
+
+- do not place multi-tenant as a `3.x` primary theme
+- automation and integrations rely on clear boundaries, authorization, auditability, and rollback thinking
+
+Possible internal staging:
+
+- `3.0`: SSO, webhook, external notifications, stronger API integration surface
+- `3.1`: auto-expiry, inventory checks, automated health checks
+- `3.2`: external-system integration and semi-autonomous operations
+
+## Why This Order Matters
+
+This strategy is intentionally conservative.
+
+Benefits:
+
+- every stage leaves behind a usable product
+- `1.x` is a real product, not just pre-work for `2.x`
+- `2.x` expands scope without collapsing ownership boundaries
+- `3.x` adds automation only after control and visibility already exist
+
+Anti-pattern to avoid:
+
+- designing for `3.x` dreams too early
+- adding cross-boundary automation before single-runtime safety is complete
+- expanding blast radius before operator confidence exists
+
+## Short Canonical Summary
+
+Use this wording when discussing post-`v1.0.0` direction:
+
+- `1.x.x`: small-scale management, strengthen the current foundation
+- `2.x.x`: large-scale management, multi-server and multi-tenant support
+- `3.x.x`: automated operations and external integrations
+
+Recommended polished wording:
+
+- `1.x.x` 小規模管理（現状の地盤強化）
+- `2.x.x` 大規模管理（マルチサーバー / マルチテナント化）
+- `3.x.x` 自動運用・外部連携（統合と半自律化）
+
+## Planning Rule
+
+When a proposed feature appears after `v1.0.0`, first ask:
+
+1. Is this strengthening single-runtime safety?
+2. Is this introducing a new ownership boundary?
+3. Is this reducing human work through automation or external linkage?
+
+Map the work to `1.x`, `2.x`, or `3.x` accordingly before committing it to a roadmap.

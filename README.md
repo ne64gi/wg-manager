@@ -40,6 +40,11 @@ Documentation roles:
 - `docs/ai`: low-ambiguity operational notes for coding and review agents
 - `docs/jp`: Japanese operator-facing documentation
 
+Repository roles:
+
+- `origin` is the primary development remote
+- `github` is a public mirror and release distribution remote
+
 AI contributors should start with [`docs/ai/README.md`](docs/ai/README.md) before planning or changing the system.
 
 ## Icon Sources

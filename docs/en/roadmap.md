@@ -105,4 +105,38 @@ These are not part of `v1.0.0`.
 - better mobile UX
 - expand Playwright from smoke coverage into broader regression coverage
 
+## Post-`v1.0.0` Version Direction
+
+The intended growth order after `v1.0.0` is:
+
+### `1.x.x`
+
+Theme: `Safe single-runtime operations`
+
+- strengthen single-runtime safety and operator trust
+- focus on authorization foundations, audit coverage, diff visibility, safer apply, history, backup/restore, and UI flow cleanup
+- target outcome: one WireGuard runtime can be operated safely by multiple humans
+
+### `2.x.x`
+
+Theme: `Scoped multi-runtime operations`
+
+- expand into multi-server and multi-tenant management
+- focus on boundaries, ownership, and data model evolution
+- target outcome: multiple runtimes and tenants can be managed with clear separation
+
+### `3.x.x`
+
+Theme: `Autonomous and integrated operations`
+
+- add automation and external integrations after the boundary model is mature
+- focus on SSO, external notifications, API-driven integration, expiry automation, and semi-autonomous operations
+- target outcome: lower human operational load through controlled automation
+
+Short version:
+
+- `1.x.x`: small-scale management, strengthen the current foundation
+- `2.x.x`: large-scale management, multi-server and multi-tenant support
+- `3.x.x`: automated operations and external integrations
+
 For the low-ambiguity planning version used by agents, see [`../ai/roadmap.md`](../ai/roadmap.md).
