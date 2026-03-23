@@ -49,7 +49,10 @@ export function AppLayout({ children }: PropsWithChildren) {
   }
 
   return (
-    <div className={`app-shell${isDesktopNavCollapsed ? " app-shell-sidebar-collapsed" : ""}`}>
+    <div
+      className={`app-shell${isDesktopNavCollapsed ? " app-shell-sidebar-collapsed" : ""}`}
+      data-testid="app-shell"
+    >
       <header className="mobile-topbar">
         <button
           className="mobile-menu-button"
@@ -91,6 +94,7 @@ export function AppLayout({ children }: PropsWithChildren) {
             <button
               className="sidebar-toggle-button"
               type="button"
+              data-testid="sidebar-toggle"
               aria-label={isDesktopNavCollapsed ? "Expand navigation" : "Collapse navigation"}
               onClick={() => setIsDesktopNavCollapsed((current) => !current)}
             >

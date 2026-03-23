@@ -14,8 +14,15 @@ const names = {
 };
 
 async function ensureAuthenticated(page: Parameters<typeof test>[0]["page"]) {
-  const setupStatusResponse = await page.request.get(`${origin}/api/auth/setup-status`);
-  expect(setupStatusResponse.ok()).toBeTruthy();
+  let setupStatusResponse;
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    setupStatusResponse = await page.request.get(`${origin}/api/auth/setup-status`);
+    if (setupStatusResponse.ok()) {
+      break;
+    }
+    await page.waitForTimeout(500);
+  }
+  expect(setupStatusResponse?.ok()).toBeTruthy();
   const setupStatus = (await setupStatusResponse.json()) as { has_login_users: boolean };
 
   await page.goto("/");
@@ -54,19 +61,22 @@ test.describe.serial("v1 smoke", () => {
     await page.getByTestId("groups-create-network-cidr").fill(networkCidr);
     await page.getByTestId("groups-create-allowed-ips").fill(allowedIps);
     await page.getByTestId("groups-create-submit").click();
+    await expect(page.getByText(names.group).first()).toBeVisible({ timeout: 10000 });
 
     await page.getByTestId("nav-users").click();
     await page.getByTestId("users-add-button").click();
     await page.getByTestId("users-create-group").selectOption({ label: names.group });
     await page.getByTestId("users-create-name").fill(names.user);
     await page.getByTestId("users-create-submit").click();
+    await expect(page.getByText(names.user).first()).toBeVisible({ timeout: 10000 });
 
     await page.getByTestId("nav-peers").click();
     await page.getByTestId("peers-add-button").click();
     await page.getByTestId("peers-create-user").selectOption({ label: names.user });
     await page.getByTestId("peers-create-name").fill(names.peer);
     await page.getByTestId("peers-create-submit").click();
-    await expect(page.getByText(names.peer).first()).toBeVisible();
+    await page.getByTestId("peers-search").fill(names.peer);
+    await expect(page.getByText(names.peer).first()).toBeVisible({ timeout: 10000 });
   });
 
   test("reveal actions are visible and logs controls load", async ({ page }) => {
@@ -103,5 +113,13 @@ test.describe.serial("v1 smoke", () => {
 
     await accordion.locator("summary").click();
     await expect(accordion.getByText(names.user).first()).toBeVisible();
+  });
+
+  test("desktop sidebar can collapse into icon-only navigation", async ({ page }) => {
+    await ensureAuthenticated(page);
+
+    await page.setViewportSize({ width: 1440, height: 960 });
+    await page.getByTestId("sidebar-toggle").click();
+    await expect(page.getByTestId("app-shell")).toHaveClass(/app-shell-sidebar-collapsed/);
   });
 });

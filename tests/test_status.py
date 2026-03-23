@@ -40,7 +40,17 @@ def test_get_wireguard_peer_statuses_and_overview(monkeypatch) -> None:
         def read_dump(self) -> ExecResult:
             return ExecResult(exit_code=0, stdout=dump_output, stderr="")
 
-    monkeypatch.setattr("app.services.status.get_wireguard_runtime", lambda: FakeRuntime())
+    class FakeRuntimeService:
+        def describe(self):
+            return FakeRuntime()
+
+        def read_peers(self):
+            from app.runtime.service import RuntimePeerRead
+            from app.runtime.dump import parse_wg_dump
+
+            return RuntimePeerRead(runtime=FakeRuntime(), peers=parse_wg_dump(dump_output))
+
+    monkeypatch.setattr("app.services.status.get_runtime_service", lambda: FakeRuntimeService())
 
     with SessionLocal() as session:
         group = create_group(
@@ -123,7 +133,17 @@ def test_capture_and_read_overview_history(monkeypatch) -> None:
         def read_dump(self) -> ExecResult:
             return ExecResult(exit_code=0, stdout=dump_output, stderr="")
 
-    monkeypatch.setattr("app.services.status.get_wireguard_runtime", lambda: FakeRuntime())
+    class FakeRuntimeService:
+        def describe(self):
+            return FakeRuntime()
+
+        def read_peers(self):
+            from app.runtime.service import RuntimePeerRead
+            from app.runtime.dump import parse_wg_dump
+
+            return RuntimePeerRead(runtime=FakeRuntime(), peers=parse_wg_dump(dump_output))
+
+    monkeypatch.setattr("app.services.status.get_runtime_service", lambda: FakeRuntimeService())
 
     with SessionLocal() as session:
         gui_settings = get_gui_settings(session)
@@ -161,3 +181,52 @@ def test_capture_and_read_overview_history(monkeypatch) -> None:
     assert history[0].total_sent_bytes == 800
     assert history[0].total_usage_bytes == 1400
     assert history[0].online_peer_count == 2
+
+
+def test_status_endpoints_degrade_gracefully_when_runtime_is_unavailable(monkeypatch) -> None:
+    reset_db()
+
+    class FailingRuntimeService:
+        def describe(self):
+            class RuntimeDescriptor:
+                interface_name = "wg0"
+
+            return RuntimeDescriptor()
+
+        def read_peers(self):
+            raise ValueError("runtime unavailable")
+
+    monkeypatch.setattr("app.services.status.get_runtime_service", lambda: FailingRuntimeService())
+
+    with SessionLocal() as session:
+        group = create_group(
+            session,
+            GroupCreate(
+                name="corp-runtime-down",
+                scope=GroupScope.SINGLE_SITE,
+                network_cidr="10.40.1.0/24",
+                default_allowed_ips=["10.40.1.0/24"],
+            ),
+        )
+        user = create_user(session, UserCreate(group_id=group.id, name="charlie"))
+        create_peer(
+            session,
+            PeerCreate(user_id=user.id, name="charlie-pc", assigned_ip="10.40.1.1"),
+        )
+
+        statuses = get_wireguard_peer_statuses(session)
+        overview = get_wireguard_overview(session)
+        user_summaries = get_user_traffic_summaries(session)
+        group_summaries = get_group_traffic_summaries(session)
+
+    assert len(statuses) == 1
+    assert statuses[0].peer_name == "charlie-pc"
+    assert statuses[0].is_online is False
+    assert statuses[0].total_bytes == 0
+    assert overview.interface_name == "wg0"
+    assert overview.peer_count == 1
+    assert overview.online_peer_count == 0
+    assert user_summaries[0].user_name == "charlie"
+    assert user_summaries[0].total_usage_bytes == 0
+    assert group_summaries[0].group_name == "corp-runtime-down"
+    assert group_summaries[0].total_usage_bytes == 0

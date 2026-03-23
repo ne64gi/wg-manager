@@ -7,9 +7,39 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function Resolve-StackServices {
+    param(
+        [string]$Target = "core"
+    )
+
+    switch ($Target) {
+        "core" { return @("postgres", "wireguard", "wg-studio-api", "wg-studio-web") }
+        "runtime" { return @("wireguard", "wg-studio-api") }
+        "api" { return @("wg-studio-api") }
+        "web" { return @("wg-studio-web") }
+        "db" { return @("postgres") }
+        default { return @($Target) }
+    }
+}
+
 switch ($Command) {
     "up" {
-        docker compose up -d --build @Args
+        $target = if ($Args.Count -gt 0) { $Args[0] } else { "core" }
+        $remaining = if ($Args.Count -gt 0) { $Args[1..($Args.Count - 1)] } else { @() }
+        $services = Resolve-StackServices -Target $target
+        docker compose up -d --build @services @remaining
+    }
+    "build" {
+        $target = if ($Args.Count -gt 0) { $Args[0] } else { "core" }
+        $remaining = if ($Args.Count -gt 0) { $Args[1..($Args.Count - 1)] } else { @() }
+        $services = Resolve-StackServices -Target $target
+        docker compose build @services @remaining
+    }
+    "restart" {
+        $target = if ($Args.Count -gt 0) { $Args[0] } else { "core" }
+        $remaining = if ($Args.Count -gt 0) { $Args[1..($Args.Count - 1)] } else { @() }
+        $services = Resolve-StackServices -Target $target
+        docker compose restart @services @remaining
     }
     "down" {
         docker compose down @Args
@@ -27,6 +57,6 @@ switch ($Command) {
         docker compose --profile test run --rm wg-studio-e2e @Args
     }
     default {
-        throw "Unsupported command '$Command'. Use: up, down, ps, logs, cli, e2e."
+        throw "Unsupported command '$Command'. Use: up, build, restart, down, ps, logs, cli, e2e."
     }
 }

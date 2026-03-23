@@ -2,7 +2,7 @@
 
 Purpose: define the intended `1.1` boundary between the core application and the current Linux/Docker-backed WireGuard runtime.
 
-Status: active `1.1.2` foundation note.
+Status: active `1.1.3` foundation note.
 
 Related docs:
 
@@ -116,3 +116,39 @@ Validation added in this slice:
 
 - runtime/service-focused pytest coverage for dump parsing and runtime read failure handling
 - Playwright smoke coverage for expanding group traffic into user traffic rows
+
+## `1.1.3` Active Direction
+
+The next `1.1` step should keep the same philosophy:
+
+- do not jump to cross-platform portability yet
+- keep moving runtime-facing mechanics behind a shared facade
+- make operator entry points cleaner without forcing a full deployment redesign
+
+Current `1.1.3` direction:
+
+- introduce a runtime service facade that owns `describe`, `read_peers`, and `apply_config`
+- stop having service modules reach straight into the adapter constructor path
+- begin treating `scripts/stack.*` as wrapper entry points with logical targets such as `core`, `runtime`, `api`, `web`, and `db`
+- keep visible operator improvements small and incremental while separation work continues
+
+## `1.1.3` Progress Notes
+
+Changes introduced in the `1.1.3` line:
+
+- `apply` and `status` now flow through a shared runtime service facade instead of resolving the adapter directly
+- runtime-facing reads degrade more gracefully when the runtime is temporarily unavailable
+- `init_db()` now ensures GUI/auth tables are registered even when older local volumes are reused
+- `scripts/stack.sh` and `scripts/stack.ps1` now support logical service targets for `up`, `build`, and `restart`
+
+Visible improvements paired with this slice:
+
+- dashboard desktop layout uses the right-side column more effectively
+- desktop sidebar can collapse into icon-only navigation
+- favicon support is now present for the web UI
+
+Validation added in this slice:
+
+- pytest coverage for runtime facade usage and runtime-unavailable status handling
+- pytest coverage for `init_db()` registering GUI/auth tables on a clean database
+- Playwright smoke coverage for desktop sidebar collapse

@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from sqlalchemy import inspect
+
 from app.core import settings
 from app.db import AuditBase, Base, SessionLocal, audit_engine, engine
 from app.models import GroupScope
@@ -24,6 +26,7 @@ from app.services import (
     reveal_peer_artifacts,
     update_gui_settings,
     update_login_user,
+    init_db,
 )
 from app.services.gui import verify_password
 
@@ -162,3 +165,15 @@ def test_bootstrap_login_user_from_env(monkeypatch) -> None:
         second = bootstrap_login_user(session)
         assert second is not None
         assert second.id == login_user.id
+
+
+def test_init_db_registers_login_user_tables() -> None:
+    Base.metadata.drop_all(bind=engine)
+    AuditBase.metadata.drop_all(bind=audit_engine)
+
+    init_db()
+
+    inspector = inspect(engine)
+    assert "login_users" in inspector.get_table_names()
+    assert "login_sessions" in inspector.get_table_names()
+    assert "gui_settings" in inspector.get_table_names()

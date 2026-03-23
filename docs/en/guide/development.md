@@ -16,7 +16,7 @@ Important defaults include:
 Current runtime boundary note:
 
 - `WG_RUNTIME_ADAPTER` exists so runtime selection has a single entry point
-- `docker_container` is the only supported adapter in `1.1.2`
+- `docker_container` is the only supported adapter in `1.1.3`
 - the intent is early separation of runtime assumptions, not full cross-platform support yet
 
 Keep the real `.env` local-only.
@@ -67,6 +67,8 @@ Wrapper entry points are also available as early launch-abstraction prep:
 
 ```bash
 ./scripts/stack.sh up
+./scripts/stack.sh up runtime
+./scripts/stack.sh build api
 ./scripts/stack.sh cli group list
 ./scripts/stack.sh e2e
 ```
@@ -75,9 +77,19 @@ On PowerShell:
 
 ```powershell
 pwsh ./scripts/stack.ps1 up
+pwsh ./scripts/stack.ps1 up runtime
+pwsh ./scripts/stack.ps1 build api
 pwsh ./scripts/stack.ps1 cli group list
 pwsh ./scripts/stack.ps1 e2e
 ```
+
+Current logical targets for `up`, `build`, and `restart`:
+
+- `core`
+- `runtime`
+- `api`
+- `web`
+- `db`
 
 Push and refresh the local remote-tracking ref in one step:
 

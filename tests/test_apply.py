@@ -51,7 +51,12 @@ def test_apply_server_config_bootstraps_with_wg_quick(
     settings.artifact_root = str(tmp_path / "artifacts")
     settings.server_address = "10.99.0.1/24"
 
-    monkeypatch.setattr("app.services.apply.get_wireguard_runtime", lambda: FakeRuntime())
+    class FakeRuntimeService:
+        def apply_config(self):
+            FakeRuntime().apply_config()
+            return FakeRuntime()
+
+    monkeypatch.setattr("app.services.apply.get_runtime_service", lambda: FakeRuntimeService())
 
     try:
         create_apply_fixture()
@@ -109,7 +114,12 @@ def test_apply_server_config_updates_existing_interface(
     settings.artifact_root = str(tmp_path / "artifacts")
     settings.server_address = "10.99.0.1/24"
 
-    monkeypatch.setattr("app.services.apply.get_wireguard_runtime", lambda: FakeRuntime())
+    class FakeRuntimeService:
+        def apply_config(self):
+            FakeRuntime().apply_config()
+            return FakeRuntime()
+
+    monkeypatch.setattr("app.services.apply.get_runtime_service", lambda: FakeRuntimeService())
 
     try:
         create_apply_fixture()

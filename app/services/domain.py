@@ -10,6 +10,7 @@ from cryptography.hazmat.primitives.asymmetric import x25519
 from sqlalchemy import inspect, select, text
 from sqlalchemy.orm import Session, joinedload
 
+import app.models  # noqa: F401  # ensure all SQLAlchemy models register before create_all
 from app.core import settings
 from app.db import Base, engine
 from app.models import Group, InitialSettings, Peer, ServerState, User
