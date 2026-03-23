@@ -1,10 +1,14 @@
 # Roadmap
 
-## Version Target
+Purpose: explain both the `v1.0.0` release boundary and the intended growth path after release.
+
+## Current Release Boundary
+
+### Version Target
 
 - `v1.0.0`
 
-## Goal
+### Goal
 
 WireGuard peers can be safely created, managed, and applied through a web UI with consistent state and minimal operational friction.
 
@@ -95,6 +99,39 @@ These are not part of `v1.0.0`.
 - system recovers from restart without inconsistency
 - the highest-risk operator path is covered by a minimal browser smoke test
 
+## Post-`v1.0.0` Direction
+
+This project is intended to grow in layers, not by stacking advanced features onto a weak core.
+
+### Current `1.x` order
+
+The current intended sequence inside `1.x` is:
+
+1. `1.1`: runtime separation
+2. `1.2`: frontend modernization prep
+3. `1.3`: UX and visibility improvements
+4. `1.4`: authorization and audit hardening
+
+Interpretation:
+
+- separate internals before broadening behavior
+- make the frontend structurally portable before any framework migration
+- improve operator UX after the main seams are cleaner
+- harden authorization after the runtime and frontend boundaries are less fragile
+
+### Cross-cutting quality work
+
+These should advance alongside `1.1` through `1.4`, rather than becoming their own version theme:
+
+- broader Playwright coverage
+- ZIP bundle verification
+- JSON export/import round-trip coverage
+- mobile workflow coverage
+- auth-expiration and apply-error failure-path coverage
+- translation cleanup
+- vocabulary and wording cleanup
+- docs/UI alignment
+
 ## Post 1.0 Ideas
 
 - status history for graphs or Grafana
@@ -141,4 +178,4 @@ Short version:
 - `2.x.x`: large-scale management, multi-server and multi-tenant support
 - `3.x.x`: automated operations and external integrations
 
-For the low-ambiguity planning version used by agents, see [`../ai/roadmap.md`](../ai/roadmap.md).
+For the low-ambiguity planning version used by agents, see [`../../ai/roadmap.md`](../../ai/roadmap.md).

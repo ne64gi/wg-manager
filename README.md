@@ -25,12 +25,12 @@ English docs live under [`docs/en/`](docs/en/README.md).
 Recommended starting points:
 
 - [`docs/en/README.md`](docs/en/README.md)
-- [`docs/en/quick-start.md`](docs/en/quick-start.md)
-- [`docs/en/overview.md`](docs/en/overview.md)
-- [`docs/en/api.md`](docs/en/api.md)
-- [`docs/en/auth-and-api-rules.md`](docs/en/auth-and-api-rules.md)
-- [`docs/en/release-notes-v1.0.0.md`](docs/en/release-notes-v1.0.0.md)
-- [`docs/en/roadmap.md`](docs/en/roadmap.md)
+- [`docs/en/guide/quick-start.md`](docs/en/guide/quick-start.md)
+- [`docs/en/current/overview.md`](docs/en/current/overview.md)
+- [`docs/en/current/api.md`](docs/en/current/api.md)
+- [`docs/en/current/auth-and-api-rules.md`](docs/en/current/auth-and-api-rules.md)
+- [`docs/en/guide/release-notes-v1.0.0.md`](docs/en/guide/release-notes-v1.0.0.md)
+- [`docs/en/planning/roadmap.md`](docs/en/planning/roadmap.md)
 - [`docs/ai/README.md`](docs/ai/README.md)
 - [`docs/jp/README.md`](docs/jp/README.md)
 
@@ -104,7 +104,7 @@ First login behavior:
 - if `WG_BOOTSTRAP_ADMIN_USERNAME` and `WG_BOOTSTRAP_ADMIN_PASSWORD` are set, startup creates the first login user automatically
 - if no login users exist, the login screen switches into first-admin setup mode
 
-For the complete GUI-first startup flow, see [`docs/en/quick-start.md`](docs/en/quick-start.md).
+For the complete GUI-first startup flow, see [`docs/en/guide/quick-start.md`](docs/en/guide/quick-start.md).
 
 Multi-interface note:
 

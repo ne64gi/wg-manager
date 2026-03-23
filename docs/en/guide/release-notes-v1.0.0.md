@@ -25,7 +25,7 @@
 ## Documentation
 
 - operators should start with [`quick-start.md`](quick-start.md)
-- architecture and behavior notes live under [`overview.md`](overview.md), [`config-and-apply.md`](config-and-apply.md), and [`auth-and-api-rules.md`](auth-and-api-rules.md)
+- architecture and behavior notes live under [`../current/overview.md`](../current/overview.md), [`../current/config-and-apply.md`](../current/config-and-apply.md), and [`../current/auth-and-api-rules.md`](../current/auth-and-api-rules.md)
 - AI contributors should read [`../ai/README.md`](../ai/README.md) before planning changes
 
 ## Post-`v1.0.0` Direction

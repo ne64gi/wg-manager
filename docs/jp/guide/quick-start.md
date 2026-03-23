@@ -1,5 +1,23 @@
 # クイックスタート
 
+目的:
+
+- `wg-studio` を最短で起動する
+- GUI まで辿り着く
+
+想定読者:
+
+- 初回セットアップを行う運用者
+- ローカルや検証環境で素早く立ち上げたい開発者
+
+関連資料:
+
+- [`../current/overview.md`](../current/overview.md)
+- [`../current/config-and-apply.md`](../current/config-and-apply.md)
+- [`development.md`](development.md)
+
+![Peers スクリーンショット](../../image/peers.png)
+
 ## 1. 環境変数を用意する
 
 ```bash

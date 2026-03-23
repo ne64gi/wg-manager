@@ -57,11 +57,14 @@ Interpretation:
 - do not rush into Next.js migration either
 - instead, make the current React/Vite frontend structurally portable first
 
-Possible internal staging:
+Current internal staging reference:
 
-- `1.1`: authz foundation, audit strengthening, diff visibility, safer apply, early runtime adapter boundaries
-- `1.2`: settings cleanup, backup/restore, history, UI flow cleanup, launch entry-point cleanup
-- `1.3`: policy support, expiring peers, operator-assist features, pre-automation guardrails
+- use [`../backlog/1.x-plan.md`](../backlog/1.x-plan.md) as the canonical `1.x` order
+- current sequence:
+  - `1.1`: runtime separation
+  - `1.2`: frontend modernization prep
+  - `1.3`: UX / visibility improvements
+  - `1.4`: authorization and audit hardening
 
 Implementation intent for runtime separation:
 

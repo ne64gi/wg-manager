@@ -146,9 +146,9 @@ rg -n '@router\.(get|post|patch|put|delete)\(' app/api/routes
 
 Then verify:
 
-- `docs/en/api.md`
-- `docs/en/auth-and-api-rules.md`
-- `docs/ai/api-contracts.md`
+- `docs/en/current/api.md`
+- `docs/en/current/auth-and-api-rules.md`
+- `docs/ai/spec/api-contracts.md`
 
 ### 9. Human docs vs AI docs role split
 

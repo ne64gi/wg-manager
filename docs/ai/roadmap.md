@@ -1,5 +1,12 @@
 # Roadmap
 
+Purpose: define the current release boundary and the shortest planning path after `v1.0.0`.
+
+Status: mixed document.
+
+- `v1.0.0` sections below describe the shipped boundary and should be treated as current release facts
+- post-`v1.0.0` sections below are planning guidance and should be read together with `notes/`
+
 ## Version Target
 
 - `v1.0.0`
@@ -99,6 +106,15 @@ These are not part of `v1.0.0`.
 - system recovers from restart without inconsistency
 - the release smoke path is covered by a minimal browser E2E suite
 
+## Post-`v1.0.0` Planning Pointers
+
+Use the more specific planning documents when deciding what comes next:
+
+- major-version direction: [`notes/strategy/post-v1-major-version-strategy.md`](notes/strategy/post-v1-major-version-strategy.md)
+- current `1.x` order: [`notes/backlog/1.x-plan.md`](notes/backlog/1.x-plan.md)
+- future authorization shape: [`notes/architecture/v1.1-authorization-notes.md`](notes/architecture/v1.1-authorization-notes.md)
+- future audit shape: [`notes/architecture/audit-model.md`](notes/architecture/audit-model.md)
+
 ## Post 1.0 Ideas
 
 - status history for graphs or Grafana
@@ -109,6 +125,31 @@ These are not part of `v1.0.0`.
 - better mobile UX
 - expand Playwright coverage from smoke paths into full regression coverage
 - add archive, import/export, and mobile-specific E2E scenarios
+
+## Current `1.x` Sequence
+
+Use this order unless a human explicitly overrides it:
+
+1. `1.1`: runtime separation
+2. `1.2`: frontend modernization prep
+3. `1.3`: UX and visibility improvements
+4. `1.4`: authorization and audit hardening
+
+This sequence is maintained in detail at [`notes/backlog/1.x-plan.md`](notes/backlog/1.x-plan.md).
+
+## Cross-Cutting Quality Track
+
+These should progress alongside `1.1` through `1.4`, not as separate version themes:
+
+- Playwright expansion beyond smoke where it supports each phase
+- ZIP bundle verification
+- JSON export/import round-trip coverage
+- mobile workflow coverage
+- auth-expiration and apply-error failure-path coverage
+- translation-gap cleanup
+- vocabulary drift cleanup
+- docs/UI wording alignment
+- stale-doc detection and cleanup
 
 ## Immediate Priorities
 
@@ -125,7 +166,9 @@ Interpretation rules for automation and AI contributors:
 - Explicitly Excluded = do not expand scope into this for `v1.0.0`
 - Acceptable Limitations = known rough edges that do not block release
 - Release Criteria = finish line definition, not suggestion
-- after `v1.0.0`, use [`versioning-policy.md`](versioning-policy.md) for `x.y.z` updates
+- after `v1.0.0`, use [`spec/versioning-policy.md`](spec/versioning-policy.md) for `x.y.z` updates
+- use `notes/` for future direction, not `spec/`
+- prefer [`notes/README.md`](notes/README.md) when deciding where a new AI note belongs
 
 When planning work, prefer closing Included gaps over polishing excluded areas.
 

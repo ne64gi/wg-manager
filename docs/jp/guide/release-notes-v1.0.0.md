@@ -25,7 +25,7 @@
 ## ドキュメント案内
 
 - 運用者はまず [`quick-start.md`](quick-start.md) から読むのがおすすめです
-- 詳しい挙動は [`overview.md`](overview.md)、[`config-and-apply.md`](config-and-apply.md)、[`auth-and-api-rules.md`](auth-and-api-rules.md) にあります
+- 詳しい挙動は [`../current/overview.md`](../current/overview.md)、[`../current/config-and-apply.md`](../current/config-and-apply.md)、[`../current/auth-and-api-rules.md`](../current/auth-and-api-rules.md) にあります
 - AI 作業者は変更前に [`../ai/README.md`](../ai/README.md) を読む前提です
 
 ## `v1.0.0` 以降にやりたいこと

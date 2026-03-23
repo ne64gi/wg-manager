@@ -4,7 +4,7 @@ This page is the endpoint index.
 
 For behavior rules that are not obvious from the route list, also read:
 
-- [`quick-start.md`](quick-start.md)
+- [`../guide/quick-start.md`](../guide/quick-start.md)
 - [`auth-and-api-rules.md`](auth-and-api-rules.md)
 
 ## Core Endpoints

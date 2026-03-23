@@ -2,6 +2,12 @@
 
 Purpose: optimize for machine parsing, repo onboarding, and low-ambiguity change planning.
 
+Structure:
+
+- `spec/`: current contracts, invariants, and operational facts
+- `notes/`: future-facing design notes, audits, and planning memos
+- `roadmap.md`: current release boundary and planning priority document
+
 Audience:
 
 - coding agents
@@ -10,20 +16,23 @@ Audience:
 
 Recommended read order:
 
-1. [`system-map.md`](system-map.md)
-2. [`api-contracts.md`](api-contracts.md)
-3. [`workflows.md`](workflows.md)
+1. [`spec/system-map.md`](spec/system-map.md)
+2. [`spec/api-contracts.md`](spec/api-contracts.md)
+3. [`spec/workflows.md`](spec/workflows.md)
 4. [`roadmap.md`](roadmap.md)
-5. [`versioning-policy.md`](versioning-policy.md)
-6. [`ui-consistency-audit.md`](ui-consistency-audit.md)
-7. [`testing-map.md`](testing-map.md)
+5. [`spec/versioning-policy.md`](spec/versioning-policy.md)
+6. [`notes/audit/ui-consistency-audit.md`](notes/audit/ui-consistency-audit.md)
+7. [`spec/testing-map.md`](spec/testing-map.md)
 8. [`roadmap.md`](roadmap.md) `E2E Strategy` section when planning test work
-9. [`v1.1-authorization-notes.md`](v1.1-authorization-notes.md) when planning post-`v1.0.0` access control work
-10. [`post-v1-major-version-strategy.md`](post-v1-major-version-strategy.md) when deciding whether work belongs in `1.x`, `2.x`, or `3.x`
+9. [`notes/architecture/v1.1-authorization-notes.md`](notes/architecture/v1.1-authorization-notes.md) when planning post-`v1.0.0` access control work
+10. [`notes/architecture/audit-model.md`](notes/architecture/audit-model.md) when planning stronger traceability or audit/authz integration
+11. [`notes/strategy/post-v1-major-version-strategy.md`](notes/strategy/post-v1-major-version-strategy.md) when deciding whether work belongs in `1.x`, `2.x`, or `3.x`
+12. [`notes/backlog/1.x-plan.md`](notes/backlog/1.x-plan.md) for the current `1.x` priority order
 
 Rules:
 
-- prefer this folder over human docs when you need invariants, route groups, or lifecycle rules
+- prefer `spec/` over human docs when you need invariants, route groups, or lifecycle rules
+- prefer `notes/` when you need future direction, planning context, or design memos
 - treat `docs/en/` as explanatory and `docs/ai/` as operational
 - when in conflict, verify against source code
 - if you are an AI agent changing this repo, start here before proposing architectural changes

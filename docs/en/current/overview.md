@@ -1,6 +1,22 @@
 # Overview
 
+Purpose: explain what `wg-studio` is, what it currently does, and what it intentionally does not do.
+
+Audience:
+
+- operators evaluating the current feature set
+- developers needing a short product summary before deeper docs
+
+Related docs:
+
+- [`architecture.md`](architecture.md)
+- [`domain-model.md`](domain-model.md)
+- [`config-and-apply.md`](config-and-apply.md)
+- [`../planning/roadmap.md`](../planning/roadmap.md)
+
 `wg-studio` manages WireGuard desired state outside the WireGuard data plane.
+
+![Dashboard screenshot](../../image/dashboard.png)
 
 It stores groups, users, peers, allocation policy, login users, and endpoint settings in PostgreSQL, then generates and applies WireGuard configuration from that state.
 

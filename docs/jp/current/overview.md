@@ -1,6 +1,26 @@
 # 概要
 
+目的:
+
+- `wg-studio` が今どんな製品か
+- 何ができて、何をまだやらないか
+を短く把握するためのページです。
+
+想定読者:
+
+- 現行機能をざっと把握したい運用者
+- 詳しい資料へ入る前に全体像を掴みたい開発者
+
+関連資料:
+
+- [`architecture.md`](architecture.md)
+- [`domain-model.md`](domain-model.md)
+- [`config-and-apply.md`](config-and-apply.md)
+- [`../planning/roadmap.md`](../planning/roadmap.md)
+
 `wg-studio` は、WireGuard の desired state をデータプレーンの外側で管理するコントロールプレーンです。
+
+![Dashboard スクリーンショット](../../image/dashboard.png)
 
 保持する主な対象:
 

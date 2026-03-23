@@ -1,10 +1,14 @@
 # Roadmap
 
-## 対象バージョン
+このページは、`v1.0.0` のリリース境界と、その後の育て方を人間向けに整理したものです。
+
+## 現在のリリース境界
+
+### 対象バージョン
 
 - `v1.0.0`
 
-## ゴール
+### ゴール
 
 WireGuard peer を Web UI から安全に作成・管理・適用でき、状態の整合性が分かりやすく、運用負荷が低いこと。
 
@@ -46,6 +50,37 @@ WireGuard peer を Web UI から安全に作成・管理・適用でき、状態
 - bundle ZIP と JSON export / import が通る
 - login / logout / token expiration が安定している
 - 再起動後に状態不整合が起きない
+
+## `v1.0.0` 以降の進め方
+
+`1.x` は、何でも先に足すのではなく、順番を守って地盤を固める前提です。
+
+### 現在の `1.x` の順番
+
+1. `1.1`: Runtime separation
+2. `1.2`: Frontend modernization prep
+3. `1.3`: UX / visibility improvements
+4. `1.4`: Authorization and audit hardening
+
+意味としてはこうです。
+
+- 先に中身の分離を進める
+- 次にフロントを Next へ移しやすい構造に寄せる
+- その上で運用 UX と可視化を強くする
+- 認可と監査の本格強化は、その後に行う
+
+### `1.x` を横断する品質トラック
+
+これは特定の版テーマではなく、各版に並走させる品質改善です。
+
+- Playwright の段階的な拡張
+- ZIP bundle の検証
+- JSON export / import の round-trip 検証
+- mobile workflow の確認
+- auth expiration / apply error の失敗経路確認
+- 翻訳漏れの修正
+- 用語や表現の揺れの解消
+- docs と UI の表現合わせ
 
 ## `v1.0.0` 以降にやりたいこと
 
@@ -93,3 +128,5 @@ WireGuard peer を Web UI から安全に作成・管理・適用でき、状態
 - `1.x.x`: 小規模管理（現状の地盤強化）
 - `2.x.x`: 大規模管理（マルチサーバー / マルチテナント化）
 - `3.x.x`: 自動運用・外部連携（統合と半自律化）
+
+AI 向けの低曖昧度な版管理や実装順序は [`../../ai/roadmap.md`](../../ai/roadmap.md) を参照してください。

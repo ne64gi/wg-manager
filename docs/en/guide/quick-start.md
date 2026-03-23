@@ -1,6 +1,21 @@
 # Quick Start
 
+Purpose: provide the shortest reliable path to a running `wg-studio` stack with the bundled GUI.
+
+Audience:
+
+- first-time operators
+- developers who need a clean local or server startup flow
+
+Related docs:
+
+- [`../current/overview.md`](../current/overview.md)
+- [`../current/config-and-apply.md`](../current/config-and-apply.md)
+- [`development.md`](development.md)
+
 This is the shortest path to a running `wg-studio` stack with the GUI enabled.
+
+![Peers screenshot](../../image/peers.png)
 
 ## 1. Create `.env`
 
