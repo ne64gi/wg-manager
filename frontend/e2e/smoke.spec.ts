@@ -142,7 +142,7 @@ test.describe.serial("v1 smoke", () => {
     await expect(page.getByTestId("logs-pagination")).toBeVisible();
   });
 
-  test("dashboard group traffic can expand to user breakdown", async ({ page }) => {
+  test("dashboard group traffic can expand and collapse as a grouped view", async ({ page }) => {
     await ensureAuthenticated(page);
 
     await page.getByTestId("nav-dashboard").click();
@@ -150,8 +150,14 @@ test.describe.serial("v1 smoke", () => {
       .locator(`[data-testid^="dashboard-group-accordion-"]`, { hasText: names.group })
       .first();
 
+    await page.getByTestId("dashboard-expand-groups").click();
+    await expect(accordion).toHaveAttribute("open", "");
     await accordion.locator("summary").click();
+    await expect(accordion).not.toHaveAttribute("open", "");
+    await page.getByTestId("dashboard-expand-groups").click();
     await expect(accordion.getByText(names.user).first()).toBeVisible();
+    await page.getByTestId("dashboard-collapse-groups").click();
+    await expect(accordion).not.toHaveAttribute("open", "");
   });
 
   test("desktop sidebar can collapse into icon-only navigation", async ({ page }) => {

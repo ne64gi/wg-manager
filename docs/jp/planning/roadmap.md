@@ -70,6 +70,7 @@ WireGuard peer を Web UI から安全に作成・管理・適用でき、状態
 - 認可と監査の本格強化は、その後に行う
 - ただし `1.1` の段階で、no-op plugin や最小 action vocabulary、authz decision をログへ流せる入口だけは先に作ってよい
 - deny / allow の本格運用や広い認可適用は、後半の hardening フェーズへ回す
+- `1.2` 中にネットワーク図のような可視化を試す場合は、軽い構造ビューに留める
 
 ### `1.x` を横断する品質トラック
 
@@ -88,6 +89,7 @@ WireGuard peer を Web UI から安全に作成・管理・適用でき、状態
 
 - グラフや Grafana 向けの状態履歴
 - グラフのクリック拡大などの操作改善
+- `Group -> User -> Peer` を見る Cytoscape.js ベースのトポロジー表示
 - Discord や LINE などの通知連携
 - ログ UI の改善
 - セキュリティ強化

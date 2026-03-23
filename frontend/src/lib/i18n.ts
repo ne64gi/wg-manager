@@ -57,6 +57,8 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "common.config_applied": "設定を適用しました。",
   "common.change_saved": "変更を保存しました。",
   "common.apply_failed": "適用に失敗しました。",
+  "common.expand_all": "すべて開く",
+  "common.collapse_all": "すべて閉じる",
   "common.apply_failed_after_change": "{action} ただし、適用に失敗しました: {error}",
   "common.apply_failed_after_change_no_error": "{action} ただし、適用に失敗しました。",
   "common.on": "オン",

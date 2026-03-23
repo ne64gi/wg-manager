@@ -120,6 +120,7 @@ Interpretation:
 - harden authorization after the runtime and frontend boundaries are less fragile
 - allow `1.1` to introduce only the earliest authz seams, such as a no-op plugin, minimal action vocabulary, and audit-visible authz decisions
 - keep real deny/allow policy behavior and broader authorization enforcement for the later hardening phase
+- if topology-style network views are explored during `1.2`, keep them lightweight and structural only
 
 ### Cross-cutting quality work
 
@@ -138,6 +139,7 @@ These should advance alongside `1.1` through `1.4`, rather than becoming their o
 
 - status history for graphs or Grafana
 - graph interaction improvements such as click-to-expand views
+- Cytoscape.js-based topology or relationship views for `Group -> User -> Peer`
 - notification integration: Discord, LINE, others
 - improved logging UI: filters, search
 - advanced security hardening

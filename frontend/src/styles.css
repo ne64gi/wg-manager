@@ -739,6 +739,10 @@ h2 {
   flex-wrap: wrap;
 }
 
+.action-row-compact {
+  gap: 6px;
+}
+
 .toggle-chip {
   display: inline-flex;
   align-items: center;
