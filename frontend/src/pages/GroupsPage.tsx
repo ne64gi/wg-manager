@@ -15,7 +15,10 @@ import { DataTable } from "../ui/Table";
 export function GroupsPage() {
   const {
     groups,
+    filteredGroups,
     activeCount,
+    searchText,
+    setSearchText,
     isCreateOpen,
     setIsCreateOpen,
     editingGroup,
@@ -59,6 +62,17 @@ export function GroupsPage() {
         </button>
       </div>
       <Panel title={t("groups.list", "Group list")}>
+        <div className="table-toolbar">
+          <label className="toolbar-search">
+            <span>{t("common.search", "Search")}</span>
+            <input
+              data-testid="groups-search"
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              placeholder={t("groups.search_placeholder", "Name, scope, network, route, DNS...")}
+            />
+          </label>
+        </div>
         <div className="desktop-table">
           <DataTable
             headers={[
@@ -71,7 +85,7 @@ export function GroupsPage() {
               t("common.actions", "Actions"),
             ]}
           >
-            {groups.map((group) => (
+            {filteredGroups.map((group) => (
               <tr key={group.id}>
                 <td>
                   <button
@@ -112,7 +126,7 @@ export function GroupsPage() {
           </DataTable>
         </div>
         <div className="mobile-list">
-          {groups.map((group) => (
+          {filteredGroups.map((group) => (
             <article key={group.id} className="mobile-record">
               <div className="mobile-record-main">
                 <div>

@@ -51,6 +51,7 @@ export function useUsersPageData() {
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [filterGroupId, setFilterGroupId] = useState("all");
+  const [searchText, setSearchText] = useState("");
   const [createForm, setCreateForm] = useState<UserFormState>(DEFAULT_CREATE_FORM);
   const [editForm, setEditForm] = useState<UserFormState>(DEFAULT_CREATE_FORM);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -246,11 +247,27 @@ export function useUsersPageData() {
     [groups],
   );
   const filteredUsers = useMemo(() => {
-    if (filterGroupId === "all") {
-      return users;
+    const filteredByGroup =
+      filterGroupId === "all"
+        ? users
+        : users.filter((user) => String(user.group_id) === filterGroupId);
+    const needle = searchText.trim().toLowerCase();
+    if (!needle) {
+      return filteredByGroup;
     }
-    return users.filter((user) => String(user.group_id) === filterGroupId);
-  }, [filterGroupId, users]);
+
+    return filteredByGroup.filter((user) =>
+      [
+        user.name,
+        groupNames.get(user.group_id) ?? `Group ${user.group_id}`,
+        user.allowed_ips_override?.join(" ") ?? "",
+        user.description ?? "",
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(needle),
+    );
+  }, [filterGroupId, groupNames, searchText, users]);
 
   return {
     groups,
@@ -258,6 +275,8 @@ export function useUsersPageData() {
     activeCount,
     groupNames,
     filteredUsers,
+    searchText,
+    setSearchText,
     isCreateOpen,
     setIsCreateOpen,
     filterGroupId,

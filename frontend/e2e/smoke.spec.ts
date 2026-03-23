@@ -100,14 +100,18 @@ test.describe.serial("v1 smoke", () => {
     await page.getByTestId("groups-create-network-cidr").fill(networkCidr);
     await page.getByTestId("groups-create-allowed-ips").fill(allowedIps);
     await page.getByTestId("groups-create-submit").click();
+    await page.getByTestId("groups-search").fill(names.group);
     await expect(page.getByText(names.group).first()).toBeVisible({ timeout: 10000 });
+    await page.getByTestId("groups-search").fill("");
 
     await page.getByTestId("nav-users").click();
     await page.getByTestId("users-add-button").click();
     await page.getByTestId("users-create-group").selectOption({ label: names.group });
     await page.getByTestId("users-create-name").fill(names.user);
     await page.getByTestId("users-create-submit").click();
+    await page.getByTestId("users-search").fill(names.user);
     await expect(page.getByText(names.user).first()).toBeVisible({ timeout: 10000 });
+    await page.getByTestId("users-search").fill("");
 
     await page.getByTestId("nav-peers").click();
     await page.getByTestId("peers-add-button").click();

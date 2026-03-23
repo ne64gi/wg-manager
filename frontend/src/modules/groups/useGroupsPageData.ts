@@ -144,6 +144,7 @@ export function useGroupsPageData() {
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
+  const [searchText, setSearchText] = useState("");
   const [createForm, setCreateForm] = useState<GroupFormState>(DEFAULT_CREATE_FORM);
   const [editForm, setEditForm] = useState<GroupFormState>(DEFAULT_CREATE_FORM);
   const guiSettingsQuery = useGuiSettingsQuery();
@@ -158,6 +159,26 @@ export function useGroupsPageData() {
     () => groups.filter((group) => group.is_active).length,
     [groups],
   );
+  const filteredGroups = useMemo(() => {
+    const needle = searchText.trim().toLowerCase();
+    if (!needle) {
+      return groups;
+    }
+
+    return groups.filter((group) =>
+      [
+        group.name,
+        t(`groups.scope_${group.scope}`, group.scope),
+        group.network_cidr,
+        group.default_allowed_ips.join(" "),
+        group.dns_servers?.join(" ") ?? "",
+        group.description ?? "",
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(needle),
+    );
+  }, [groups, searchText]);
   const createScopeError = getScopeValidationMessage(createForm.scope, createForm.networkCidr);
 
   async function refreshGroupQueries() {
@@ -342,7 +363,10 @@ export function useGroupsPageData() {
 
   return {
     groups,
+    filteredGroups,
     activeCount,
+    searchText,
+    setSearchText,
     isCreateOpen,
     setIsCreateOpen,
     editingGroup,

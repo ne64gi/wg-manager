@@ -16,6 +16,8 @@ export function UsersPage() {
     activeCount,
     groupNames,
     filteredUsers,
+    searchText,
+    setSearchText,
     isCreateOpen,
     setIsCreateOpen,
     filterGroupId,
@@ -57,6 +59,17 @@ export function UsersPage() {
         <button className="success-button" data-testid="users-add-button" onClick={() => setIsCreateOpen(true)}>
           {t("users.add", "+ Add user")}
         </button>
+      </div>
+      <div className="toolbar-card">
+        <label className="toolbar-search">
+          <span>{t("common.search", "Search")}</span>
+          <input
+            data-testid="users-search"
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            placeholder={t("users.search_placeholder", "User, group, route...")}
+          />
+        </label>
       </div>
       <div className="toolbar-card">
         <label className="toolbar-field">
