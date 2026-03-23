@@ -63,18 +63,11 @@ def test_parse_wg_dump_returns_runtime_rows() -> None:
 
 def test_read_runtime_peers_returns_runtime_and_rows() -> None:
     class FakeRuntime:
-        container_name = "wg-test"
+        adapter_name = "fake_runtime"
         interface_name = "wg0"
-        config_path = "/config/wg0.conf"
 
         def ensure_available(self) -> None:
             return None
-
-        def exec(self, command: list[str], *, capture_output: bool = False) -> ExecResult:
-            raise AssertionError("not used in this test")
-
-        def interface_exists(self) -> bool:
-            return True
 
         def read_dump(self) -> ExecResult:
             return ExecResult(
@@ -92,25 +85,18 @@ def test_read_runtime_peers_returns_runtime_and_rows() -> None:
     result = read_runtime_peers(FakeRuntime())
 
     assert result.runtime.interface_name == "wg0"
-    assert result.runtime.container_name == "wg-test"
+    assert result.runtime.runtime_adapter == "fake_runtime"
     assert len(result.peers) == 1
     assert result.peers[0].public_key == "pubkey-2"
 
 
 def test_read_runtime_peers_raises_on_runtime_failure() -> None:
     class FakeRuntime:
-        container_name = "wg-test"
+        adapter_name = "fake_runtime"
         interface_name = "wg0"
-        config_path = "/config/wg0.conf"
 
         def ensure_available(self) -> None:
             return None
-
-        def exec(self, command: list[str], *, capture_output: bool = False) -> ExecResult:
-            raise AssertionError("not used in this test")
-
-        def interface_exists(self) -> bool:
-            return True
 
         def read_dump(self) -> ExecResult:
             return ExecResult(exit_code=1, stdout="", stderr="wg failed")
@@ -128,18 +114,11 @@ def test_read_runtime_peers_raises_on_runtime_failure() -> None:
 
 def test_runtime_service_apply_returns_runtime_descriptor() -> None:
     class FakeRuntime:
-        container_name = "wg-test"
+        adapter_name = "fake_runtime"
         interface_name = "wg0"
-        config_path = "/config/wg0.conf"
 
         def ensure_available(self) -> None:
             return None
-
-        def exec(self, command: list[str], *, capture_output: bool = False) -> ExecResult:
-            raise AssertionError("not used in this test")
-
-        def interface_exists(self) -> bool:
-            return True
 
         def read_dump(self) -> ExecResult:
             return ExecResult(exit_code=0, stdout="private\tpublic\t51820\toff\n", stderr="")
@@ -151,25 +130,17 @@ def test_runtime_service_apply_returns_runtime_descriptor() -> None:
 
     assert isinstance(service, RuntimeService)
     descriptor = service.apply_config()
-    assert descriptor.container_name == "wg-test"
+    assert descriptor.runtime_adapter == "fake_runtime"
     assert descriptor.interface_name == "wg0"
-    assert descriptor.config_path == "/config/wg0.conf"
 
 
 def test_runtime_service_writes_server_and_peer_artifacts(tmp_path) -> None:
     class FakeRuntime:
-        container_name = "wg-test"
+        adapter_name = "fake_runtime"
         interface_name = "wg0"
-        config_path = "/config/wg0.conf"
 
         def ensure_available(self) -> None:
             return None
-
-        def exec(self, command: list[str], *, capture_output: bool = False) -> ExecResult:
-            raise AssertionError("not used in this test")
-
-        def interface_exists(self) -> bool:
-            return True
 
         def read_dump(self) -> ExecResult:
             return ExecResult(exit_code=0, stdout="private\tpublic\t51820\toff\n", stderr="")

@@ -46,6 +46,7 @@ Examples:
 - interface existence checks
 - `wg show ... dump` retrieval
 - `wg-quick up` / `wg syncconf` execution
+- adapter-specific transport details such as Docker socket access
 
 ### Artifact store should own artifact path and file-write mechanics
 
@@ -175,6 +176,7 @@ Changes introduced in the `1.1.4` line:
 - `RuntimeService` now exposes a small artifact-facing public surface instead of only runtime reads/applies
 - service entrypoints can now accept an injected runtime collaborator instead of resolving the global runtime factory every time
 - `scripts/stack.sh` and `scripts/stack.ps1` now include `health` and `smoke` commands
+- runtime-facing public descriptors now expose adapter-neutral fields instead of container-specific ones
 
 Visible improvements paired with this slice:
 
@@ -208,6 +210,7 @@ Changes introduced in the `1.1.5` line:
 - `health` now performs bounded readiness polling before checking API and web reachability
 - `smoke` now reuses the same readiness path before launching Playwright
 - `/gui/version` now returns the active runtime adapter alongside the version fields
+- `ApplyResult` and runtime descriptors now surface `runtime_adapter` and `interface_name` instead of Docker-specific identifiers
 
 Visible improvements paired with this slice:
 

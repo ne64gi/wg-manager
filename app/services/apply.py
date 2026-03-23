@@ -29,7 +29,7 @@ def apply_server_config(
         details={
             "config_path": artifacts.server_config_path,
             "peer_count": artifacts.peer_count,
-            "container_name": runtime.container_name,
+            "runtime_adapter": runtime.runtime_adapter,
             "interface_name": runtime.interface_name,
             "applied_at": applied_at.isoformat(),
         },
@@ -38,7 +38,7 @@ def apply_server_config(
     return ApplyResult(
         server_config_path=artifacts.server_config_path,
         peer_count=artifacts.peer_count,
-        container_name=runtime.container_name,
+        runtime_adapter=runtime.runtime_adapter,
         interface_name=runtime.interface_name,
         applied_at=applied_at,
     )

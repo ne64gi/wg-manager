@@ -41,7 +41,7 @@ def test_apply_server_config_bootstraps_with_wg_quick(
     exec_calls: list[list[str]] = []
 
     class FakeRuntime:
-        container_name = "wg-studio-wireguard"
+        runtime_adapter = "fake_runtime"
         interface_name = "wg0"
 
         def apply_config(self) -> None:
@@ -73,7 +73,7 @@ def test_apply_server_config_bootstraps_with_wg_quick(
         assert config_path.exists()
         assert "apollo-pc" in config_path.read_text(encoding="utf-8")
         assert result.peer_count == 1
-        assert result.container_name == "wg-studio-wireguard"
+        assert result.runtime_adapter == "fake_runtime"
         assert result.interface_name == "wg0"
         assert exec_calls == [
             ["sh", "-lc", "ip link show wg0 >/dev/null 2>&1"],
@@ -104,7 +104,7 @@ def test_apply_server_config_updates_existing_interface(
     exec_calls: list[list[str]] = []
 
     class FakeRuntime:
-        container_name = "wg-studio-wireguard"
+        runtime_adapter = "fake_runtime"
         interface_name = "wg0"
 
         def apply_config(self) -> None:
@@ -172,9 +172,8 @@ def test_apply_server_config_accepts_runtime_service_injection(tmp_path: Path) -
             self.applied = True
 
             class Descriptor:
-                container_name = "wg-studio-wireguard"
+                runtime_adapter = "fake_runtime"
                 interface_name = "wg0"
-                config_path = "/config/wg_confs/wg0.conf"
 
             return Descriptor()
 

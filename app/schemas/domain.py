@@ -375,7 +375,7 @@ class GeneratedServerArtifacts(BaseModel):
 class ApplyResult(BaseModel):
     server_config_path: str
     peer_count: int
-    container_name: str
+    runtime_adapter: str
     interface_name: str
     applied_at: datetime
 

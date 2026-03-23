@@ -385,7 +385,7 @@ export type GeneratedServerArtifacts = {
 export type ApplyResult = {
   server_config_path: string;
   peer_count: number;
-  container_name: string;
+  runtime_adapter: string;
   interface_name: string;
   applied_at: string;
 };

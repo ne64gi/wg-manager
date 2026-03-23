@@ -35,6 +35,7 @@ def test_get_wireguard_peer_statuses_and_overview(monkeypatch) -> None:
     )
 
     class FakeRuntime:
+        adapter_name = "fake_runtime"
         interface_name = "wg0"
 
         def read_dump(self) -> ExecResult:
@@ -128,6 +129,7 @@ def test_capture_and_read_overview_history(monkeypatch) -> None:
     )
 
     class FakeRuntime:
+        adapter_name = "fake_runtime"
         interface_name = "wg0"
 
         def read_dump(self) -> ExecResult:
@@ -189,6 +191,7 @@ def test_status_endpoints_degrade_gracefully_when_runtime_is_unavailable(monkeyp
     class FailingRuntimeService:
         def describe(self):
             class RuntimeDescriptor:
+                runtime_adapter = "fake_runtime"
                 interface_name = "wg0"
 
             return RuntimeDescriptor()

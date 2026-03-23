@@ -10,9 +10,8 @@ from app.runtime.wireguard import WireGuardRuntime, get_wireguard_runtime
 
 @dataclass
 class RuntimeDescriptor:
-    container_name: str
+    runtime_adapter: str
     interface_name: str
-    config_path: str
 
 
 @dataclass
@@ -38,9 +37,8 @@ class RuntimeService:
 
     def describe(self) -> RuntimeDescriptor:
         return RuntimeDescriptor(
-            container_name=self._runtime.container_name,
+            runtime_adapter=self._runtime.adapter_name,
             interface_name=self._runtime.interface_name,
-            config_path=self._runtime.config_path,
         )
 
     def server_config_path(self) -> Path:
