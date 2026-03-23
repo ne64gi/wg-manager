@@ -111,12 +111,12 @@ Changes introduced in the `1.1.2` line:
 
 Visible improvement paired with this slice:
 
-- dashboard group traffic now expands inline to show user traffic instead of forcing a second separate panel
+- dashboard layout now uses a lighter topology-oriented preview instead of adding more duplicated traffic panels
 
 Validation added in this slice:
 
 - runtime/service-focused pytest coverage for dump parsing and runtime read failure handling
-- Playwright smoke coverage for expanding group traffic into user traffic rows
+- Playwright smoke coverage for the dashboard topology preview
 
 ## `1.1.3` Active Direction
 

@@ -15,8 +15,16 @@
 
 - `Group.dns_servers` が空なら `[Interface] DNS` は出力しません
 - group DNS があれば `[Interface] DNS` を出力します
+- `InitialSettings.interface_mtu` が設定されていれば `[Interface] MTU` を出力します
 - `[Peer] PersistentKeepalive = 25` は常に出力します
 - endpoint address と port は `initial_settings` の singleton から取得します
+
+現在の MTU の扱い:
+
+- いまの実装では、MTU は `InitialSettings` にある interface 既定値としてのみ保持します
+- MTU は runtime adapter の責務ではなく、設定生成時の入力値として扱います
+- 将来 layered override を足す場合も、runtime code 側ではなく config rendering 前の解決層で吸収します
+- 将来の優先順位は、interface default -> group override -> user override -> peer override を想定します
 
 有効な `AllowedIPs` はアクセス解決結果から決まります。
 

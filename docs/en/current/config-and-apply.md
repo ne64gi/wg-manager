@@ -15,8 +15,16 @@ In the default compose stack, these files live in the shared Docker named volume
 
 - `[Interface] DNS` is omitted when `Group.dns_servers` is empty
 - `[Interface] DNS` is included when group DNS exists
+- `[Interface] MTU` is emitted when `InitialSettings.interface_mtu` is set
 - `[Peer] PersistentKeepalive = 25` is always emitted
 - endpoint address and port come from the `initial_settings` singleton
+
+Current MTU ownership:
+
+- the current implementation stores MTU only as an interface-level default on `InitialSettings`
+- MTU is treated as config-generation input, not runtime-adapter behavior
+- if layered MTU overrides are added later, resolve them before config rendering rather than inside runtime code
+- intended future precedence is: interface default -> group override -> user override -> peer override
 
 Effective `AllowedIPs` come from the resolved access policy:
 
