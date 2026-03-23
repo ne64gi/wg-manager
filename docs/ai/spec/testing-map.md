@@ -17,20 +17,22 @@ Give AI contributors a low-ambiguity map from change type to the minimum require
 - direct runner: `docker compose --profile test run --rm wg-studio-e2e`
 - framework: Playwright
 - role: catch cross-layer regressions that unit or service tests miss
-- scope: minimal release smoke, expanded incrementally through the `1.1.x` line
+- scope: minimal release smoke, expanded incrementally through the `1.2.x` line
 
 ## Current Smoke Scope
 
 Required browser paths:
 
+- login display settings carry into the authenticated UI
 - login or first-admin setup
 - `Group -> User -> Peer` creation
 - reveal modal opens and shows direct download actions
 - apply button runs and dashboard sync-state remains visible
 - logs page loads with filters and pagination controls
-- dashboard group traffic expands into user traffic rows
+- dashboard shows the lightweight topology preview
 - desktop sidebar collapse works on large screens
 - settings build information shows the active runtime adapter
+- settings theme and locale saves apply to the current session
 
 ## Selector Strategy
 

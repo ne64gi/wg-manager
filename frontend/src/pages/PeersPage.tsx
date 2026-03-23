@@ -1,277 +1,42 @@
-import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-import {
-  applyServerConfig,
-  createPeer,
-  deletePeer,
-  getPeerStatuses,
-  listGroups,
-  listUsers,
-  reissuePeer,
-  revealPeerArtifacts,
-  updatePeer,
-} from "../lib/api";
+import { confirmAction } from "../lib/browser/actions";
 import { formatBytes } from "../lib/format";
-import { formatApplyFailureMessage, t } from "../lib/i18n";
-import { useAuth } from "../modules/auth/AuthContext";
-import { useGuiSettingsQuery } from "../modules/gui/useGuiSettingsQuery";
-import { queryKeys } from "../modules/queryKeys";
-import type { RevealedPeerArtifacts, User } from "../types";
+import { t } from "../lib/i18n";
 import { Panel, StatCard } from "../ui/Cards";
 import { MobileInfoPopover } from "../ui/MobileInfoPopover";
 import { RevealModal } from "../ui/RevealModal";
 import { DataTable } from "../ui/Table";
-import { useToast } from "../ui/ToastProvider";
-
-type PeerFormState = {
-  userId: string;
-  name: string;
-  assignedIp: string;
-  description: string;
-  isActive: boolean;
-};
-
-const DEFAULT_CREATE_FORM: PeerFormState = {
-  userId: "",
-  name: "",
-  assignedIp: "",
-  description: "",
-  isActive: true,
-};
-
-function formatDeleteConfirm(name: string) {
-  return t("peers.delete_confirm_named", `Delete "${name}"?`).replace("{name}", name);
-}
+import {
+  canManagePeerSecrets,
+  formatDeleteConfirm,
+  usePeersPageData,
+} from "../modules/peers/usePeersPageData";
 
 export function PeersPage() {
-  const auth = useAuth();
-  const queryClient = useQueryClient();
-  const [revealed, setRevealed] = useState<RevealedPeerArtifacts | null>(null);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [searchText, setSearchText] = useState("");
-  const [createForm, setCreateForm] = useState<PeerFormState>(DEFAULT_CREATE_FORM);
-  const guiSettingsQuery = useGuiSettingsQuery();
-  const { pushToast } = useToast();
-  const peersRefreshMs = (guiSettingsQuery.data?.peers_refresh_seconds ?? 10) * 1000;
-
-  const peerStatusesQuery = useQuery({
-    queryKey: queryKeys.peerStatuses,
-    queryFn: async () => getPeerStatuses((await auth.getValidAccessToken()) ?? ""),
-    refetchInterval: peersRefreshMs,
-  });
-  const usersQuery = useQuery({
-    queryKey: queryKeys.users,
-    queryFn: async () => listUsers((await auth.getValidAccessToken()) ?? ""),
-  });
-  const groupsQuery = useQuery({
-    queryKey: queryKeys.groups,
-    queryFn: async () => listGroups((await auth.getValidAccessToken()) ?? ""),
-  });
-
-  const users = usersQuery.data ?? [];
-  const groups = groupsQuery.data ?? [];
-  const activeUsers = useMemo(() => users.filter((user) => user.is_active), [users]);
-
-  async function refreshQueries() {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.peers });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.peerStatuses });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.overview });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.overviewHistory(24) });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.userSummaries });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.groupSummaries });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.syncState });
-  }
-
-  async function applyIfNeeded(successNotice?: string) {
-    if (!guiSettingsQuery.data?.refresh_after_apply) {
-      if (successNotice) {
-        pushToast(successNotice);
-      }
-      return;
-    }
-
-    try {
-      await applyServerConfig((await auth.getValidAccessToken()) ?? "");
-      pushToast(successNotice ?? t("common.config_applied", "Config applied."));
-    } catch (error) {
-      pushToast(
-        formatApplyFailureMessage(
-          successNotice ?? t("common.change_saved", "Change saved."),
-          error instanceof Error ? error.message : undefined,
-        ),
-        "error",
-      );
-    }
-  }
-
-  function closeCreateModal() {
-    setIsCreateOpen(false);
-    setCreateForm(DEFAULT_CREATE_FORM);
-  }
-
-  useEffect(() => {
-    if (!isCreateOpen) {
-      return;
-    }
-
-    if (!activeUsers.length) {
-      if (createForm.userId) {
-        setCreateForm((current) => ({ ...current, userId: "" }));
-      }
-      return;
-    }
-
-    const selectedIsActive = activeUsers.some(
-      (user) => String(user.id) === createForm.userId,
-    );
-    if (!selectedIsActive) {
-      setCreateForm((current) => ({
-        ...current,
-        userId: String(activeUsers[0].id),
-      }));
-    }
-  }, [activeUsers, createForm.userId, isCreateOpen]);
-
-  const createMutation = useMutation({
-    mutationFn: async () =>
-      createPeer((await auth.getValidAccessToken()) ?? "", {
-        user_id: Number(createForm.userId),
-        name: createForm.name,
-        assigned_ip: createForm.assignedIp || undefined,
-        description: createForm.description,
-        is_active: createForm.isActive,
-      }),
-    onSuccess: async () => {
-      closeCreateModal();
-      await applyIfNeeded(t("peers.created_notice", "Peer created."));
-      await refreshQueries();
-    },
-    onError: (error) => {
-      pushToast(
-        error instanceof Error ? error.message : t("peers.create_failed", "Failed to create peer"),
-        "error",
-      );
-    },
-  });
-
-  const revealMutation = useMutation({
-    mutationFn: async (peerId: number) =>
-      revealPeerArtifacts(peerId, (await auth.getValidAccessToken()) ?? ""),
-    onSuccess: async (artifacts) => {
-      setRevealed(artifacts);
-      await refreshQueries();
-    },
-    onError: (error) => {
-      pushToast(
-        error instanceof Error ? error.message : t("peers.reveal_failed", "Failed to reveal peer artifacts"),
-        "error",
-      );
-    },
-  });
-
-  const toggleMutation = useMutation({
-    mutationFn: async ({
-      peerId,
-      isActive,
-    }: {
-      peerId: number;
-      isActive: boolean;
-    }) =>
-      updatePeer((await auth.getValidAccessToken()) ?? "", peerId, {
-        is_active: !isActive,
-      }),
-    onSuccess: async (_, variables) => {
-      await applyIfNeeded(
-        variables.isActive
-          ? t("peers.disabled_notice", "Peer disabled.")
-          : t("peers.enabled_notice", "Peer enabled."),
-      );
-      await refreshQueries();
-    },
-    onError: (error) => {
-      pushToast(
-        error instanceof Error ? error.message : t("peers.update_failed", "Failed to update peer"),
-        "error",
-      );
-    },
-  });
-
-  const reissueMutation = useMutation({
-    mutationFn: async (peerId: number) =>
-      reissuePeer(peerId, (await auth.getValidAccessToken()) ?? ""),
-    onSuccess: async () => {
-      await applyIfNeeded(t("peers.reissue_notice", "Peer keys regenerated."));
-      await refreshQueries();
-    },
-    onError: (error) => {
-      pushToast(
-        error instanceof Error ? error.message : t("peers.reissue_failed", "Failed to reissue peer keys"),
-        "error",
-      );
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (peerId: number) =>
-      deletePeer(peerId, (await auth.getValidAccessToken()) ?? ""),
-    onSuccess: async () => {
-      await applyIfNeeded(t("peers.deleted_notice", "Peer deleted."));
-      await refreshQueries();
-    },
-    onError: (error) => {
-      pushToast(
-        error instanceof Error ? error.message : t("peers.delete_failed", "Failed to delete peer"),
-        "error",
-      );
-    },
-  });
-
-  const applyMutation = useMutation({
-    mutationFn: async () => applyServerConfig((await auth.getValidAccessToken()) ?? ""),
-    onSuccess: async () => {
-      pushToast(t("peers.apply_notice", "Config applied."));
-      await refreshQueries();
-    },
-    onError: (error) => {
-      pushToast(
-        error instanceof Error ? error.message : t("common.apply_failed", "Apply failed."),
-        "error",
-      );
-    },
-  });
-
-  const peers = peerStatusesQuery.data ?? [];
-  const userMap = useMemo(
-    () => new Map(users.map((user: User) => [user.id, user] as const)),
-    [users],
-  );
-  const groupMap = useMemo(
-    () => new Map(groups.map((group) => [group.id, group.name] as const)),
-    [groups],
-  );
-  const filteredPeers = peers.filter((peer) => {
-    const needle = searchText.trim().toLowerCase();
-    if (!needle) {
-      return true;
-    }
-
-    const peerUser = userMap.get(peer.user_id);
-    const groupName = peerUser ? groupMap.get(peerUser.group_id) ?? "" : "";
-
-    return [
-      peer.peer_name,
-      peer.user_name,
-      groupName,
-      peer.assigned_ip,
-      peer.endpoint ?? "",
-      peer.effective_allowed_ips.join(" "),
-    ]
-      .join(" ")
-      .toLowerCase()
-      .includes(needle);
-  });
-  const onlineCount = peers.filter((peer) => peer.is_online).length;
+  const {
+    guiSettingsQuery,
+    revealed,
+    setRevealed,
+    isCreateOpen,
+    setIsCreateOpen,
+    searchText,
+    setSearchText,
+    createForm,
+    setCreateForm,
+    groups,
+    peers,
+    activeUsers,
+    userMap,
+    groupMap,
+    filteredPeers,
+    onlineCount,
+    createMutation,
+    revealMutation,
+    toggleMutation,
+    reissueMutation,
+    deleteMutation,
+    applyMutation,
+    closeCreateModal,
+  } = usePeersPageData();
 
   return (
     <div className="page-stack">
@@ -357,11 +122,7 @@ export function PeersPage() {
                   <td>{formatBytes(peer.total_bytes)}</td>
                   <td className="action-row">
                     {(() => {
-                      const userIsActive = peerUser?.is_active ?? false;
-                      const groupIsActive = peerUser
-                        ? groups.some((group) => group.id === peerUser.group_id && group.is_active)
-                        : false;
-                      const canManageSecrets = peer.is_active && userIsActive && groupIsActive;
+                      const canManageSecrets = canManagePeerSecrets(peer, peerUser, groups);
 
                       return (
                         <>
@@ -396,7 +157,7 @@ export function PeersPage() {
                     <button
                       className="danger-button"
                       onClick={() => {
-                        if (window.confirm(formatDeleteConfirm(peer.peer_name))) {
+                        if (confirmAction(formatDeleteConfirm(peer.peer_name))) {
                           deleteMutation.mutate(peer.peer_id);
                         }
                       }}
@@ -413,11 +174,7 @@ export function PeersPage() {
           {filteredPeers.map((peer) => {
             const peerUser = userMap.get(peer.user_id);
             const groupName = peerUser ? groupMap.get(peerUser.group_id) ?? "—" : "—";
-            const userIsActive = peerUser?.is_active ?? false;
-            const groupIsActive = peerUser
-              ? groups.some((group) => group.id === peerUser.group_id && group.is_active)
-              : false;
-            const canManageSecrets = peer.is_active && userIsActive && groupIsActive;
+            const canManageSecrets = canManagePeerSecrets(peer, peerUser, groups);
 
             return (
               <article key={peer.peer_id} className="mobile-record">
@@ -485,7 +242,7 @@ export function PeersPage() {
                   <button
                     className="danger-button"
                     onClick={() => {
-                      if (window.confirm(formatDeleteConfirm(peer.peer_name))) {
+                      if (confirmAction(formatDeleteConfirm(peer.peer_name))) {
                         deleteMutation.mutate(peer.peer_id);
                       }
                     }}

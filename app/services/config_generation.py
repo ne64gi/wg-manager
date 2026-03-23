@@ -71,6 +71,7 @@ def _render_peer_config(
     server_endpoint: str,
     server_port: int,
     server_public_key: str,
+    interface_mtu: int | None,
 ) -> str:
     allowed_ips = ", ".join(_effective_allowed_ips(peer))
     lines = [
@@ -78,6 +79,8 @@ def _render_peer_config(
         f"Address = {peer.assigned_ip}/32",
         f"PrivateKey = {peer.private_key}",
     ]
+    if interface_mtu is not None:
+        lines.append(f"MTU = {interface_mtu}")
     if peer.user.group.dns_servers:
         lines.append(f"DNS = {', '.join(peer.user.group.dns_servers)}")
     lines.extend(
@@ -97,14 +100,22 @@ def _render_peer_config(
     return "\n".join(lines)
 
 
-def _render_server_config(server_address: str, listen_port: int, private_key: str, peers: list[Peer]) -> str:
+def _render_server_config(
+    server_address: str,
+    listen_port: int,
+    private_key: str,
+    peers: list[Peer],
+    interface_mtu: int | None,
+) -> str:
     lines = [
         "[Interface]",
         f"Address = {server_address}",
         f"ListenPort = {listen_port}",
         f"PrivateKey = {private_key}",
-        "",
     ]
+    if interface_mtu is not None:
+        lines.append(f"MTU = {interface_mtu}")
+    lines.append("")
     for peer in peers:
         lines.extend(
             [
@@ -146,6 +157,7 @@ def generate_peer_artifacts(
         initial_settings.endpoint_address,
         initial_settings.endpoint_port,
         server.public_key,
+        initial_settings.interface_mtu,
     )
     runtime_service = runtime_service or get_runtime_service()
     config_path = runtime_service.write_peer_config(peer.name, config_contents)
@@ -181,6 +193,7 @@ def generate_server_config(
     runtime_service: RuntimeService | None = None,
 ) -> GeneratedServerArtifacts:
     server = get_server_state(session)
+    initial_settings = get_initial_settings(session)
     peers = list(
         session.scalars(
             select(Peer)
@@ -205,6 +218,7 @@ def generate_server_config(
             server.listen_port,
             server.private_key,
             peers,
+            initial_settings.interface_mtu,
         ),
     )
 

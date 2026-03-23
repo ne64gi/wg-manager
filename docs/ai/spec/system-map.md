@@ -42,6 +42,14 @@ Hierarchy:
 - GUI is the normal operator entry point
 - the group network is the allocation boundary for descendant peers
 - users do not own subnets; peers own concrete assigned addresses
+- interface-level MTU currently lives on `InitialSettings.interface_mtu`
+- future MTU expansion should not be implemented by pushing logic into runtime adapters
+- future MTU override order should be resolved before config rendering:
+  - interface default
+  - group override
+  - user override
+  - peer override
+- if MTU overrides expand later, introduce an `effective settings` resolver rather than scattering precedence logic across routes or runtime code
 
 ## Route Ownership
 

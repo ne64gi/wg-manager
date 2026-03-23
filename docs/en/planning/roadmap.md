@@ -120,6 +120,12 @@ Interpretation:
 - harden authorization after the runtime and frontend boundaries are less fragile
 - allow `1.1` to introduce only the earliest authz seams, such as a no-op plugin, minimal action vocabulary, and audit-visible authz decisions
 - keep real deny/allow policy behavior and broader authorization enforcement for the later hardening phase
+- if topology-style network views are explored during `1.2`, keep them lightweight and structural only
+- if configuration values gain layered overrides later, prefer one shared resolver seam before config generation rather than spreading precedence across routes or runtime code
+- MTU is the current example:
+  - `1.2.x` stores it only as an interface-level default
+  - future expansion may add group, user, and peer overrides
+  - precedence should stay outside runtime adapters
 
 ### Cross-cutting quality work
 
@@ -138,6 +144,7 @@ These should advance alongside `1.1` through `1.4`, rather than becoming their o
 
 - status history for graphs or Grafana
 - graph interaction improvements such as click-to-expand views
+- Cytoscape.js-based topology or relationship views for `Group -> User -> Peer`
 - notification integration: Discord, LINE, others
 - improved logging UI: filters, search
 - advanced security hardening
@@ -158,6 +165,7 @@ Theme: `Safe single-runtime operations`
 - focus on authorization foundations, audit coverage, diff visibility, safer apply, history, backup/restore, and UI flow cleanup
 - separate Linux-specific runtime control behind adapter-style boundaries early, so future portability work does not require a large rewrite
 - keep the frontend Next-ready by separating routing, data fetching, browser-only APIs, and reusable UI concerns before any framework migration
+- keep future layered settings such as MTU override-ready by resolving effective values in service-level logic before config rendering
 - target outcome: one WireGuard runtime can be operated safely by multiple humans
 
 ### `2.x.x`

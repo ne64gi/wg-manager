@@ -1,44 +1,28 @@
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-
-import { listGuiLogs } from "../lib/api";
 import { formatDateTime } from "../lib/format";
 import { t } from "../lib/i18n";
-import { useAuth } from "../modules/auth/AuthContext";
-import { useGuiSettingsQuery } from "../modules/gui/useGuiSettingsQuery";
-import { queryKeys } from "../modules/queryKeys";
+import { useGuiLogsPage } from "../modules/gui/useGuiLogsPage";
 import { Panel } from "../ui/Cards";
 import { DataTable } from "../ui/Table";
 
 export function LogsPage() {
-  const auth = useAuth();
-  const guiSettingsQuery = useGuiSettingsQuery();
-  const [offset, setOffset] = useState(0);
-  const [level, setLevel] = useState("");
-  const [category, setCategory] = useState("");
-  const [search, setSearch] = useState("");
-  const limit = 50;
-  const categoryOptions = useMemo(
-    () => ["auth", "settings", "secret", "server", "peer", "group", "user"],
-    [],
-  );
-
-  const logsQuery = useQuery({
-    queryKey: queryKeys.guiLogs({ limit, offset, level, category, search }),
-    queryFn: async () =>
-      listGuiLogs((await auth.getValidAccessToken()) ?? "", {
-        limit,
-        offset,
-        level: level || undefined,
-        category: category || undefined,
-        search: search || undefined,
-      }),
-  });
-
-  const logs = logsQuery.data?.items ?? [];
-  const total = logsQuery.data?.total ?? 0;
-  const from = total === 0 ? 0 : offset + 1;
-  const to = Math.min(offset + limit, total);
+  const {
+    guiSettingsQuery,
+    logs,
+    total,
+    from,
+    to,
+    offset,
+    level,
+    category,
+    search,
+    limit,
+    categoryOptions,
+    setLevel,
+    setCategory,
+    setSearch,
+    previousPage,
+    nextPage,
+  } = useGuiLogsPage();
 
   return (
     <div className="page-stack">
@@ -65,10 +49,7 @@ export function LogsPage() {
           <select
             data-testid="logs-level-filter"
             value={level}
-            onChange={(event) => {
-              setOffset(0);
-              setLevel(event.target.value);
-            }}
+            onChange={(event) => setLevel(event.target.value)}
           >
             <option value="">{t("logs.all_levels", "All levels")}</option>
             <option value="debug">{t("log_level.debug", "debug")}</option>
@@ -83,10 +64,7 @@ export function LogsPage() {
           <select
             data-testid="logs-category-filter"
             value={category}
-            onChange={(event) => {
-              setOffset(0);
-              setCategory(event.target.value);
-            }}
+            onChange={(event) => setCategory(event.target.value)}
           >
             <option value="">{t("logs.all_categories", "All categories")}</option>
             {categoryOptions.map((item) => (
@@ -101,10 +79,7 @@ export function LogsPage() {
           <input
             data-testid="logs-search"
             value={search}
-            onChange={(event) => {
-              setOffset(0);
-              setSearch(event.target.value);
-            }}
+            onChange={(event) => setSearch(event.target.value)}
             placeholder={t("logs.search_placeholder", "Message, user, category")}
           />
         </label>
@@ -140,7 +115,7 @@ export function LogsPage() {
           <button
             className="ghost-button"
             disabled={offset === 0}
-            onClick={() => setOffset((current) => Math.max(0, current - limit))}
+            onClick={previousPage}
           >
             {t("logs.prev_page", "Previous")}
           </button>
@@ -153,7 +128,7 @@ export function LogsPage() {
           <button
             className="ghost-button"
             disabled={offset + limit >= total}
-            onClick={() => setOffset((current) => current + limit)}
+            onClick={nextPage}
           >
             {t("logs.next_page", "Next")}
           </button>

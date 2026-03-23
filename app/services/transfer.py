@@ -222,6 +222,7 @@ def export_domain_state(session: Session) -> StateExportRead:
             listen_port=server_state.listen_port,
             server_address=server_state.server_address,
             dns=server_state.dns,
+            interface_mtu=initial_settings.interface_mtu,
             private_key=server_state.private_key,
             public_key=server_state.public_key,
         ),
@@ -354,6 +355,7 @@ def import_domain_state(
         InitialSettingsUpdate(
             endpoint_address=payload.initial_settings.endpoint_address,
             endpoint_port=payload.initial_settings.endpoint_port,
+            interface_mtu=payload.initial_settings.interface_mtu,
         ),
     )
     gui_settings = update_gui_settings(
@@ -382,6 +384,7 @@ def import_domain_state(
             "imported_peer_count": imported_peer_count,
             "imported_at": imported_at.isoformat(),
             "endpoint_address": initial_settings.endpoint_address,
+            "interface_mtu": initial_settings.interface_mtu,
             "theme_mode": gui_settings.theme_mode,
         },
     )

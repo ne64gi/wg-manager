@@ -22,14 +22,17 @@ from app.services import (
     create_user,
     delete_login_user,
     get_gui_settings,
+    get_initial_settings,
     list_gui_logs,
     list_login_users,
     reveal_peer_artifacts,
+    update_initial_settings,
     update_gui_settings,
     update_login_user,
     init_db,
 )
 from app.services.gui import verify_password
+from app.schemas import InitialSettingsUpdate
 
 
 def reset_db() -> None:
@@ -150,6 +153,24 @@ def test_login_users_and_gui_settings_are_persisted() -> None:
     assert "GUI login user created" in messages
     assert "GUI settings updated" in messages
     assert "GUI login user deleted" in messages
+
+
+def test_initial_settings_include_interface_mtu() -> None:
+    reset_db()
+
+    with SessionLocal() as session:
+        initial_settings = get_initial_settings(session)
+        assert initial_settings.interface_mtu is None
+
+        updated = update_initial_settings(
+            session,
+            InitialSettingsUpdate(
+                endpoint_address="vpn.example.test",
+                endpoint_port=51820,
+                interface_mtu=1380,
+            ),
+        )
+        assert updated.interface_mtu == 1380
 
 
 def test_bootstrap_login_user_from_env(monkeypatch) -> None:

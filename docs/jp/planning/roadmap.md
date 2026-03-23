@@ -70,6 +70,12 @@ WireGuard peer を Web UI から安全に作成・管理・適用でき、状態
 - 認可と監査の本格強化は、その後に行う
 - ただし `1.1` の段階で、no-op plugin や最小 action vocabulary、authz decision をログへ流せる入口だけは先に作ってよい
 - deny / allow の本格運用や広い認可適用は、後半の hardening フェーズへ回す
+- `1.2` 中にネットワーク図のような可視化を試す場合は、軽い構造ビューに留める
+- 将来 layered override を持つ設定値は、route や runtime code に優先順位を散らさず、config 生成前の共有 resolver で解決する方針にする
+- MTU はその最初の例として扱う:
+  - `1.2.x` では interface 既定値だけを保持する
+  - 将来は group, user, peer override の追加を想定する
+  - 優先順位解決は runtime adapter の外側に置く
 
 ### `1.x` を横断する品質トラック
 
@@ -88,6 +94,7 @@ WireGuard peer を Web UI から安全に作成・管理・適用でき、状態
 
 - グラフや Grafana 向けの状態履歴
 - グラフのクリック拡大などの操作改善
+- `Group -> User -> Peer` を見る Cytoscape.js ベースのトポロジー表示
 - Discord や LINE などの通知連携
 - ログ UI の改善
 - セキュリティ強化
@@ -108,6 +115,7 @@ WireGuard peer を Web UI から安全に作成・管理・適用でき、状態
 - 認可の土台、監査ログ、diff 表示、安全な apply、履歴、backup / restore、GUI 導線整理を進める
 - Linux 依存の runtime 制御は早めに adapter 的な境界の内側へ押し込み、将来の移植性に備える
 - フロントは Next へ移りやすいよう、routing、data fetching、browser 依存、再利用 UI の責務分離を先に進める
+- MTU のように後から layered override を持ちうる設定値は、config rendering 前の service 層で一度だけ解決する形を守る
 - 目標: 1 台の WireGuard runtime を複数人が安心して触れる状態にする
 
 ### `2.x.x`

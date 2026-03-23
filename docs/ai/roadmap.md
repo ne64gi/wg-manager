@@ -119,6 +119,7 @@ Use the more specific planning documents when deciding what comes next:
 
 - status history for graphs or Grafana
 - graph interaction improvements such as click-to-expand drill-down views
+- lightweight topology-view exploration in `1.2`, with full interactive graph work deferred to `1.3`
 - notification integration: Discord, LINE, others
 - improved logging UI: filters, search
 - advanced security hardening

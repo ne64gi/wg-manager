@@ -163,6 +163,7 @@ def test_generate_peer_artifacts_uses_updated_initial_settings(tmp_path: Path) -
                 InitialSettingsUpdate(
                     endpoint_address="eip.sys-sol.jp",
                     endpoint_port=51820,
+                    interface_mtu=1380,
                 ),
             )
             group = create_group(
@@ -180,9 +181,48 @@ def test_generate_peer_artifacts_uses_updated_initial_settings(tmp_path: Path) -
 
         conf_text = Path(artifacts.config_path).read_text(encoding="utf-8")
         assert "Endpoint = eip.sys-sol.jp:51820" in conf_text
+        assert "MTU = 1380" in conf_text
     finally:
         settings.artifact_root = previous_root
         settings.server_endpoint = previous_endpoint
+        settings.server_address = previous_address
+
+
+def test_generate_server_config_includes_interface_mtu_when_configured(tmp_path: Path) -> None:
+    reset_db()
+    previous_root = settings.artifact_root
+    previous_address = settings.server_address
+    settings.artifact_root = str(tmp_path)
+    settings.server_address = "10.99.0.1/24"
+
+    try:
+        with SessionLocal() as session:
+            update_initial_settings(
+                session,
+                InitialSettingsUpdate(
+                    endpoint_address="vpn.example.test",
+                    endpoint_port=51820,
+                    interface_mtu=1420,
+                ),
+            )
+            group = create_group(
+                session,
+                GroupCreate(
+                    name="corp-mtu",
+                    scope=GroupScope.SINGLE_SITE,
+                    network_cidr="10.63.1.0/24",
+                    default_allowed_ips=["10.63.1.0/24"],
+                ),
+            )
+            user = create_user(session, UserCreate(group_id=group.id, name="mtu-user"))
+            create_peer(session, PeerCreate(user_id=user.id, name="mtu-peer"))
+
+            artifacts = generate_server_config(session)
+
+        config_text = Path(artifacts.server_config_path).read_text(encoding="utf-8")
+        assert "MTU = 1420" in config_text
+    finally:
+        settings.artifact_root = previous_root
         settings.server_address = previous_address
 
 

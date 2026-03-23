@@ -72,6 +72,25 @@ async function ensureAuthenticated(page: Parameters<typeof test>[0]["page"]) {
 }
 
 test.describe.serial("v1 smoke", () => {
+  test("login display settings carry into the authenticated app shell", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForLoadState("domcontentloaded");
+    await page.getByTestId("login-display-settings").click();
+    await page.getByTestId("login-theme-toggle").click();
+    await page.getByTestId("login-language-select").selectOption("ja");
+
+    await ensureAuthenticated(page);
+
+    await expect(page.locator("html")).toHaveAttribute("lang", "ja");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await expect(page.locator("html")).toHaveAttribute("data-theme-mode", "light");
+
+    await page.getByTestId("nav-settings").click();
+    await expect(page.getByTestId("settings-page-heading")).toContainText("設定");
+    await expect(page.getByTestId("settings-default-locale-select")).toHaveValue("ja");
+    await expect(page.getByTestId("settings-theme-mode-select")).toHaveValue("light");
+  });
+
   test("login or first-user setup reaches the dashboard", async ({ page }) => {
     await ensureAuthenticated(page);
     await expect(page.getByTestId("dashboard-sync-state")).toBeVisible();
@@ -86,14 +105,18 @@ test.describe.serial("v1 smoke", () => {
     await page.getByTestId("groups-create-network-cidr").fill(networkCidr);
     await page.getByTestId("groups-create-allowed-ips").fill(allowedIps);
     await page.getByTestId("groups-create-submit").click();
+    await page.getByTestId("groups-search").fill(names.group);
     await expect(page.getByText(names.group).first()).toBeVisible({ timeout: 10000 });
+    await page.getByTestId("groups-search").fill("");
 
     await page.getByTestId("nav-users").click();
     await page.getByTestId("users-add-button").click();
     await page.getByTestId("users-create-group").selectOption({ label: names.group });
     await page.getByTestId("users-create-name").fill(names.user);
     await page.getByTestId("users-create-submit").click();
+    await page.getByTestId("users-search").fill(names.user);
     await expect(page.getByText(names.user).first()).toBeVisible({ timeout: 10000 });
+    await page.getByTestId("users-search").fill("");
 
     await page.getByTestId("nav-peers").click();
     await page.getByTestId("peers-add-button").click();
@@ -128,16 +151,13 @@ test.describe.serial("v1 smoke", () => {
     await expect(page.getByTestId("logs-pagination")).toBeVisible();
   });
 
-  test("dashboard group traffic can expand to user breakdown", async ({ page }) => {
+  test("dashboard shows the lightweight topology preview", async ({ page }) => {
     await ensureAuthenticated(page);
 
     await page.getByTestId("nav-dashboard").click();
-    const accordion = page
-      .locator(`[data-testid^="dashboard-group-accordion-"]`, { hasText: names.group })
-      .first();
-
-    await accordion.locator("summary").click();
-    await expect(accordion.getByText(names.user).first()).toBeVisible();
+    await expect(page.getByTestId("dashboard-topology-preview")).toBeVisible();
+    await expect(page.getByText(names.group).first()).toBeVisible();
+    await expect(page.getByText(names.user).first()).toBeVisible();
   });
 
   test("desktop sidebar can collapse into icon-only navigation", async ({ page }) => {
@@ -153,5 +173,19 @@ test.describe.serial("v1 smoke", () => {
 
     await page.getByTestId("nav-settings").click();
     await expect(page.getByTestId("settings-runtime-adapter")).toHaveValue("docker_container");
+  });
+
+  test("settings theme and locale save applies to the current session", async ({ page }) => {
+    await ensureAuthenticated(page);
+
+    await page.getByTestId("nav-settings").click();
+    await page.getByTestId("settings-default-locale-select").selectOption("ja");
+    await page.getByTestId("settings-theme-mode-select").selectOption("light");
+    await page.getByTestId("settings-save-gui").click();
+
+    await expect(page.locator("html")).toHaveAttribute("lang", "ja");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await expect(page.locator("html")).toHaveAttribute("data-theme-mode", "light");
+    await expect(page.getByTestId("settings-page-heading")).toContainText("設定");
   });
 });

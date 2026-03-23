@@ -57,6 +57,8 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "common.config_applied": "設定を適用しました。",
   "common.change_saved": "変更を保存しました。",
   "common.apply_failed": "適用に失敗しました。",
+  "common.expand_all": "すべて開く",
+  "common.collapse_all": "すべて閉じる",
   "common.apply_failed_after_change": "{action} ただし、適用に失敗しました: {error}",
   "common.apply_failed_after_change_no_error": "{action} ただし、適用に失敗しました。",
   "common.on": "オン",
@@ -92,6 +94,9 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "dashboard.no_group_data": "グループ集計データはまだありません。",
   "dashboard.user_traffic": "ユーザー別トラフィック",
   "dashboard.group_traffic": "グループ別トラフィック",
+  "dashboard.topology_preview": "ネットワーク構成プレビュー",
+  "dashboard.no_topology_data": "グループとユーザーが作成されると、ここに構成プレビューが表示されます。",
+  "dashboard.no_topology_users": "このグループにはまだ表示できるユーザーノードがありません。",
   "dashboard.sync_state": "適用とドリフト状態",
   "dashboard.sync_synced": "同期済み",
   "dashboard.sync_unavailable": "ランタイム未接続",
@@ -284,7 +289,10 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "settings.endpoint_save_failed": "エンドポイント設定の保存に失敗しました。",
   "settings.endpoint_address": "エンドポイントアドレス",
   "settings.endpoint_port": "エンドポイントポート",
+  "settings.interface_mtu": "インターフェース MTU",
+  "settings.interface_mtu_placeholder": "任意",
   "settings.endpoint_port_hint": "Peer 設定に埋め込む公開ポート番号です。",
+  "settings.interface_mtu_hint": "生成する WireGuard の Interface 設定に埋め込む任意の MTU 値です。",
   "settings.add_user": "ログインユーザーを追加",
   "settings.login_user_created": "ログインユーザーを追加しました。",
   "settings.add_user_failed": "ログインユーザーの追加に失敗しました。",
@@ -366,49 +374,3 @@ export function formatApplyFailureMessage(
     .replace("{error}", errorMessage ?? "");
 }
 
-const PREVIEW_LOCALE_KEY = "wg-studio-preview-locale";
-const PREVIEW_THEME_KEY = "wg-studio-preview-theme";
-
-export function getPreviewLocale(): "en" | "ja" {
-  return getStoredPreviewLocale() ?? "en";
-}
-
-export function getStoredPreviewLocale(): "en" | "ja" | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const stored = window.localStorage.getItem(PREVIEW_LOCALE_KEY);
-  if (stored === "ja" || stored === "en") {
-    return stored;
-  }
-  return null;
-}
-
-export function setPreviewLocale(locale: "en" | "ja"): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  window.localStorage.setItem(PREVIEW_LOCALE_KEY, locale);
-  document.documentElement.lang = locale;
-}
-
-export function getPreviewTheme(): "light" | "dark" | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const stored = window.localStorage.getItem(PREVIEW_THEME_KEY);
-  return stored === "light" || stored === "dark" ? stored : null;
-}
-
-export function setPreviewTheme(theme: "light" | "dark"): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  window.localStorage.setItem(PREVIEW_THEME_KEY, theme);
-  document.documentElement.dataset.theme = theme;
-  document.documentElement.dataset.themeMode = theme;
-}

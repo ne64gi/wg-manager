@@ -1,47 +1,42 @@
 import { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
-import type { PropsWithChildren } from "react";
+import type { ComponentType, PropsWithChildren } from "react";
 
+import { readLocalStorage, writeLocalStorage } from "../lib/browser/storage";
 import { t } from "../lib/i18n";
-import { useAuth } from "../modules/auth/AuthContext";
 import {
   BrandIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  DashboardIcon,
-  GroupIcon,
   LogoutIcon,
-  LogsIcon,
   MenuIcon,
-  PeerIcon,
-  SettingsIcon,
-  UserIcon,
 } from "./Icons";
 
-const navItems = [
-  { to: "/", labelKey: "nav.dashboard", label: "Dashboard", icon: DashboardIcon },
-  { to: "/groups", labelKey: "nav.groups", label: "Groups", icon: GroupIcon },
-  { to: "/users", labelKey: "nav.users", label: "Users", icon: UserIcon },
-  { to: "/peers", labelKey: "nav.peers", label: "Peers", icon: PeerIcon },
-  { to: "/settings", labelKey: "nav.settings", label: "Settings", icon: SettingsIcon },
-  { to: "/logs", labelKey: "nav.logs", label: "Logs", icon: LogsIcon },
-];
+export type AppNavItem = {
+  to: string;
+  labelKey: string;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+  isActive: boolean;
+  onSelect: () => void;
+};
 
-export function AppLayout({ children }: PropsWithChildren) {
-  const auth = useAuth();
+export function AppLayout({
+  children,
+  currentUsername,
+  navigation,
+  onLogout,
+}: PropsWithChildren<{
+  currentUsername: string | null;
+  navigation: AppNavItem[];
+  onLogout: () => Promise<void> | void;
+}>) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isDesktopNavCollapsed, setIsDesktopNavCollapsed] = useState(() => {
-    if (typeof window === "undefined") {
-      return false;
-    }
-    return window.localStorage.getItem("wg-studio.desktop-nav-collapsed") === "true";
+    return readLocalStorage("wg-studio.desktop-nav-collapsed") === "true";
   });
 
   useEffect(() => {
-    window.localStorage.setItem(
-      "wg-studio.desktop-nav-collapsed",
-      String(isDesktopNavCollapsed),
-    );
+    writeLocalStorage("wg-studio.desktop-nav-collapsed", String(isDesktopNavCollapsed));
   }, [isDesktopNavCollapsed]);
 
   function closeMobileNav() {
@@ -106,38 +101,38 @@ export function AppLayout({ children }: PropsWithChildren) {
             </button>
           </div>
           <nav className="nav-list">
-            {navItems.map((item) => (
-              <NavLink
+            {navigation.map((item) => (
+              <button
                 key={item.to}
-                to={item.to}
+                type="button"
                 data-testid={`nav-${item.label.toLowerCase()}`}
-                className={({ isActive }) =>
-                  `nav-item${isActive ? " nav-item-active" : ""}`
-                }
-                end={item.to === "/"}
-                onClick={closeMobileNav}
+                className={`nav-item${item.isActive ? " nav-item-active" : ""}`}
+                onClick={() => {
+                  closeMobileNav();
+                  item.onSelect();
+                }}
                 title={isDesktopNavCollapsed ? t(item.labelKey, item.label) : undefined}
               >
                 <item.icon className="icon nav-icon" />
                 <span className={isDesktopNavCollapsed ? "sidebar-collapsed-hidden" : ""}>
                   {t(item.labelKey, item.label)}
                 </span>
-              </NavLink>
+              </button>
             ))}
           </nav>
         </div>
         <div className="sidebar-footer">
           <div className={`sidebar-user${isDesktopNavCollapsed ? " sidebar-collapsed-hidden" : ""}`}>
-            {auth.currentUser?.username}
+            {currentUsername}
           </div>
           <button
             className={`secondary-button sidebar-logout-button${
               isDesktopNavCollapsed ? " sidebar-logout-button-collapsed" : ""
             }`}
             data-testid="nav-logout"
-            onClick={() => {
+            onClick={async () => {
               closeMobileNav();
-              auth.logoutAction();
+              await onLogout();
             }}
             title={isDesktopNavCollapsed ? t("auth.logout", "Log out") : undefined}
           >

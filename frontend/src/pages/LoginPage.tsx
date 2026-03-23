@@ -1,17 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-
-import { getAuthSetupStatus, setupInitialLoginUser } from "../lib/api";
-import {
-  getPreviewLocale,
-  getPreviewTheme,
-  setPreviewLocale,
-  setPreviewTheme,
-  t,
-  translateErrorMessage,
-} from "../lib/i18n";
-import { useAuth } from "../modules/auth/AuthContext";
+import { t } from "../lib/i18n";
+import { useLoginPageState } from "../modules/auth/useLoginPageState";
 import {
   BrandIcon,
   EyeIcon,
@@ -22,69 +10,31 @@ import {
   UserIcon,
 } from "../ui/Icons";
 
-export function LoginPage() {
-  const auth = useAuth();
-  const navigate = useNavigate();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [locale, setLocale] = useState<"en" | "ja">(getPreviewLocale());
-  const [theme, setTheme] = useState<"light" | "dark">(() => getPreviewTheme() ?? "dark");
-  const setupStatusQuery = useQuery({
-    queryKey: ["auth", "setup-status"],
-    queryFn: getAuthSetupStatus,
-    retry: false,
-  });
-  const needsSetup = setupStatusQuery.data?.has_login_users === false;
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      await auth.loginAction({ username, password });
-      navigate("/", { replace: true });
-    } catch (submissionError) {
-      setError(
-        submissionError instanceof Error
-          ? translateErrorMessage(submissionError.message)
-          : t("auth.invalid_credentials", "Login failed"),
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  async function handleSetupSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setIsSubmitting(true);
-    setError(null);
-
-    if (password !== confirmPassword) {
-      setError(t("auth.password_mismatch", "Passwords do not match"));
-      setIsSubmitting(false);
-      return;
-    }
-
-    try {
-      const pair = await setupInitialLoginUser({ username, password });
-      await auth.acceptTokenPair(pair);
-      navigate("/", { replace: true });
-    } catch (submissionError) {
-      setError(
-        submissionError instanceof Error
-          ? translateErrorMessage(submissionError.message)
-          : t("auth.setup_failed", "Setup failed"),
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
+export function LoginPage({
+  onAuthenticated,
+}: {
+  onAuthenticated?: () => void;
+}) {
+  const {
+    username,
+    setUsername,
+    password,
+    setPassword,
+    confirmPassword,
+    setConfirmPassword,
+    error,
+    isSubmitting,
+    isSettingsOpen,
+    setIsSettingsOpen,
+    showPassword,
+    setShowPassword,
+    locale,
+    changeLocale,
+    theme,
+    toggleTheme,
+    needsSetup,
+    handleSubmit,
+  } = useLoginPageState(onAuthenticated);
 
   return (
     <div className="login-shell">
@@ -93,7 +43,7 @@ export function LoginPage() {
       <form
         className="login-card login-card-xui"
         data-testid="login-form"
-        onSubmit={needsSetup ? handleSetupSubmit : handleSubmit}
+        onSubmit={handleSubmit}
       >
         <div className="login-card-top">
           <div className="login-brand-chip">
@@ -103,6 +53,7 @@ export function LoginPage() {
             <button
               type="button"
               className="login-settings-button"
+              data-testid="login-display-settings"
               onClick={() => setIsSettingsOpen((current) => !current)}
               aria-label={t("auth.display_settings_button", "Display settings")}
               title={t("auth.display_settings_button", "Display settings")}
@@ -114,14 +65,9 @@ export function LoginPage() {
                 <button
                   type="button"
                   className="login-settings-toggle-row"
+                  data-testid="login-theme-toggle"
                   aria-pressed={theme === "dark"}
-                  onClick={() =>
-                    setTheme((current) => {
-                      const nextTheme = current === "dark" ? "light" : "dark";
-                      setPreviewTheme(nextTheme);
-                      return nextTheme;
-                    })
-                  }
+                  onClick={toggleTheme}
                 >
                   <span>{t("auth.dark_mode", "Dark mode")}</span>
                   <span className={`theme-toggle ${theme === "dark" ? "theme-toggle-on" : ""}`}>
@@ -133,12 +79,9 @@ export function LoginPage() {
                   <div className="login-language-shell">
                     <GlobeIcon className="icon login-language-icon" />
                     <select
+                      data-testid="login-language-select"
                       value={locale}
-                      onChange={(event) => {
-                        const nextLocale = event.target.value === "ja" ? "ja" : "en";
-                        setPreviewLocale(nextLocale);
-                        setLocale(nextLocale);
-                      }}
+                      onChange={(event) => changeLocale(event.target.value)}
                     >
                       <option value="en">{t("locale.en_flag", "🇺🇸 English")}</option>
                       <option value="ja">{t("locale.ja_flag", "🇯🇵 日本語")}</option>

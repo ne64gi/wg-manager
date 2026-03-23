@@ -1,119 +1,21 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-import {
-  applyServerConfig,
-  getGroupSummaries,
-  getOverview,
-  getOverviewHistory,
-  getSyncState,
-  getUserSummaries,
-} from "../lib/api";
 import { formatBytes, formatDateTime } from "../lib/format";
 import { t } from "../lib/i18n";
-import { useAuth } from "../modules/auth/AuthContext";
-import { useGuiSettingsQuery } from "../modules/gui/useGuiSettingsQuery";
-import { queryKeys } from "../modules/queryKeys";
+import { translateDriftReason, useDashboardData } from "../modules/dashboard/useDashboardData";
 import { StatCard, Panel } from "../ui/Cards";
-import { DataTable } from "../ui/Table";
-import { useToast } from "../ui/ToastProvider";
-import type { UserTrafficSummary } from "../types";
-
-function translateDriftReason(reason: string): string {
-  const missingMatch = reason.match(/^(\d+)\s+desired peers are missing from runtime$/);
-  if (missingMatch) {
-    return t("dashboard.drift_missing_runtime", "{count} required peers are not present in the runtime.").replace(
-      "{count}",
-      missingMatch[1],
-    );
-  }
-
-  const unexpectedMatch = reason.match(/^(\d+)\s+runtime peers are not managed by current state$/);
-  if (unexpectedMatch) {
-    return t("dashboard.drift_unmanaged_runtime", "{count} runtime peers are not part of the current managed state.").replace(
-      "{count}",
-      unexpectedMatch[1],
-    );
-  }
-
-  const allowedIpsMatch = reason.match(
-    /^(\d+)\s+peers have runtime allowed IPs that differ from desired state$/,
-  );
-  if (allowedIpsMatch) {
-    return t(
-      "dashboard.drift_allowed_ips",
-      "{count} peers have runtime AllowedIPs that do not match the expected state.",
-    ).replace("{count}", allowedIpsMatch[1]);
-  }
-
-  return reason;
-}
 
 export function DashboardPage() {
-  const auth = useAuth();
-  const queryClient = useQueryClient();
-  const guiSettingsQuery = useGuiSettingsQuery();
-  const { pushToast } = useToast();
-  const overviewRefreshMs =
-    (guiSettingsQuery.data?.overview_refresh_seconds ?? 5) * 1000;
-
-  const applyMutation = useMutation({
-    mutationFn: async () => applyServerConfig((await auth.getValidAccessToken()) ?? ""),
-    onSuccess: async () => {
-      pushToast(t("peers.apply_notice", "Config applied."));
-      await queryClient.invalidateQueries({ queryKey: queryKeys.overview });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.overviewHistory(24) });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.userSummaries });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.groupSummaries });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.peerStatuses });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.syncState });
-    },
-    onError: (error) => {
-      pushToast(
-        error instanceof Error ? error.message : t("common.apply_failed", "Apply failed."),
-        "error",
-      );
-    },
-  });
-
-  const overviewQuery = useQuery({
-    queryKey: queryKeys.overview,
-    queryFn: async () => getOverview((await auth.getValidAccessToken()) ?? ""),
-    refetchInterval: overviewRefreshMs,
-  });
-  const usersQuery = useQuery({
-    queryKey: queryKeys.userSummaries,
-    queryFn: async () => getUserSummaries((await auth.getValidAccessToken()) ?? ""),
-    refetchInterval: overviewRefreshMs,
-  });
-  const groupsQuery = useQuery({
-    queryKey: queryKeys.groupSummaries,
-    queryFn: async () => getGroupSummaries((await auth.getValidAccessToken()) ?? ""),
-    refetchInterval: overviewRefreshMs,
-  });
-  const historyQuery = useQuery({
-    queryKey: queryKeys.overviewHistory(24),
-    queryFn: async () => getOverviewHistory((await auth.getValidAccessToken()) ?? "", 24),
-    refetchInterval: overviewRefreshMs,
-  });
-  const syncStateQuery = useQuery({
-    queryKey: queryKeys.syncState,
-    queryFn: async () => getSyncState((await auth.getValidAccessToken()) ?? ""),
-    refetchInterval: overviewRefreshMs,
-  });
-
-  const overview = overviewQuery.data;
-  const syncState = syncStateQuery.data;
-  const historyPoints = historyQuery.data ?? [];
-  const hasRuntimeDrift = (syncState?.drift_reasons?.length ?? 0) > 0;
-  const hasPendingGeneration = (syncState?.pending_generation_count ?? 0) > 0;
-  const timelinePath = buildTimelinePath(historyPoints.map((point) => point.total_usage_bytes));
-  const onlinePath = buildTimelinePath(historyPoints.map((point) => point.online_peer_count));
-  const userSummariesByGroup = new Map<number, UserTrafficSummary[]>();
-  for (const user of usersQuery.data ?? []) {
-    const current = userSummariesByGroup.get(user.group_id) ?? [];
-    current.push(user);
-    userSummariesByGroup.set(user.group_id, current);
-  }
+  const {
+    overview,
+    groups,
+    historyPoints,
+    syncState,
+    hasRuntimeDrift,
+    hasPendingGeneration,
+    timelinePath,
+    onlinePath,
+    topologyGroups,
+    applyMutation,
+  } = useDashboardData();
 
   return (
     <div className="page-stack">
@@ -196,7 +98,10 @@ export function DashboardPage() {
               ) : (
                 <div className="muted-text">
                   {syncState?.status === "runtime_unavailable"
-                    ? t("dashboard.sync_runtime_unavailable_detail", "Could not read the WireGuard runtime state. Check runtime connectivity.")
+                    ? t(
+                        "dashboard.sync_runtime_unavailable_detail",
+                        "Could not read the WireGuard runtime state. Check runtime connectivity.",
+                      )
                     : t("dashboard.sync_healthy", "Runtime state matches the desired WireGuard state.")}
                 </div>
               )}
@@ -242,7 +147,7 @@ export function DashboardPage() {
         <div className="dashboard-panel-span-3 dashboard-side-stack">
           <Panel title={t("dashboard.group_online", "Online peers by group")}>
             <div className="bar-list">
-              {(groupsQuery.data ?? []).map((item) => {
+              {groups.map((item) => {
                 const width =
                   item.peer_count > 0
                     ? Math.max(8, Math.round((item.online_peer_count / item.peer_count) * 100))
@@ -261,88 +166,56 @@ export function DashboardPage() {
                   </div>
                 );
               })}
-              {groupsQuery.data?.length ? null : (
+              {groups.length ? null : (
                 <div className="muted-text">{t("dashboard.no_group_data", "No group summary data yet.")}</div>
               )}
             </div>
           </Panel>
-          <Panel title={t("dashboard.group_traffic", "Group traffic")}>
-            <div className="accordion-list" data-testid="dashboard-group-traffic-accordion">
-              {(groupsQuery.data ?? []).map((item) => (
-                <details
-                  key={item.group_id}
-                  className="accordion-card"
-                  data-testid={`dashboard-group-accordion-${item.group_id}`}
-                >
-                  <summary className="accordion-summary">
-                    <div>
-                      <div className="accordion-title">{item.group_name}</div>
-                      <div className="accordion-subtitle">
-                        {item.group_scope} · {item.user_count} {t("nav.users", "Users")} · {item.peer_count}{" "}
+        </div>
+        <div className="dashboard-panel-span-12">
+          <Panel title={t("dashboard.topology_preview", "Network topology preview")}>
+            <div className="topology-preview" data-testid="dashboard-topology-preview">
+              {topologyGroups.length ? (
+                topologyGroups.map((group) => (
+                  <section className="topology-group" key={group.groupId}>
+                    <div className="topology-node topology-node-group">
+                      <div className="topology-node-title">{group.groupName}</div>
+                      <div className="topology-node-subtitle">
+                        {group.scope} · {group.userCount} {t("nav.users", "Users")} · {group.peerCount}{" "}
                         {t("table.peers", "Peers")}
                       </div>
                     </div>
-                    <div className="accordion-summary-metrics">
-                      <span>{formatBytes(item.total_usage_bytes)}</span>
-                      <span className="accordion-summary-chevron" aria-hidden="true">
-                        +
-                      </span>
+                    <div className="topology-user-list">
+                      {group.users.length ? (
+                        group.users.map((user) => (
+                          <div className="topology-user-branch" key={user.user_id}>
+                            <div className="topology-connector" aria-hidden="true" />
+                            <div className="topology-node topology-node-user">
+                              <div className="topology-node-title">{user.user_name}</div>
+                              <div className="topology-node-subtitle">
+                                {user.peer_count} {t("table.peers", "Peers")} · {user.online_peer_count}{" "}
+                                {t("table.online", "Online")}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="muted-text">
+                          {t("dashboard.no_topology_users", "No user nodes available for this group yet.")}
+                        </div>
+                      )}
                     </div>
-                  </summary>
-                  <div className="accordion-content">
-                    <DataTable
-                      headers={[
-                        t("table.user", "User"),
-                        t("table.peers", "Peers"),
-                        t("table.online", "Online"),
-                        t("table.traffic", "Traffic"),
-                      ]}
-                    >
-                      {(userSummariesByGroup.get(item.group_id) ?? []).map((user) => (
-                        <tr key={user.user_id}>
-                          <td>{user.user_name}</td>
-                          <td>{user.peer_count}</td>
-                          <td>{user.online_peer_count}</td>
-                          <td>{formatBytes(user.total_usage_bytes)}</td>
-                        </tr>
-                      ))}
-                    </DataTable>
-                    {(userSummariesByGroup.get(item.group_id) ?? []).length === 0 ? (
-                      <div className="muted-text">
-                        {t("dashboard.no_user_data_for_group", "No user traffic data for this group yet.")}
-                      </div>
-                    ) : null}
-                  </div>
-                </details>
-              ))}
+                  </section>
+                ))
+              ) : (
+                <div className="muted-text">
+                  {t("dashboard.no_topology_data", "Topology preview will appear once groups and users exist.")}
+                </div>
+              )}
             </div>
           </Panel>
         </div>
       </div>
     </div>
   );
-}
-
-function buildTimelinePath(values: number[]): string | null {
-  if (values.length === 0) {
-    return null;
-  }
-
-  if (values.length === 1) {
-    const y = 52;
-    return `M 0 ${y} L 100 ${y}`;
-  }
-
-  const maxValue = Math.max(...values);
-  const minValue = Math.min(...values);
-  const range = Math.max(1, maxValue - minValue);
-
-  return values
-    .map((value, index) => {
-      const x = (index / (values.length - 1)) * 100;
-      const normalized = (value - minValue) / range;
-      const y = 88 - normalized * 58;
-      return `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`;
-    })
-    .join(" ");
 }

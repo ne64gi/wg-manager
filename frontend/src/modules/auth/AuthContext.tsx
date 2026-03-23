@@ -10,6 +10,7 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ApiError, getAuthMe, login, logout, refresh } from "../../lib/api";
+import { readLocalStorage, removeLocalStorage, writeLocalStorage } from "../../lib/browser/storage";
 import { queryKeys } from "../queryKeys";
 import type { AuthLoginRequest, AuthenticatedLoginUser, TokenPair } from "../../types";
 
@@ -40,7 +41,7 @@ const REFRESH_SKEW_MS = 60_000;
 
 function readPersistedAuth(): PersistedAuth | null {
   try {
-    const value = window.localStorage.getItem(STORAGE_KEY);
+    const value = readLocalStorage(STORAGE_KEY);
     if (!value) {
       return null;
     }
@@ -52,9 +53,9 @@ function readPersistedAuth(): PersistedAuth | null {
 
 function writePersistedAuth(value: PersistedAuth | null) {
   if (value) {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+    writeLocalStorage(STORAGE_KEY, JSON.stringify(value));
   } else {
-    window.localStorage.removeItem(STORAGE_KEY);
+    removeLocalStorage(STORAGE_KEY);
   }
 }
 

@@ -1,355 +1,42 @@
-import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
+import { confirmAction, downloadBlob } from "../lib/browser/actions";
+import { t } from "../lib/i18n";
 import {
-  applyServerConfig,
-  createGroup,
-  deleteGroup,
-  downloadGroupBundle,
-  getGroupBundleWarning,
-  listGroups,
-  updateGroup,
-} from "../lib/api";
-import { formatApplyFailureMessage, t } from "../lib/i18n";
-import type { Group } from "../types";
-import { useAuth } from "../modules/auth/AuthContext";
-import { useGuiSettingsQuery } from "../modules/gui/useGuiSettingsQuery";
+  formatDeleteConfirm,
+  getBundleWarningText,
+  normalizeNetworkCidr,
+  SCOPE_EXAMPLE,
+  SCOPE_PREFIX,
+  useGroupsPageData,
+} from "../modules/groups/useGroupsPageData";
 import { Panel } from "../ui/Cards";
 import { MobileInfoPopover } from "../ui/MobileInfoPopover";
 import { DataTable } from "../ui/Table";
-import { queryKeys } from "../modules/queryKeys";
-import { useToast } from "../ui/ToastProvider";
-
-type GroupFormState = {
-  name: string;
-  scope: string;
-  networkCidr: string;
-  allowedIps: string;
-  dnsServers: string;
-  description: string;
-  isActive: boolean;
-};
-
-const DEFAULT_CREATE_FORM: GroupFormState = {
-  name: "",
-  scope: "single_site",
-  networkCidr: "",
-  allowedIps: "",
-  dnsServers: "",
-  description: "",
-  isActive: true,
-};
-
-const SCOPE_PREFIX: Record<string, number> = {
-  single_site: 24,
-  multi_site: 16,
-  admin: 8,
-};
-
-const SCOPE_EXAMPLE: Record<string, string> = {
-  single_site: "10.10.1.0/24",
-  multi_site: "10.10.0.0/16",
-  admin: "10.0.0.0/8",
-};
-
-function normalizeNetworkCidr(value: string) {
-  const trimmed = value.trim();
-  const match = trimmed.match(
-    /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\/(\d{1,2})$/,
-  );
-  if (!match) {
-    return trimmed;
-  }
-
-  const octets = match.slice(1, 5).map(Number);
-  const prefix = Number(match[5]);
-  if (octets.some((part) => Number.isNaN(part) || part < 0 || part > 255)) {
-    return trimmed;
-  }
-  if (Number.isNaN(prefix) || prefix < 0 || prefix > 32) {
-    return trimmed;
-  }
-
-  let address =
-    ((octets[0] << 24) >>> 0) |
-    ((octets[1] << 16) >>> 0) |
-    ((octets[2] << 8) >>> 0) |
-    (octets[3] >>> 0);
-
-  const mask = prefix === 0 ? 0 : ((0xffffffff << (32 - prefix)) >>> 0);
-  address = address & mask;
-
-  return [
-    (address >>> 24) & 255,
-    (address >>> 16) & 255,
-    (address >>> 8) & 255,
-    address & 255,
-  ].join(".") + `/${prefix}`;
-}
-
-function formatDeleteConfirm(name: string) {
-  return t("groups.delete_confirm_named", `Delete "${name}"?`).replace("{name}", name);
-}
-
-function saveBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-function getBundleWarningText(peerCount: number) {
-  return `${t(
-    "groups.bundle_warning",
-    "This bundle will reissue keys for eligible peers, package the new configs into a ZIP, and invalidate older peer files. Apply before distributing the new files.",
-  )}\n\n${t("groups.bundle_peer_count", "Peer count")}: ${peerCount}`;
-}
-
-function getScopeValidationMessage(scope: string, networkCidr: string) {
-  const expectedPrefix = SCOPE_PREFIX[scope];
-  if (!networkCidr.trim()) {
-    return null;
-  }
-
-  const match = networkCidr.trim().match(/\/(\d{1,2})$/);
-  if (!match) {
-    return t(
-      "groups.network_prefix_required",
-      "Network CIDR must include a prefix, such as 10.10.1.0/24.",
-    );
-  }
-
-  const actualPrefix = Number(match[1]);
-  if (actualPrefix !== expectedPrefix) {
-    const scopeLabel = t(`groups.scope_${scope}`, scope);
-    return t("groups.prefix_rule", "{scope} groups must use /{prefix}.")
-      .replace("{scope}", scopeLabel)
-      .replace("{prefix}", String(expectedPrefix));
-  }
-
-  return null;
-}
-
-function toUpdatePayload(form: GroupFormState) {
-  return {
-    name: form.name,
-    default_allowed_ips: form.allowedIps
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean),
-    dns_servers: form.dnsServers
-      ? form.dnsServers
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean)
-      : null,
-    description: form.description,
-    is_active: form.isActive,
-  };
-}
 
 export function GroupsPage() {
-  const auth = useAuth();
-  const queryClient = useQueryClient();
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingGroup, setEditingGroup] = useState<Group | null>(null);
-  const [createForm, setCreateForm] = useState<GroupFormState>(DEFAULT_CREATE_FORM);
-  const [editForm, setEditForm] = useState<GroupFormState>(DEFAULT_CREATE_FORM);
-  const guiSettingsQuery = useGuiSettingsQuery();
-  const { pushToast } = useToast();
-  const groupsQuery = useQuery({
-    queryKey: queryKeys.groups,
-    queryFn: async () => listGroups((await auth.getValidAccessToken()) ?? ""),
-  });
-
-  const groups = groupsQuery.data ?? [];
-  const activeCount = useMemo(
-    () => groups.filter((group) => group.is_active).length,
-    [groups],
-  );
-  const createScopeError = getScopeValidationMessage(createForm.scope, createForm.networkCidr);
-
-  function updateCreateFormField<K extends keyof GroupFormState>(
-    key: K,
-    value: GroupFormState[K],
-  ) {
-    setCreateForm((current) => ({ ...current, [key]: value }));
-  }
-
-  async function refreshGroupQueries() {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.groups });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.users });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.peers });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.groupSummaries });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.userSummaries });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.peerStatuses });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.syncState });
-  }
-
-  async function applyIfNeeded(successNotice?: string) {
-    if (!guiSettingsQuery.data?.refresh_after_apply) {
-      if (successNotice) {
-        pushToast(successNotice);
-      }
-      return;
-    }
-
-    try {
-      await applyServerConfig((await auth.getValidAccessToken()) ?? "");
-      pushToast(successNotice ?? t("common.config_applied", "Config applied."));
-    } catch (error) {
-      pushToast(
-        formatApplyFailureMessage(
-          successNotice ?? t("common.change_saved", "Change saved."),
-          error instanceof Error ? error.message : undefined,
-        ),
-        "error",
-      );
-    }
-  }
-
-  function closeCreateModal() {
-    setIsCreateOpen(false);
-    setCreateForm(DEFAULT_CREATE_FORM);
-  }
-
-  function openEditModal(group: Group) {
-    setEditingGroup(group);
-    setEditForm({
-      name: group.name,
-      scope: group.scope,
-      networkCidr: group.network_cidr,
-      allowedIps: group.default_allowed_ips.join(", "),
-      dnsServers: group.dns_servers?.join(", ") ?? "",
-      description: group.description ?? "",
-      isActive: group.is_active,
-    });
-  }
-
-  function closeEditModal() {
-    setEditingGroup(null);
-    setEditForm(DEFAULT_CREATE_FORM);
-  }
-
-  const createMutation = useMutation({
-    mutationFn: async () =>
-      createGroup((await auth.getValidAccessToken()) ?? "", {
-        name: createForm.name,
-        scope: createForm.scope,
-        network_cidr: normalizeNetworkCidr(createForm.networkCidr),
-        default_allowed_ips: createForm.allowedIps
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean),
-        dns_servers: createForm.dnsServers
-          ? createForm.dnsServers
-              .split(",")
-              .map((item) => item.trim())
-              .filter(Boolean)
-          : undefined,
-        description: createForm.description,
-        is_active: createForm.isActive,
-      }),
-    onSuccess: async () => {
-      closeCreateModal();
-      await applyIfNeeded(t("groups.created_notice", "Group created."));
-      await refreshGroupQueries();
-    },
-    onError: (error) => {
-      pushToast(
-        error instanceof Error ? error.message : t("groups.create_failed", "Failed to create group"),
-        "error",
-      );
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({
-      groupId,
-      form,
-    }: {
-      groupId: number;
-      form: GroupFormState;
-    }) => updateGroup((await auth.getValidAccessToken()) ?? "", groupId, toUpdatePayload(form)),
-    onSuccess: async () => {
-      closeEditModal();
-      await applyIfNeeded(t("groups.updated_notice", "Group updated."));
-      await refreshGroupQueries();
-    },
-    onError: (error) => {
-      pushToast(
-        error instanceof Error ? error.message : t("groups.update_failed", "Failed to update group"),
-        "error",
-      );
-    },
-  });
-
-  const toggleMutation = useMutation({
-    mutationFn: async (group: Group) =>
-      updateGroup((await auth.getValidAccessToken()) ?? "", group.id, {
-        is_active: !group.is_active,
-      }),
-    onSuccess: async (_, group) => {
-      await applyIfNeeded(
-        group.is_active
-          ? t("groups.disabled_notice", "Group disabled.")
-          : t("groups.enabled_notice", "Group enabled."),
-      );
-      await refreshGroupQueries();
-    },
-    onError: (error) => {
-      pushToast(
-        error instanceof Error ? error.message : t("groups.update_failed", "Failed to update group"),
-        "error",
-      );
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (groupId: number) =>
-      deleteGroup(groupId, (await auth.getValidAccessToken()) ?? ""),
-    onSuccess: async () => {
-      await applyIfNeeded(t("groups.deleted_notice", "Group deleted."));
-      await refreshGroupQueries();
-    },
-    onError: (error) => {
-      pushToast(
-        error instanceof Error ? error.message : t("groups.delete_failed", "Failed to delete group"),
-        "error",
-      );
-    },
-  });
-
-  const bundleMutation = useMutation({
-    mutationFn: async (group: Group) => {
-      const accessToken = (await auth.getValidAccessToken()) ?? "";
-      const warning = await getGroupBundleWarning(group.id, accessToken);
-      const confirmed = window.confirm(getBundleWarningText(warning.peer_count));
-      if (!confirmed) {
-        return null;
-      }
-      return {
-        blob: await downloadGroupBundle(group.id, accessToken),
-        filename: `${group.name}-peers.zip`,
-      };
-    },
-    onSuccess: async (result) => {
-      if (!result) {
-        return;
-      }
-      saveBlob(result.blob, result.filename);
-      await applyIfNeeded(t("groups.bundle_notice", "Group peer bundle downloaded."));
-      await refreshGroupQueries();
-    },
-    onError: (error) => {
-      pushToast(
-        error instanceof Error ? error.message : t("groups.bundle_failed", "Failed to download group bundle."),
-        "error",
-      );
-    },
-  });
+  const {
+    groups,
+    filteredGroups,
+    activeCount,
+    searchText,
+    setSearchText,
+    isCreateOpen,
+    setIsCreateOpen,
+    editingGroup,
+    createForm,
+    setCreateForm,
+    editForm,
+    setEditForm,
+    createScopeError,
+    updateCreateFormField,
+    closeCreateModal,
+    openEditModal,
+    closeEditModal,
+    createMutation,
+    updateMutation,
+    toggleMutation,
+    deleteMutation,
+    bundleMutation,
+  } = useGroupsPageData();
 
   return (
     <div className="page-stack">
@@ -375,6 +62,17 @@ export function GroupsPage() {
         </button>
       </div>
       <Panel title={t("groups.list", "Group list")}>
+        <div className="table-toolbar">
+          <label className="toolbar-search">
+            <span>{t("common.search", "Search")}</span>
+            <input
+              data-testid="groups-search"
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              placeholder={t("groups.search_placeholder", "Name, scope, network, route, DNS...")}
+            />
+          </label>
+        </div>
         <div className="desktop-table">
           <DataTable
             headers={[
@@ -387,7 +85,7 @@ export function GroupsPage() {
               t("common.actions", "Actions"),
             ]}
           >
-            {groups.map((group) => (
+            {filteredGroups.map((group) => (
               <tr key={group.id}>
                 <td>
                   <button
@@ -415,9 +113,7 @@ export function GroupsPage() {
                   <button
                     className="danger-button"
                     onClick={() => {
-                      if (
-                        window.confirm(formatDeleteConfirm(group.name))
-                      ) {
+                      if (confirmAction(formatDeleteConfirm(group.name))) {
                         deleteMutation.mutate(group.id);
                       }
                     }}
@@ -430,7 +126,7 @@ export function GroupsPage() {
           </DataTable>
         </div>
         <div className="mobile-list">
-          {groups.map((group) => (
+          {filteredGroups.map((group) => (
             <article key={group.id} className="mobile-record">
               <div className="mobile-record-main">
                 <div>
@@ -472,9 +168,7 @@ export function GroupsPage() {
                 <button
                   className="danger-button"
                   onClick={() => {
-                    if (
-                      window.confirm(formatDeleteConfirm(group.name))
-                    ) {
+                    if (confirmAction(formatDeleteConfirm(group.name))) {
                       deleteMutation.mutate(group.id);
                     }
                   }}

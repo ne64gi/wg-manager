@@ -166,11 +166,24 @@ def _migrate_gui_settings_table() -> None:
             )
 
 
+def _migrate_initial_settings_table() -> None:
+    with engine.begin() as connection:
+        inspector = inspect(connection)
+        if "initial_settings" not in inspector.get_table_names():
+            return
+        columns = {column["name"] for column in inspector.get_columns("initial_settings")}
+        if "interface_mtu" not in columns:
+            connection.execute(
+                text("ALTER TABLE initial_settings ADD COLUMN interface_mtu INTEGER")
+            )
+
+
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
     _migrate_groups_table()
     _migrate_peers_table()
     _migrate_gui_settings_table()
+    _migrate_initial_settings_table()
     init_log_db()
 
 
@@ -222,6 +235,7 @@ def get_initial_settings(session: Session) -> InitialSettings:
             id=1,
             endpoint_address=settings.server_endpoint,
             endpoint_port=settings.server_listen_port,
+            interface_mtu=settings.server_interface_mtu,
         )
         session.add(initial_settings)
         session.commit()
@@ -235,6 +249,7 @@ def update_initial_settings(
     initial_settings = get_initial_settings(session)
     initial_settings.endpoint_address = payload.endpoint_address
     initial_settings.endpoint_port = payload.endpoint_port
+    initial_settings.interface_mtu = payload.interface_mtu
     initial_settings.updated_at = datetime.now(timezone.utc)
     session.commit()
     session.refresh(initial_settings)
@@ -246,6 +261,7 @@ def update_initial_settings(
         details={
             "endpoint_address": initial_settings.endpoint_address,
             "endpoint_port": initial_settings.endpoint_port,
+            "interface_mtu": initial_settings.interface_mtu,
         },
     )
     return initial_settings

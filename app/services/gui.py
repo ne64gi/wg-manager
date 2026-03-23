@@ -48,18 +48,28 @@ def get_gui_settings(session: Session) -> GuiSettings:
 
 def update_gui_settings(session: Session, payload: GuiSettingsUpdate) -> GuiSettings:
     gui_settings = get_gui_settings(session)
-    gui_settings.theme_mode = payload.theme_mode
-    gui_settings.default_locale = payload.default_locale
-    gui_settings.overview_refresh_seconds = payload.overview_refresh_seconds
-    gui_settings.peers_refresh_seconds = payload.peers_refresh_seconds
-    gui_settings.traffic_snapshot_interval_seconds = (
-        payload.traffic_snapshot_interval_seconds
-    )
-    gui_settings.refresh_after_apply = payload.refresh_after_apply
-    gui_settings.online_threshold_seconds = payload.online_threshold_seconds
-    gui_settings.error_log_level = payload.error_log_level
-    gui_settings.access_log_path = payload.access_log_path
-    gui_settings.error_log_path = payload.error_log_path
+    if payload.theme_mode is not None:
+        gui_settings.theme_mode = payload.theme_mode
+    if payload.default_locale is not None:
+        gui_settings.default_locale = payload.default_locale
+    if payload.overview_refresh_seconds is not None:
+        gui_settings.overview_refresh_seconds = payload.overview_refresh_seconds
+    if payload.peers_refresh_seconds is not None:
+        gui_settings.peers_refresh_seconds = payload.peers_refresh_seconds
+    if payload.traffic_snapshot_interval_seconds is not None:
+        gui_settings.traffic_snapshot_interval_seconds = (
+            payload.traffic_snapshot_interval_seconds
+        )
+    if payload.refresh_after_apply is not None:
+        gui_settings.refresh_after_apply = payload.refresh_after_apply
+    if payload.online_threshold_seconds is not None:
+        gui_settings.online_threshold_seconds = payload.online_threshold_seconds
+    if payload.error_log_level is not None:
+        gui_settings.error_log_level = payload.error_log_level
+    if payload.access_log_path is not None:
+        gui_settings.access_log_path = payload.access_log_path
+    if payload.error_log_path is not None:
+        gui_settings.error_log_path = payload.error_log_path
     gui_settings.updated_at = datetime.now(timezone.utc)
     session.commit()
     session.refresh(gui_settings)

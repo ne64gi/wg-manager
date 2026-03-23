@@ -49,6 +49,7 @@ class InitialSettings(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     endpoint_address: Mapped[str] = mapped_column(String(255))
     endpoint_port: Mapped[int]
+    interface_mtu: Mapped[int | None] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
