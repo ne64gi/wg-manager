@@ -11,6 +11,7 @@ import {
   listUsers,
   updateUser,
 } from "../lib/api";
+import { confirmAction, downloadBlob } from "../lib/browser/actions";
 import { formatApplyFailureMessage, t } from "../lib/i18n";
 import type { User } from "../types";
 import { useAuth } from "../modules/auth/AuthContext";
@@ -39,15 +40,6 @@ const DEFAULT_CREATE_FORM: UserFormState = {
 
 function formatDeleteConfirm(name: string) {
   return t("users.delete_confirm_named", `Delete "${name}"?`).replace("{name}", name);
-}
-
-function saveBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
 }
 
 function getBundleWarningText(peerCount: number) {
@@ -221,7 +213,7 @@ export function UsersPage() {
     mutationFn: async (user: User) => {
       const accessToken = (await auth.getValidAccessToken()) ?? "";
       const warning = await getUserBundleWarning(user.id, accessToken);
-      const confirmed = window.confirm(getBundleWarningText(warning.peer_count));
+      const confirmed = confirmAction(getBundleWarningText(warning.peer_count));
       if (!confirmed) {
         return null;
       }
@@ -234,7 +226,7 @@ export function UsersPage() {
       if (!result) {
         return;
       }
-      saveBlob(result.blob, result.filename);
+      downloadBlob(result.blob, result.filename);
       await applyIfNeeded(t("users.bundle_notice", "User peer bundle downloaded."));
       await refreshQueries();
     },
@@ -333,7 +325,7 @@ export function UsersPage() {
                   <button
                     className="danger-button"
                     onClick={() => {
-                      if (window.confirm(formatDeleteConfirm(user.name))) {
+                      if (confirmAction(formatDeleteConfirm(user.name))) {
                         deleteMutation.mutate(user.id);
                       }
                     }}
@@ -387,7 +379,7 @@ export function UsersPage() {
                 <button
                   className="danger-button"
                   onClick={() => {
-                    if (window.confirm(formatDeleteConfirm(user.name))) {
+                    if (confirmAction(formatDeleteConfirm(user.name))) {
                       deleteMutation.mutate(user.id);
                     }
                   }}

@@ -14,6 +14,7 @@ import {
   updateGuiSettings,
   updateInitialSettings,
 } from "../lib/api";
+import { confirmAction, downloadBlob } from "../lib/browser/actions";
 import { formatDateTime } from "../lib/format";
 import { t, translateErrorMessage } from "../lib/i18n";
 import { useAuth } from "../modules/auth/AuthContext";
@@ -166,12 +167,7 @@ export function SettingsPage() {
       const blob = new Blob([JSON.stringify(payload, null, 2)], {
         type: "application/json;charset=utf-8",
       });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `wg-studio-state-${payload.exported_at.slice(0, 10)}.json`;
-      link.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `wg-studio-state-${payload.exported_at.slice(0, 10)}.json`);
       pushToast(t("settings.export_done", "State exported."));
     },
     onError: (error) => {
@@ -210,7 +206,7 @@ export function SettingsPage() {
 
     try {
       const payload = JSON.parse(await file.text()) as StateExport;
-      const confirmed = window.confirm(
+      const confirmed = confirmAction(
         t(
           "settings.import_confirm",
           "Importing state will replace the current groups, users, peers, endpoint, and GUI settings. Continue?",

@@ -12,6 +12,7 @@ import {
   revealPeerArtifacts,
   updatePeer,
 } from "../lib/api";
+import { confirmAction } from "../lib/browser/actions";
 import { formatBytes } from "../lib/format";
 import { formatApplyFailureMessage, t } from "../lib/i18n";
 import { useAuth } from "../modules/auth/AuthContext";
@@ -396,7 +397,7 @@ export function PeersPage() {
                     <button
                       className="danger-button"
                       onClick={() => {
-                        if (window.confirm(formatDeleteConfirm(peer.peer_name))) {
+                        if (confirmAction(formatDeleteConfirm(peer.peer_name))) {
                           deleteMutation.mutate(peer.peer_id);
                         }
                       }}
@@ -485,7 +486,7 @@ export function PeersPage() {
                   <button
                     className="danger-button"
                     onClick={() => {
-                      if (window.confirm(formatDeleteConfirm(peer.peer_name))) {
+                      if (confirmAction(formatDeleteConfirm(peer.peer_name))) {
                         deleteMutation.mutate(peer.peer_id);
                       }
                     }}

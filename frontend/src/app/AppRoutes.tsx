@@ -1,4 +1,4 @@
-import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
 
 import { DashboardPage } from "../pages/DashboardPage";
 import { GroupsPage } from "../pages/GroupsPage";
@@ -8,7 +8,7 @@ import { PeersPage } from "../pages/PeersPage";
 import { SettingsPage } from "../pages/SettingsPage";
 import { UsersPage } from "../pages/UsersPage";
 import { useAuth } from "../modules/auth/AuthContext";
-import { AppLayout } from "../ui/AppLayout";
+import { AppShell } from "./AppShell";
 
 function ProtectedLayout() {
   const auth = useAuth();
@@ -22,21 +22,27 @@ function ProtectedLayout() {
   }
 
   return (
-    <AppLayout>
+    <AppShell>
       <Outlet />
-    </AppLayout>
+    </AppShell>
   );
 }
 
-export function AppRoutes() {
+function LoginRoute() {
   const auth = useAuth();
+  const navigate = useNavigate();
 
+  if (auth.isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <LoginPage onAuthenticated={() => navigate("/", { replace: true })} />;
+}
+
+export function AppRoutes() {
   return (
     <Routes>
-      <Route
-        path="/login"
-        element={auth.isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />}
-      />
+      <Route path="/login" element={<LoginRoute />} />
       <Route element={<ProtectedLayout />}>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/peers" element={<PeersPage />} />

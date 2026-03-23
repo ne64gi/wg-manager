@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 
 import { getAuthSetupStatus, setupInitialLoginUser } from "../lib/api";
@@ -24,9 +23,12 @@ import {
   UserIcon,
 } from "../ui/Icons";
 
-export function LoginPage() {
+export function LoginPage({
+  onAuthenticated,
+}: {
+  onAuthenticated?: () => void;
+}) {
   const auth = useAuth();
-  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -50,7 +52,7 @@ export function LoginPage() {
 
     try {
       await auth.loginAction({ username, password });
-      navigate("/", { replace: true });
+      onAuthenticated?.();
     } catch (submissionError) {
       setError(
         submissionError instanceof Error
@@ -76,7 +78,7 @@ export function LoginPage() {
     try {
       const pair = await setupInitialLoginUser({ username, password });
       await auth.acceptTokenPair(pair);
-      navigate("/", { replace: true });
+      onAuthenticated?.();
     } catch (submissionError) {
       setError(
         submissionError instanceof Error

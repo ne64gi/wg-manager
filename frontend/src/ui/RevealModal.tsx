@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { copyText, downloadBlob, downloadDataUrl } from "../lib/browser/actions";
 import { t } from "../lib/i18n";
 import type { RevealedPeerArtifacts } from "../types";
 
@@ -24,21 +25,9 @@ export function RevealModal({
 
   async function handleCopy() {
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(artifacts.config_text);
-      } else {
-        const textarea = document.createElement("textarea");
-        textarea.value = artifacts.config_text;
-        textarea.setAttribute("readonly", "true");
-        textarea.style.position = "absolute";
-        textarea.style.left = "-9999px";
-        document.body.appendChild(textarea);
-        textarea.select();
-        const copied = document.execCommand("copy");
-        document.body.removeChild(textarea);
-        if (!copied) {
-          throw new Error("copy failed");
-        }
+      const copied = await copyText(artifacts.config_text);
+      if (!copied) {
+        throw new Error("copy failed");
       }
       setCopyState("done");
     } catch {
@@ -48,19 +37,11 @@ export function RevealModal({
 
   function handleDownloadConfig() {
     const blob = new Blob([artifacts.config_text], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${artifacts.peer_name}.conf`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `${artifacts.peer_name}.conf`);
   }
 
   function handleDownloadQr() {
-    const link = document.createElement("a");
-    link.href = qrImageSrc;
-    link.download = `${artifacts.peer_name}.svg`;
-    link.click();
+    downloadDataUrl(qrImageSrc, `${artifacts.peer_name}.svg`);
   }
 
   return (

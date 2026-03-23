@@ -10,6 +10,7 @@ import {
   listGroups,
   updateGroup,
 } from "../lib/api";
+import { confirmAction, downloadBlob } from "../lib/browser/actions";
 import { formatApplyFailureMessage, t } from "../lib/i18n";
 import type { Group } from "../types";
 import { useAuth } from "../modules/auth/AuthContext";
@@ -89,15 +90,6 @@ function normalizeNetworkCidr(value: string) {
 
 function formatDeleteConfirm(name: string) {
   return t("groups.delete_confirm_named", `Delete "${name}"?`).replace("{name}", name);
-}
-
-function saveBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
 }
 
 function getBundleWarningText(peerCount: number) {
@@ -326,7 +318,7 @@ export function GroupsPage() {
     mutationFn: async (group: Group) => {
       const accessToken = (await auth.getValidAccessToken()) ?? "";
       const warning = await getGroupBundleWarning(group.id, accessToken);
-      const confirmed = window.confirm(getBundleWarningText(warning.peer_count));
+      const confirmed = confirmAction(getBundleWarningText(warning.peer_count));
       if (!confirmed) {
         return null;
       }
@@ -339,7 +331,7 @@ export function GroupsPage() {
       if (!result) {
         return;
       }
-      saveBlob(result.blob, result.filename);
+      downloadBlob(result.blob, result.filename);
       await applyIfNeeded(t("groups.bundle_notice", "Group peer bundle downloaded."));
       await refreshGroupQueries();
     },
@@ -415,9 +407,7 @@ export function GroupsPage() {
                   <button
                     className="danger-button"
                     onClick={() => {
-                      if (
-                        window.confirm(formatDeleteConfirm(group.name))
-                      ) {
+                      if (confirmAction(formatDeleteConfirm(group.name))) {
                         deleteMutation.mutate(group.id);
                       }
                     }}
@@ -472,9 +462,7 @@ export function GroupsPage() {
                 <button
                   className="danger-button"
                   onClick={() => {
-                    if (
-                      window.confirm(formatDeleteConfirm(group.name))
-                    ) {
+                    if (confirmAction(formatDeleteConfirm(group.name))) {
                       deleteMutation.mutate(group.id);
                     }
                   }}

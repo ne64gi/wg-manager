@@ -20,6 +20,8 @@ It only starts reducing frontend coupling in places that would become painful la
 - preview theme and preview locale logic is no longer mixed into `i18n.ts`
 - browser storage access starts moving behind small helpers
 - document theme/lang synchronization becomes a dedicated hook instead of an inline `App.tsx` effect
+- the authenticated shell now owns router-specific navigation wiring outside the reusable layout
+- browser-only confirm/download/copy actions start moving into shared browser helpers
 
 ## Why This Matters
 
@@ -41,3 +43,4 @@ This keeps behavior stable while making the app easier to move later:
 - move route metadata and page registration into a more explicit app-level structure
 - isolate navigation-specific UI from router-specific primitives where practical
 - keep browser-only utilities grouped so SSR-sensitive code is visible early
+- keep page-level DOM actions moving toward browser helpers instead of page-local implementations
