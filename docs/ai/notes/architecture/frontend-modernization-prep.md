@@ -24,6 +24,9 @@ It only starts reducing frontend coupling in places that would become painful la
 - browser-only confirm/download/copy actions start moving into shared browser helpers
 - dashboard data loading and apply-side effects now have a feature-level hook boundary
 - settings-page query/mutation/form orchestration now has a GUI feature-level hook boundary
+- logs-page filter/paging/query orchestration now has a GUI feature-level hook boundary
+- login-page submit/setup/preview state now lives behind an auth module hook
+- group, user, and peer pages now push their query/mutation/form orchestration into feature modules, so the page files are closer to composition shells than controller files
 
 ## Why This Matters
 
@@ -33,6 +36,7 @@ This keeps behavior stable while making the app easier to move later:
 - browser-only APIs are easier to identify and isolate
 - `App.tsx` becomes closer to a top-level shell than a mixed routing/effect container
 - page files start moving toward composition roles instead of owning every query and mutation directly
+- dashboard/settings/logs/login/groups/users/peers now follow the same direction, which makes later Next-oriented page relocation much less risky
 
 ## Non-Goals For This Step
 
@@ -50,3 +54,4 @@ This keeps behavior stable while making the app easier to move later:
 - keep page-level DOM actions moving toward browser helpers instead of page-local implementations
 - if a topology view appears during `1.2`, keep it as a lightweight structural preview rather than a feature-rich graph
 - continue moving page-owned query/mutation orchestration into feature modules before touching larger visual work
+- keep the remaining page-local helper logic small, and prefer feature modules for query/mutation/form state by default
