@@ -50,6 +50,13 @@ switch ($Command) {
     "logs" {
         docker compose logs @Args
     }
+    "health" {
+        docker compose ps
+        docker compose exec wg-studio-api python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/health').read().decode())"
+    }
+    "smoke" {
+        docker compose --profile test run --rm wg-studio-e2e @Args
+    }
     "cli" {
         docker compose --profile tools run --rm wg-studio-cli @Args
     }
@@ -57,6 +64,6 @@ switch ($Command) {
         docker compose --profile test run --rm wg-studio-e2e @Args
     }
     default {
-        throw "Unsupported command '$Command'. Use: up, build, restart, down, ps, logs, cli, e2e."
+        throw "Unsupported command '$Command'. Use: up, build, restart, down, ps, logs, health, smoke, cli, e2e."
     }
 }

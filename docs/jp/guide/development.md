@@ -18,7 +18,7 @@
 現時点の runtime 境界メモ:
 
 - `WG_RUNTIME_ADAPTER` は runtime 選択の入口として用意しています
-- `1.1.3` 時点で対応している adapter は `docker_container` のみです
+- `1.1.4` 時点で対応している adapter は `docker_container` のみです
 - 目的は早い段階で runtime 依存を分離することであり、まだ完全な cross-platform 対応ではありません
 
 実際の `.env` はローカル専用で保持してください。
@@ -71,6 +71,8 @@ docker compose --profile tools run --rm wg-studio-cli group list
 ./scripts/stack.sh up
 ./scripts/stack.sh up runtime
 ./scripts/stack.sh build api
+./scripts/stack.sh health
+./scripts/stack.sh smoke
 ./scripts/stack.sh cli group list
 ./scripts/stack.sh e2e
 ```
@@ -81,6 +83,8 @@ PowerShell では:
 pwsh ./scripts/stack.ps1 up
 pwsh ./scripts/stack.ps1 up runtime
 pwsh ./scripts/stack.ps1 build api
+pwsh ./scripts/stack.ps1 health
+pwsh ./scripts/stack.ps1 smoke
 pwsh ./scripts/stack.ps1 cli group list
 pwsh ./scripts/stack.ps1 e2e
 ```
@@ -92,6 +96,13 @@ pwsh ./scripts/stack.ps1 e2e
 - `api`
 - `web`
 - `db`
+
+追加された wrapper コマンド:
+
+- `health`
+  - compose の状態表示と、スタック内からの API `/health` 確認をまとめて行います
+- `smoke`
+  - `test` profile 経由で Playwright smoke suite を実行します
 
 push 後に remote-tracking ref まで更新して確認する:
 

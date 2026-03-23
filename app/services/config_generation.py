@@ -9,8 +9,8 @@ import qrcode.image.svg
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
-from app.runtime import ArtifactStore, get_artifact_store
 from app.models import Group, Peer, User
+from app.runtime import RuntimeService, get_runtime_service
 from app.schemas import (
     GeneratedPeerArtifacts,
     GeneratedServerArtifacts,
@@ -20,24 +20,12 @@ from app.services.audit import log_gui_event, log_operation
 from app.services.domain import ensure_peer_keys, get_initial_settings, get_server_state
 
 
-def _server_config_path(store: ArtifactStore):
-    return store.server_config_path()
-
-
-def _peer_config_path(store: ArtifactStore, peer_name: str):
-    return store.peer_config_path(peer_name)
-
-
-def _peer_qr_path(store: ArtifactStore, peer_name: str):
-    return store.peer_qr_path(peer_name)
-
-
 def get_peer_config_path(peer_name: str) -> Path:
-    return _peer_config_path(get_artifact_store(), peer_name)
+    return get_runtime_service().peer_artifact_paths(peer_name).config_path
 
 
 def get_peer_qr_path(peer_name: str) -> Path:
-    return _peer_qr_path(get_artifact_store(), peer_name)
+    return get_runtime_service().peer_artifact_paths(peer_name).qr_path
 
 
 def _effective_allowed_ips(peer: Peer) -> list[str]:
@@ -132,14 +120,18 @@ def _render_server_config(server_address: str, listen_port: int, private_key: st
     return "\n".join(lines)
 
 
-def _write_qr_svg(store: ArtifactStore, contents: str, path: Path) -> None:
+def _write_qr_svg(runtime_service: RuntimeService, peer_name: str, contents: str) -> Path:
     image = qrcode.make(contents, image_factory=qrcode.image.svg.SvgImage)
     buffer = BytesIO()
     image.save(buffer)
-    store.write_bytes(path, buffer.getvalue())
+    return runtime_service.write_peer_qr(peer_name, buffer.getvalue())
 
 
-def generate_peer_artifacts(session: Session, peer_id: int) -> GeneratedPeerArtifacts:
+def generate_peer_artifacts(
+    session: Session,
+    peer_id: int,
+    runtime_service: RuntimeService | None = None,
+) -> GeneratedPeerArtifacts:
     peer = _load_peer_with_context(session, peer_id)
     if peer is None:
         raise ValueError(f"peer id={peer_id} does not exist")
@@ -155,11 +147,9 @@ def generate_peer_artifacts(session: Session, peer_id: int) -> GeneratedPeerArti
         initial_settings.endpoint_port,
         server.public_key,
     )
-    store = get_artifact_store()
-    config_path = _peer_config_path(store, peer.name)
-    qr_path = _peer_qr_path(store, peer.name)
-    store.write_text(config_path, config_contents)
-    _write_qr_svg(store, config_contents, qr_path)
+    runtime_service = runtime_service or get_runtime_service()
+    config_path = runtime_service.write_peer_config(peer.name, config_contents)
+    qr_path = _write_qr_svg(runtime_service, peer.name, config_contents)
 
     peer.last_config_generated_at = datetime.now(timezone.utc)
     peer.updated_at = datetime.now(timezone.utc)
@@ -186,7 +176,10 @@ def generate_peer_artifacts(session: Session, peer_id: int) -> GeneratedPeerArti
     )
 
 
-def generate_server_config(session: Session) -> GeneratedServerArtifacts:
+def generate_server_config(
+    session: Session,
+    runtime_service: RuntimeService | None = None,
+) -> GeneratedServerArtifacts:
     server = get_server_state(session)
     peers = list(
         session.scalars(
@@ -205,10 +198,8 @@ def generate_server_config(session: Session) -> GeneratedServerArtifacts:
     for peer in peers:
         ensure_peer_keys(session, peer)
 
-    store = get_artifact_store()
-    config_path = _server_config_path(store)
-    store.write_text(
-        config_path,
+    runtime_service = runtime_service or get_runtime_service()
+    config_path = runtime_service.write_server_config(
         _render_server_config(
             server.server_address,
             server.listen_port,
@@ -234,51 +225,65 @@ def generate_server_config(session: Session) -> GeneratedServerArtifacts:
     )
 
 
-def get_or_generate_peer_config_text(session: Session, peer_id: int) -> tuple[Peer, str]:
+def get_or_generate_peer_config_text(
+    session: Session,
+    peer_id: int,
+    runtime_service: RuntimeService | None = None,
+) -> tuple[Peer, str]:
     peer = _load_peer_with_context(session, peer_id)
     if peer is None:
         raise ValueError(f"peer id={peer_id} does not exist")
     _ensure_peer_can_generate(peer)
 
     initial_settings = get_initial_settings(session)
-    store = get_artifact_store()
-    config_path = _peer_config_path(store, peer.name)
-    qr_path = _peer_qr_path(store, peer.name)
+    runtime_service = runtime_service or get_runtime_service()
+    paths = runtime_service.peer_artifact_paths(peer.name)
+    config_path = paths.config_path
+    qr_path = paths.qr_path
     if _peer_artifacts_need_regeneration(
         peer,
         initial_settings.updated_at,
         config_path,
         qr_path,
     ):
-        generate_peer_artifacts(session, peer_id)
+        generate_peer_artifacts(session, peer_id, runtime_service=runtime_service)
         peer = _load_peer_with_context(session, peer_id) or peer
-        config_path = _peer_config_path(store, peer.name)
+        config_path = runtime_service.peer_artifact_paths(peer.name).config_path
     return peer, config_path.read_text(encoding="utf-8")
 
 
-def get_or_generate_peer_qr_svg(session: Session, peer_id: int) -> tuple[Peer, str]:
+def get_or_generate_peer_qr_svg(
+    session: Session,
+    peer_id: int,
+    runtime_service: RuntimeService | None = None,
+) -> tuple[Peer, str]:
     peer = _load_peer_with_context(session, peer_id)
     if peer is None:
         raise ValueError(f"peer id={peer_id} does not exist")
     _ensure_peer_can_generate(peer)
 
     initial_settings = get_initial_settings(session)
-    store = get_artifact_store()
-    config_path = _peer_config_path(store, peer.name)
-    qr_path = _peer_qr_path(store, peer.name)
+    runtime_service = runtime_service or get_runtime_service()
+    paths = runtime_service.peer_artifact_paths(peer.name)
+    config_path = paths.config_path
+    qr_path = paths.qr_path
     if _peer_artifacts_need_regeneration(
         peer,
         initial_settings.updated_at,
         config_path,
         qr_path,
     ):
-        generate_peer_artifacts(session, peer_id)
+        generate_peer_artifacts(session, peer_id, runtime_service=runtime_service)
         peer = _load_peer_with_context(session, peer_id) or peer
-        qr_path = _peer_qr_path(store, peer.name)
+        qr_path = runtime_service.peer_artifact_paths(peer.name).qr_path
     return peer, qr_path.read_text(encoding="utf-8")
 
 
-def reveal_peer_artifacts(session: Session, peer_id: int) -> RevealedPeerArtifacts:
+def reveal_peer_artifacts(
+    session: Session,
+    peer_id: int,
+    runtime_service: RuntimeService | None = None,
+) -> RevealedPeerArtifacts:
     peer = _load_peer_with_context(session, peer_id)
     if peer is None:
         raise ValueError(f"peer id={peer_id} does not exist")
@@ -287,19 +292,21 @@ def reveal_peer_artifacts(session: Session, peer_id: int) -> RevealedPeerArtifac
         raise ValueError(f"peer id={peer_id} has already been revealed")
 
     initial_settings = get_initial_settings(session)
-    store = get_artifact_store()
-    config_path = _peer_config_path(store, peer.name)
-    qr_path = _peer_qr_path(store, peer.name)
+    runtime_service = runtime_service or get_runtime_service()
+    paths = runtime_service.peer_artifact_paths(peer.name)
+    config_path = paths.config_path
+    qr_path = paths.qr_path
     if _peer_artifacts_need_regeneration(
         peer,
         initial_settings.updated_at,
         config_path,
         qr_path,
     ):
-        generate_peer_artifacts(session, peer_id)
+        generate_peer_artifacts(session, peer_id, runtime_service=runtime_service)
         peer = _load_peer_with_context(session, peer_id) or peer
-        config_path = _peer_config_path(store, peer.name)
-        qr_path = _peer_qr_path(store, peer.name)
+        refreshed_paths = runtime_service.peer_artifact_paths(peer.name)
+        config_path = refreshed_paths.config_path
+        qr_path = refreshed_paths.qr_path
 
     revealed_at = datetime.now(timezone.utc)
     peer.is_revealed = True

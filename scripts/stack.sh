@@ -61,6 +61,13 @@ case "$command_name" in
   logs)
     docker compose logs "$@"
     ;;
+  health)
+    docker compose ps
+    docker compose exec wg-studio-api python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/health').read().decode())"
+    ;;
+  smoke)
+    docker compose --profile test run --rm wg-studio-e2e "$@"
+    ;;
   cli)
     docker compose --profile tools run --rm wg-studio-cli "$@"
     ;;
@@ -68,7 +75,7 @@ case "$command_name" in
     docker compose --profile test run --rm wg-studio-e2e "$@"
     ;;
   *)
-    echo "Unsupported command '$command_name'. Use: up, build, restart, down, ps, logs, cli, e2e." >&2
+    echo "Unsupported command '$command_name'. Use: up, build, restart, down, ps, logs, health, smoke, cli, e2e." >&2
     exit 1
     ;;
 esac

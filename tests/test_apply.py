@@ -52,6 +52,12 @@ def test_apply_server_config_bootstraps_with_wg_quick(
     settings.server_address = "10.99.0.1/24"
 
     class FakeRuntimeService:
+        def write_server_config(self, contents: str) -> Path:
+            path = tmp_path / "artifacts" / "wg_confs" / "wg0.conf"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(contents, encoding="utf-8")
+            return path
+
         def apply_config(self):
             FakeRuntime().apply_config()
             return FakeRuntime()
@@ -115,6 +121,12 @@ def test_apply_server_config_updates_existing_interface(
     settings.server_address = "10.99.0.1/24"
 
     class FakeRuntimeService:
+        def write_server_config(self, contents: str) -> Path:
+            path = tmp_path / "artifacts" / "wg_confs" / "wg0.conf"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(contents, encoding="utf-8")
+            return path
+
         def apply_config(self):
             FakeRuntime().apply_config()
             return FakeRuntime()
@@ -135,6 +147,49 @@ def test_apply_server_config_updates_existing_interface(
                 "wg-quick strip /config/wg_confs/wg0.conf | wg syncconf wg0 /dev/stdin",
             ],
         ]
+    finally:
+        settings.artifact_root = previous_root
+        settings.server_address = previous_address
+
+
+def test_apply_server_config_accepts_runtime_service_injection(tmp_path: Path) -> None:
+    reset_db()
+
+    previous_root = settings.artifact_root
+    previous_address = settings.server_address
+
+    class FakeRuntimeService:
+        def __init__(self) -> None:
+            self.applied = False
+
+        def write_server_config(self, contents: str) -> Path:
+            path = tmp_path / "artifacts" / "wg_confs" / "wg0.conf"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(contents, encoding="utf-8")
+            return path
+
+        def apply_config(self):
+            self.applied = True
+
+            class Descriptor:
+                container_name = "wg-studio-wireguard"
+                interface_name = "wg0"
+                config_path = "/config/wg_confs/wg0.conf"
+
+            return Descriptor()
+
+    settings.artifact_root = str(tmp_path / "artifacts")
+    settings.server_address = "10.99.0.1/24"
+
+    try:
+        create_apply_fixture()
+        runtime_service = FakeRuntimeService()
+        with SessionLocal() as session:
+            result = apply_server_config(session, runtime_service=runtime_service)
+
+        assert runtime_service.applied is True
+        assert Path(result.server_config_path).exists()
+        assert result.peer_count == 1
     finally:
         settings.artifact_root = previous_root
         settings.server_address = previous_address

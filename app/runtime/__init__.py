@@ -5,6 +5,7 @@ from app.runtime.artifacts import (
 )
 from app.runtime.dump import RuntimePeerDumpRow, parse_wg_dump
 from app.runtime.service import (
+    PeerArtifactPaths,
     RuntimeDescriptor,
     RuntimePeerRead,
     RuntimeService,
@@ -23,6 +24,7 @@ __all__ = [
     "DockerWireGuardRuntime",
     "ExecResult",
     "LocalFilesystemArtifactStore",
+    "PeerArtifactPaths",
     "RuntimeDescriptor",
     "RuntimePeerRead",
     "RuntimePeerDumpRow",

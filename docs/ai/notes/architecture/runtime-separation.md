@@ -2,7 +2,7 @@
 
 Purpose: define the intended `1.1` boundary between the core application and the current Linux/Docker-backed WireGuard runtime.
 
-Status: active `1.1.3` foundation note.
+Status: active `1.1.4` foundation note.
 
 Related docs:
 
@@ -152,3 +152,35 @@ Validation added in this slice:
 - pytest coverage for runtime facade usage and runtime-unavailable status handling
 - pytest coverage for `init_db()` registering GUI/auth tables on a clean database
 - Playwright smoke coverage for desktop sidebar collapse
+
+## `1.1.4` Active Direction
+
+This slice should stay narrow:
+
+- keep moving artifact/config mechanics behind the runtime facade
+- make operator entrypoints more usable without redesigning deployment
+- avoid introducing new adapters or broad cross-platform abstractions yet
+
+Current `1.1.4` direction:
+
+- stop letting config-generation paths reach directly into artifact-store setup
+- let the runtime service own server-config and peer-artifact write entrypoints
+- add small operator-facing stack helpers such as `health` and `smoke`
+
+## `1.1.4` Progress Notes
+
+Changes introduced in the `1.1.4` line:
+
+- `app/services/config_generation.py` now writes server config, peer config, and peer QR output through `RuntimeService`
+- `RuntimeService` now exposes a small artifact-facing public surface instead of only runtime reads/applies
+- service entrypoints can now accept an injected runtime collaborator instead of resolving the global runtime factory every time
+- `scripts/stack.sh` and `scripts/stack.ps1` now include `health` and `smoke` commands
+
+Visible improvements paired with this slice:
+
+- login-screen settings and credential controls were refined in parallel on the same release line
+
+Validation added in this slice:
+
+- pytest coverage for runtime-service artifact writes
+- existing config-generation tests continue to verify peer/server artifact output

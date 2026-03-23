@@ -16,7 +16,7 @@ Important defaults include:
 Current runtime boundary note:
 
 - `WG_RUNTIME_ADAPTER` exists so runtime selection has a single entry point
-- `docker_container` is the only supported adapter in `1.1.3`
+- `docker_container` is the only supported adapter in `1.1.4`
 - the intent is early separation of runtime assumptions, not full cross-platform support yet
 
 Keep the real `.env` local-only.
@@ -69,6 +69,8 @@ Wrapper entry points are also available as early launch-abstraction prep:
 ./scripts/stack.sh up
 ./scripts/stack.sh up runtime
 ./scripts/stack.sh build api
+./scripts/stack.sh health
+./scripts/stack.sh smoke
 ./scripts/stack.sh cli group list
 ./scripts/stack.sh e2e
 ```
@@ -79,6 +81,8 @@ On PowerShell:
 pwsh ./scripts/stack.ps1 up
 pwsh ./scripts/stack.ps1 up runtime
 pwsh ./scripts/stack.ps1 build api
+pwsh ./scripts/stack.ps1 health
+pwsh ./scripts/stack.ps1 smoke
 pwsh ./scripts/stack.ps1 cli group list
 pwsh ./scripts/stack.ps1 e2e
 ```
@@ -90,6 +94,13 @@ Current logical targets for `up`, `build`, and `restart`:
 - `api`
 - `web`
 - `db`
+
+Additional wrapper commands:
+
+- `health`
+  - show compose service state and query the API `/health` endpoint from inside the stack
+- `smoke`
+  - run the Playwright smoke suite through the `test` profile
 
 Push and refresh the local remote-tracking ref in one step:
 
