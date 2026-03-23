@@ -94,7 +94,15 @@ export function useSettingsPageData() {
   const settingsMutation = useMutation({
     mutationFn: async () =>
       updateGuiSettings((await auth.getValidAccessToken()) ?? "", formState),
-    onSuccess: async () => {
+    onSuccess: async (savedSettings) => {
+      setFormState(savedSettings);
+      setPreviewLocale(savedSettings.default_locale);
+      if (savedSettings.theme_mode === "light" || savedSettings.theme_mode === "dark") {
+        setPreviewTheme(savedSettings.theme_mode);
+      } else {
+        clearPreviewTheme();
+      }
+      queryClient.setQueryData(queryKeys.guiSettings, savedSettings);
       pushToast(t("settings.saved", "GUI settings saved."));
       await queryClient.invalidateQueries({ queryKey: queryKeys.guiSettings });
     },

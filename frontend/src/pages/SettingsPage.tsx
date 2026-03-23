@@ -61,7 +61,11 @@ export function SettingsPage() {
         <Panel
           title={t("settings.gui_heading", "GUI settings")}
           actions={
-            <button className="primary-button" onClick={() => settingsMutation.mutate()}>
+            <button
+              className="primary-button"
+              data-testid="settings-save-gui"
+              onClick={() => settingsMutation.mutate()}
+            >
               {t("common.save", "Save")}
             </button>
           }

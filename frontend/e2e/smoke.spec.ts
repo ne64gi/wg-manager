@@ -184,4 +184,18 @@ test.describe.serial("v1 smoke", () => {
     await page.getByTestId("nav-settings").click();
     await expect(page.getByTestId("settings-runtime-adapter")).toHaveValue("docker_container");
   });
+
+  test("settings theme and locale save applies to the current session", async ({ page }) => {
+    await ensureAuthenticated(page);
+
+    await page.getByTestId("nav-settings").click();
+    await page.getByTestId("settings-default-locale-select").selectOption("ja");
+    await page.getByTestId("settings-theme-mode-select").selectOption("light");
+    await page.getByTestId("settings-save-gui").click();
+
+    await expect(page.locator("html")).toHaveAttribute("lang", "ja");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await expect(page.locator("html")).toHaveAttribute("data-theme-mode", "light");
+    await expect(page.getByTestId("settings-page-heading")).toContainText("設定");
+  });
 });
