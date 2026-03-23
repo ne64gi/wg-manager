@@ -2,7 +2,6 @@ import { formatBytes, formatDateTime } from "../lib/format";
 import { t } from "../lib/i18n";
 import { translateDriftReason, useDashboardData } from "../modules/dashboard/useDashboardData";
 import { StatCard, Panel } from "../ui/Cards";
-import { DataTable } from "../ui/Table";
 
 export function DashboardPage() {
   const {
@@ -14,12 +13,7 @@ export function DashboardPage() {
     hasPendingGeneration,
     timelinePath,
     onlinePath,
-    userSummariesByGroup,
     topologyGroups,
-    expandedGroupIds,
-    toggleGroup,
-    expandAllGroups,
-    collapseAllGroups,
     applyMutation,
   } = useDashboardData();
 
@@ -175,89 +169,6 @@ export function DashboardPage() {
               {groups.length ? null : (
                 <div className="muted-text">{t("dashboard.no_group_data", "No group summary data yet.")}</div>
               )}
-            </div>
-          </Panel>
-          <Panel
-            title={t("dashboard.group_traffic", "Group traffic")}
-            actions={
-              groups.length ? (
-                <div className="action-row action-row-compact">
-                  <button
-                    type="button"
-                    className="ghost-button"
-                    onClick={expandAllGroups}
-                    data-testid="dashboard-expand-groups"
-                  >
-                    {t("common.expand_all", "Expand all")}
-                  </button>
-                  <button
-                    type="button"
-                    className="ghost-button"
-                    onClick={collapseAllGroups}
-                    data-testid="dashboard-collapse-groups"
-                  >
-                    {t("common.collapse_all", "Collapse all")}
-                  </button>
-                </div>
-              ) : null
-            }
-          >
-            <div className="accordion-list" data-testid="dashboard-group-traffic-accordion">
-              {groups.map((item) => (
-                <details
-                  key={item.group_id}
-                  className="accordion-card"
-                  data-testid={`dashboard-group-accordion-${item.group_id}`}
-                  open={expandedGroupIds.includes(item.group_id)}
-                  onToggle={(event) => {
-                    const nextOpen = (event.currentTarget as HTMLDetailsElement).open;
-                    const isOpen = expandedGroupIds.includes(item.group_id);
-                    if (nextOpen !== isOpen) {
-                      toggleGroup(item.group_id);
-                    }
-                  }}
-                >
-                  <summary className="accordion-summary">
-                    <div>
-                      <div className="accordion-title">{item.group_name}</div>
-                      <div className="accordion-subtitle">
-                        {item.group_scope} · {item.user_count} {t("nav.users", "Users")} · {item.peer_count}{" "}
-                        {t("table.peers", "Peers")}
-                      </div>
-                    </div>
-                    <div className="accordion-summary-metrics">
-                      <span>{formatBytes(item.total_usage_bytes)}</span>
-                      <span className="accordion-summary-chevron" aria-hidden="true">
-                        +
-                      </span>
-                    </div>
-                  </summary>
-                  <div className="accordion-content">
-                    <DataTable
-                      headers={[
-                        t("table.user", "User"),
-                        t("table.peers", "Peers"),
-                        t("table.online", "Online"),
-                        t("table.traffic", "Traffic"),
-                      ]}
-                    >
-                      {(userSummariesByGroup.get(item.group_id) ?? []).map((user) => (
-                        <tr key={user.user_id}>
-                          <td>{user.user_name}</td>
-                          <td>{user.peer_count}</td>
-                          <td>{user.online_peer_count}</td>
-                          <td>{formatBytes(user.total_usage_bytes)}</td>
-                        </tr>
-                      ))}
-                    </DataTable>
-                    {(userSummariesByGroup.get(item.group_id) ?? []).length === 0 ? (
-                      <div className="muted-text">
-                        {t("dashboard.no_user_data_for_group", "No user traffic data for this group yet.")}
-                      </div>
-                    ) : null}
-                  </div>
-                </details>
-              ))}
             </div>
           </Panel>
         </div>

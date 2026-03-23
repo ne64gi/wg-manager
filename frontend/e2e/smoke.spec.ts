@@ -151,23 +151,13 @@ test.describe.serial("v1 smoke", () => {
     await expect(page.getByTestId("logs-pagination")).toBeVisible();
   });
 
-  test("dashboard group traffic can expand and collapse as a grouped view", async ({ page }) => {
+  test("dashboard shows the lightweight topology preview", async ({ page }) => {
     await ensureAuthenticated(page);
 
     await page.getByTestId("nav-dashboard").click();
     await expect(page.getByTestId("dashboard-topology-preview")).toBeVisible();
-    const accordion = page
-      .locator(`[data-testid^="dashboard-group-accordion-"]`, { hasText: names.group })
-      .first();
-
-    await page.getByTestId("dashboard-expand-groups").click();
-    await expect(accordion).toHaveAttribute("open", "");
-    await accordion.locator("summary").click();
-    await expect(accordion).not.toHaveAttribute("open", "");
-    await page.getByTestId("dashboard-expand-groups").click();
-    await expect(accordion.getByText(names.user).first()).toBeVisible();
-    await page.getByTestId("dashboard-collapse-groups").click();
-    await expect(accordion).not.toHaveAttribute("open", "");
+    await expect(page.getByText(names.group).first()).toBeVisible();
+    await expect(page.getByText(names.user).first()).toBeVisible();
   });
 
   test("desktop sidebar can collapse into icon-only navigation", async ({ page }) => {

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import {
   applyServerConfig,
@@ -21,7 +21,6 @@ export function useDashboardData() {
   const queryClient = useQueryClient();
   const guiSettingsQuery = useGuiSettingsQuery();
   const { pushToast } = useToast();
-  const [expandedGroupIds, setExpandedGroupIds] = useState<number[]>([]);
   const overviewRefreshMs = (guiSettingsQuery.data?.overview_refresh_seconds ?? 5) * 1000;
 
   const applyMutation = useMutation({
@@ -100,20 +99,6 @@ export function useDashboardData() {
     [groups, userSummariesByGroup],
   );
 
-  function toggleGroup(groupId: number) {
-    setExpandedGroupIds((current) =>
-      current.includes(groupId) ? current.filter((id) => id !== groupId) : [...current, groupId],
-    );
-  }
-
-  function expandAllGroups() {
-    setExpandedGroupIds(groups.map((group) => group.group_id));
-  }
-
-  function collapseAllGroups() {
-    setExpandedGroupIds([]);
-  }
-
   return {
     overview,
     groups,
@@ -125,10 +110,6 @@ export function useDashboardData() {
     onlinePath,
     userSummariesByGroup,
     topologyGroups,
-    expandedGroupIds,
-    toggleGroup,
-    expandAllGroups,
-    collapseAllGroups,
     applyMutation,
   };
 }
