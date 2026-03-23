@@ -23,6 +23,7 @@ Give AI contributors a low-ambiguity map from change type to the minimum require
 
 Required browser paths:
 
+- login display settings carry into the authenticated UI
 - login or first-admin setup
 - `Group -> User -> Peer` creation
 - reveal modal opens and shows direct download actions

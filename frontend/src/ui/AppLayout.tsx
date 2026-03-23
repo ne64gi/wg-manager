@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import type { PropsWithChildren } from "react";
 
+import { readLocalStorage, writeLocalStorage } from "../lib/browser/storage";
 import { t } from "../lib/i18n";
 import { useAuth } from "../modules/auth/AuthContext";
 import {
@@ -31,17 +32,11 @@ export function AppLayout({ children }: PropsWithChildren) {
   const auth = useAuth();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isDesktopNavCollapsed, setIsDesktopNavCollapsed] = useState(() => {
-    if (typeof window === "undefined") {
-      return false;
-    }
-    return window.localStorage.getItem("wg-studio.desktop-nav-collapsed") === "true";
+    return readLocalStorage("wg-studio.desktop-nav-collapsed") === "true";
   });
 
   useEffect(() => {
-    window.localStorage.setItem(
-      "wg-studio.desktop-nav-collapsed",
-      String(isDesktopNavCollapsed),
-    );
+    writeLocalStorage("wg-studio.desktop-nav-collapsed", String(isDesktopNavCollapsed));
   }, [isDesktopNavCollapsed]);
 
   function closeMobileNav() {

@@ -4,14 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 
 import { getAuthSetupStatus, setupInitialLoginUser } from "../lib/api";
 import {
-  getPreviewLocale,
-  getPreviewTheme,
-  setPreviewLocale,
-  setPreviewTheme,
   t,
   translateErrorMessage,
 } from "../lib/i18n";
 import { useAuth } from "../modules/auth/AuthContext";
+import {
+  getPreviewLocale,
+  getPreviewTheme,
+  setPreviewLocale,
+  setPreviewTheme,
+} from "../modules/preferences/previewPreferences";
 import {
   BrandIcon,
   EyeIcon,
@@ -103,6 +105,7 @@ export function LoginPage() {
             <button
               type="button"
               className="login-settings-button"
+              data-testid="login-display-settings"
               onClick={() => setIsSettingsOpen((current) => !current)}
               aria-label={t("auth.display_settings_button", "Display settings")}
               title={t("auth.display_settings_button", "Display settings")}
@@ -114,6 +117,7 @@ export function LoginPage() {
                 <button
                   type="button"
                   className="login-settings-toggle-row"
+                  data-testid="login-theme-toggle"
                   aria-pressed={theme === "dark"}
                   onClick={() =>
                     setTheme((current) => {
@@ -133,6 +137,7 @@ export function LoginPage() {
                   <div className="login-language-shell">
                     <GlobeIcon className="icon login-language-icon" />
                     <select
+                      data-testid="login-language-select"
                       value={locale}
                       onChange={(event) => {
                         const nextLocale = event.target.value === "ja" ? "ja" : "en";

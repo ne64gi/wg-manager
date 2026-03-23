@@ -72,6 +72,20 @@ async function ensureAuthenticated(page: Parameters<typeof test>[0]["page"]) {
 }
 
 test.describe.serial("v1 smoke", () => {
+  test("login display settings carry into the authenticated app shell", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForLoadState("domcontentloaded");
+    await page.getByTestId("login-display-settings").click();
+    await page.getByTestId("login-theme-toggle").click();
+    await page.getByTestId("login-language-select").selectOption("ja");
+
+    await ensureAuthenticated(page);
+
+    await expect(page.locator("html")).toHaveAttribute("lang", "ja");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await expect(page.locator("html")).toHaveAttribute("data-theme-mode", "light");
+  });
+
   test("login or first-user setup reaches the dashboard", async ({ page }) => {
     await ensureAuthenticated(page);
     await expect(page.getByTestId("dashboard-sync-state")).toBeVisible();
