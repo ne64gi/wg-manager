@@ -41,17 +41,30 @@ Expected focus areas:
 - settings management cleanup
 - backup / restore
 - GUI navigation and operator workflow cleanup
+- runtime separability before runtime portability
+- adapter boundaries around Linux-specific runtime control
+- startup entry points that can later dispatch different runtime profiles without changing the core product
 
 Interpretation:
 
 - do not expand scope into multi-tenant orchestration yet
 - first make one runtime safe, understandable, and resilient
+- do not rush into Windows-native support
+- instead, make Linux-specific runtime handling replaceable early
+- the near-term target is separability, not portability
 
 Possible internal staging:
 
-- `1.1`: authz foundation, audit strengthening, diff visibility, safer apply
-- `1.2`: settings cleanup, backup/restore, history, UI flow cleanup
+- `1.1`: authz foundation, audit strengthening, diff visibility, safer apply, early runtime adapter boundaries
+- `1.2`: settings cleanup, backup/restore, history, UI flow cleanup, launch entry-point cleanup
 - `1.3`: policy support, expiring peers, operator-assist features, pre-automation guardrails
+
+Implementation intent for runtime separation:
+
+- keep core CRUD, config generation, auth, GUI, audit, and drift logic platform-neutral
+- isolate runtime-specific operations such as config write, apply, status read, and artifact-root handling
+- prefer thin launch wrappers such as `start.sh` / `start.ps1` / `start.bat` over embedding environment assumptions into the core
+- compose profiles and launch scripts may vary per host platform, but the product logic should not
 
 Exit condition for the `1.x` era:
 

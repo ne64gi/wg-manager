@@ -115,6 +115,7 @@ Theme: `Safe single-runtime operations`
 
 - strengthen single-runtime safety and operator trust
 - focus on authorization foundations, audit coverage, diff visibility, safer apply, history, backup/restore, and UI flow cleanup
+- separate Linux-specific runtime control behind adapter-style boundaries early, so future portability work does not require a large rewrite
 - target outcome: one WireGuard runtime can be operated safely by multiple humans
 
 ### `2.x.x`
