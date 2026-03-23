@@ -44,6 +44,8 @@ Expected focus areas:
 - runtime separability before runtime portability
 - adapter boundaries around Linux-specific runtime control
 - startup entry points that can later dispatch different runtime profiles without changing the core product
+- frontend separability before framework migration
+- Next-ready layout, routing, and data-loading boundaries
 
 Interpretation:
 
@@ -52,6 +54,8 @@ Interpretation:
 - do not rush into Windows-native support
 - instead, make Linux-specific runtime handling replaceable early
 - the near-term target is separability, not portability
+- do not rush into Next.js migration either
+- instead, make the current React/Vite frontend structurally portable first
 
 Possible internal staging:
 
@@ -65,6 +69,15 @@ Implementation intent for runtime separation:
 - isolate runtime-specific operations such as config write, apply, status read, and artifact-root handling
 - prefer thin launch wrappers such as `start.sh` / `start.ps1` / `start.bat` over embedding environment assumptions into the core
 - compose profiles and launch scripts may vary per host platform, but the product logic should not
+
+Implementation intent for frontend separation:
+
+- keep page composition separate from reusable UI components
+- keep router-specific code out of shared UI where possible
+- keep data fetching and query orchestration outside presentation components
+- isolate browser-only APIs such as `window`, `document`, `localStorage`, and `matchMedia`
+- move toward layout boundaries that could later map cleanly onto Next nested layouts
+- optimize for "Next-ready" structure, not immediate Next migration
 
 Exit condition for the `1.x` era:
 

@@ -68,6 +68,7 @@ WireGuard peer を Web UI から安全に作成・管理・適用でき、状態
 - 現状の地盤強化
 - 認可の土台、監査ログ、diff 表示、安全な apply、履歴、backup / restore、GUI 導線整理を進める
 - Linux 依存の runtime 制御は早めに adapter 的な境界の内側へ押し込み、将来の移植性に備える
+- フロントは Next へ移りやすいよう、routing、data fetching、browser 依存、再利用 UI の責務分離を先に進める
 - 目標: 1 台の WireGuard runtime を複数人が安心して触れる状態にする
 
 ### `2.x.x`
