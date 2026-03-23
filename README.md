@@ -49,6 +49,11 @@ Repository roles:
 
 AI contributors should start with [`docs/ai/README.md`](docs/ai/README.md) before planning or changing the system.
 
+Version source of truth:
+
+- [`VERSION`](VERSION) is the canonical project version
+- frontend `package.json` version is auto-synced from `VERSION` during build/dev workflows and should not be treated as an independent version source
+
 ## Icon Sources
 
 - navigation, settings, menu, and globe icons are repo-local inline SVG components defined in [`frontend/src/ui/Icons.tsx`](frontend/src/ui/Icons.tsx)

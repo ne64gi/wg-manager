@@ -3,7 +3,9 @@ FROM node:22-alpine AS build
 WORKDIR /frontend
 
 COPY frontend/package.json ./
-RUN npm install
+COPY frontend/scripts ./scripts
+COPY VERSION ./VERSION
+RUN node ./scripts/sync-version.mjs && npm install
 
 COPY frontend/ ./
 COPY VERSION ./VERSION
