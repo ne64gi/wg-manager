@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import Integer, cast, func, select
 from sqlalchemy.orm import Session, joinedload
 
-from app.runtime import get_wireguard_runtime, read_runtime_peers
+from app.runtime import get_runtime_service
 from app.models import Peer, PeerTrafficSnapshot, User
 from app.schemas import (
     GroupTrafficSummaryRead,
@@ -61,11 +61,15 @@ def _capture_peer_snapshots(
 
 def get_wireguard_peer_statuses(session: Session) -> list[PeerStatusRead]:
     gui_settings = get_gui_settings(session)
-    runtime_read = read_runtime_peers(get_wireguard_runtime())
-
-    runtime_by_key = {
-        peer.public_key: peer for peer in runtime_read.peers if peer.public_key
-    }
+    runtime_by_key = {}
+    try:
+        runtime_read = get_runtime_service().read_peers()
+    except ValueError:
+        runtime_read = None
+    if runtime_read is not None:
+        runtime_by_key = {
+            peer.public_key: peer for peer in runtime_read.peers if peer.public_key
+        }
     peers = list(
         session.scalars(
             select(Peer)
@@ -113,7 +117,7 @@ def get_wireguard_overview(session: Session) -> WireGuardOverviewRead:
     statuses = get_wireguard_peer_statuses(session)
     total_received = sum(status.received_bytes for status in statuses)
     total_sent = sum(status.sent_bytes for status in statuses)
-    runtime = get_wireguard_runtime()
+    runtime = get_runtime_service().describe()
     return WireGuardOverviewRead(
         interface_name=runtime.interface_name,
         total_received_bytes=total_received,
@@ -126,7 +130,8 @@ def get_wireguard_overview(session: Session) -> WireGuardOverviewRead:
 
 
 def get_wireguard_sync_state(session: Session) -> SyncStateRead:
-    runtime = get_wireguard_runtime()
+    runtime_service = get_runtime_service()
+    runtime = runtime_service.describe()
     desired_peers = list(
         session.scalars(
             select(Peer)
@@ -155,7 +160,7 @@ def get_wireguard_sync_state(session: Session) -> SyncStateRead:
     )
 
     try:
-        runtime_read = read_runtime_peers(runtime)
+        runtime_read = runtime_service.read_peers()
     except ValueError as exc:
         return SyncStateRead(
             interface_name=runtime.interface_name,

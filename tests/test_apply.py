@@ -41,7 +41,7 @@ def test_apply_server_config_bootstraps_with_wg_quick(
     exec_calls: list[list[str]] = []
 
     class FakeRuntime:
-        container_name = "wg-studio-wireguard"
+        runtime_adapter = "fake_runtime"
         interface_name = "wg0"
 
         def apply_config(self) -> None:
@@ -51,7 +51,18 @@ def test_apply_server_config_bootstraps_with_wg_quick(
     settings.artifact_root = str(tmp_path / "artifacts")
     settings.server_address = "10.99.0.1/24"
 
-    monkeypatch.setattr("app.services.apply.get_wireguard_runtime", lambda: FakeRuntime())
+    class FakeRuntimeService:
+        def write_server_config(self, contents: str) -> Path:
+            path = tmp_path / "artifacts" / "wg_confs" / "wg0.conf"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(contents, encoding="utf-8")
+            return path
+
+        def apply_config(self):
+            FakeRuntime().apply_config()
+            return FakeRuntime()
+
+    monkeypatch.setattr("app.services.apply.get_runtime_service", lambda: FakeRuntimeService())
 
     try:
         create_apply_fixture()
@@ -62,7 +73,7 @@ def test_apply_server_config_bootstraps_with_wg_quick(
         assert config_path.exists()
         assert "apollo-pc" in config_path.read_text(encoding="utf-8")
         assert result.peer_count == 1
-        assert result.container_name == "wg-studio-wireguard"
+        assert result.runtime_adapter == "fake_runtime"
         assert result.interface_name == "wg0"
         assert exec_calls == [
             ["sh", "-lc", "ip link show wg0 >/dev/null 2>&1"],
@@ -93,7 +104,7 @@ def test_apply_server_config_updates_existing_interface(
     exec_calls: list[list[str]] = []
 
     class FakeRuntime:
-        container_name = "wg-studio-wireguard"
+        runtime_adapter = "fake_runtime"
         interface_name = "wg0"
 
         def apply_config(self) -> None:
@@ -109,7 +120,18 @@ def test_apply_server_config_updates_existing_interface(
     settings.artifact_root = str(tmp_path / "artifacts")
     settings.server_address = "10.99.0.1/24"
 
-    monkeypatch.setattr("app.services.apply.get_wireguard_runtime", lambda: FakeRuntime())
+    class FakeRuntimeService:
+        def write_server_config(self, contents: str) -> Path:
+            path = tmp_path / "artifacts" / "wg_confs" / "wg0.conf"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(contents, encoding="utf-8")
+            return path
+
+        def apply_config(self):
+            FakeRuntime().apply_config()
+            return FakeRuntime()
+
+    monkeypatch.setattr("app.services.apply.get_runtime_service", lambda: FakeRuntimeService())
 
     try:
         create_apply_fixture()
@@ -125,6 +147,48 @@ def test_apply_server_config_updates_existing_interface(
                 "wg-quick strip /config/wg_confs/wg0.conf | wg syncconf wg0 /dev/stdin",
             ],
         ]
+    finally:
+        settings.artifact_root = previous_root
+        settings.server_address = previous_address
+
+
+def test_apply_server_config_accepts_runtime_service_injection(tmp_path: Path) -> None:
+    reset_db()
+
+    previous_root = settings.artifact_root
+    previous_address = settings.server_address
+
+    class FakeRuntimeService:
+        def __init__(self) -> None:
+            self.applied = False
+
+        def write_server_config(self, contents: str) -> Path:
+            path = tmp_path / "artifacts" / "wg_confs" / "wg0.conf"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(contents, encoding="utf-8")
+            return path
+
+        def apply_config(self):
+            self.applied = True
+
+            class Descriptor:
+                runtime_adapter = "fake_runtime"
+                interface_name = "wg0"
+
+            return Descriptor()
+
+    settings.artifact_root = str(tmp_path / "artifacts")
+    settings.server_address = "10.99.0.1/24"
+
+    try:
+        create_apply_fixture()
+        runtime_service = FakeRuntimeService()
+        with SessionLocal() as session:
+            result = apply_server_config(session, runtime_service=runtime_service)
+
+        assert runtime_service.applied is True
+        assert Path(result.server_config_path).exists()
+        assert result.peer_count == 1
     finally:
         settings.artifact_root = previous_root
         settings.server_address = previous_address

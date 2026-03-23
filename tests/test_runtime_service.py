@@ -2,11 +2,13 @@ from app.core import settings
 from app.runtime import (
     ExecResult,
     get_artifact_store,
+    get_runtime_service,
     get_wireguard_runtime,
     parse_wg_dump,
     read_runtime_peers,
 )
 from app.runtime.artifacts import LocalFilesystemArtifactStore
+from app.runtime.service import RuntimeService
 from app.runtime.wireguard import DockerWireGuardRuntime
 
 
@@ -61,18 +63,11 @@ def test_parse_wg_dump_returns_runtime_rows() -> None:
 
 def test_read_runtime_peers_returns_runtime_and_rows() -> None:
     class FakeRuntime:
-        container_name = "wg-test"
+        adapter_name = "fake_runtime"
         interface_name = "wg0"
-        config_path = "/config/wg0.conf"
 
         def ensure_available(self) -> None:
             return None
-
-        def exec(self, command: list[str], *, capture_output: bool = False) -> ExecResult:
-            raise AssertionError("not used in this test")
-
-        def interface_exists(self) -> bool:
-            return True
 
         def read_dump(self) -> ExecResult:
             return ExecResult(
@@ -90,24 +85,18 @@ def test_read_runtime_peers_returns_runtime_and_rows() -> None:
     result = read_runtime_peers(FakeRuntime())
 
     assert result.runtime.interface_name == "wg0"
+    assert result.runtime.runtime_adapter == "fake_runtime"
     assert len(result.peers) == 1
     assert result.peers[0].public_key == "pubkey-2"
 
 
 def test_read_runtime_peers_raises_on_runtime_failure() -> None:
     class FakeRuntime:
-        container_name = "wg-test"
+        adapter_name = "fake_runtime"
         interface_name = "wg0"
-        config_path = "/config/wg0.conf"
 
         def ensure_available(self) -> None:
             return None
-
-        def exec(self, command: list[str], *, capture_output: bool = False) -> ExecResult:
-            raise AssertionError("not used in this test")
-
-        def interface_exists(self) -> bool:
-            return True
 
         def read_dump(self) -> ExecResult:
             return ExecResult(exit_code=1, stdout="", stderr="wg failed")
@@ -121,3 +110,56 @@ def test_read_runtime_peers_raises_on_runtime_failure() -> None:
         assert str(exc) == "wg failed"
     else:
         raise AssertionError("expected runtime dump failure to raise")
+
+
+def test_runtime_service_apply_returns_runtime_descriptor() -> None:
+    class FakeRuntime:
+        adapter_name = "fake_runtime"
+        interface_name = "wg0"
+
+        def ensure_available(self) -> None:
+            return None
+
+        def read_dump(self) -> ExecResult:
+            return ExecResult(exit_code=0, stdout="private\tpublic\t51820\toff\n", stderr="")
+
+        def apply_config(self) -> None:
+            return None
+
+    service = get_runtime_service(FakeRuntime())
+
+    assert isinstance(service, RuntimeService)
+    descriptor = service.apply_config()
+    assert descriptor.runtime_adapter == "fake_runtime"
+    assert descriptor.interface_name == "wg0"
+
+
+def test_runtime_service_writes_server_and_peer_artifacts(tmp_path) -> None:
+    class FakeRuntime:
+        adapter_name = "fake_runtime"
+        interface_name = "wg0"
+
+        def ensure_available(self) -> None:
+            return None
+
+        def read_dump(self) -> ExecResult:
+            return ExecResult(exit_code=0, stdout="private\tpublic\t51820\toff\n", stderr="")
+
+        def apply_config(self) -> None:
+            return None
+
+    service = get_runtime_service(
+        FakeRuntime(),
+        LocalFilesystemArtifactStore(tmp_path / "artifacts"),
+    )
+
+    server_config_path = service.write_server_config("[Interface]\nAddress = 10.0.0.1/24\n")
+    peer_config_path = service.write_peer_config("alpha", "[Interface]\nAddress = 10.0.0.2/32\n")
+    peer_qr_path = service.write_peer_qr("alpha", b"<svg />")
+
+    assert server_config_path.exists()
+    assert server_config_path.read_text(encoding="utf-8").startswith("[Interface]")
+    assert peer_config_path.exists()
+    assert peer_config_path.read_text(encoding="utf-8").endswith("/32\n")
+    assert peer_qr_path.exists()
+    assert peer_qr_path.read_bytes() == b"<svg />"

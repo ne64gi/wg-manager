@@ -10,6 +10,7 @@ from cryptography.hazmat.primitives.asymmetric import x25519
 from sqlalchemy import inspect, select, text
 from sqlalchemy.orm import Session, joinedload
 
+import app.models  # noqa: F401  # ensure all SQLAlchemy models register before create_all
 from app.core import settings
 from app.db import Base, engine
 from app.models import Group, InitialSettings, Peer, ServerState, User
@@ -34,12 +35,11 @@ def _datetime_sql_type() -> str:
 
 
 def _migrate_groups_table() -> None:
-    inspector = inspect(engine)
-    if "groups" not in inspector.get_table_names():
-        return
-
-    columns = {column["name"] for column in inspector.get_columns("groups")}
     with engine.begin() as connection:
+        inspector = inspect(connection)
+        if "groups" not in inspector.get_table_names():
+            return
+        columns = {column["name"] for column in inspector.get_columns("groups")}
         if "allocation_start_host" not in columns:
             connection.execute(
                 text(
@@ -62,13 +62,12 @@ def _migrate_groups_table() -> None:
 
 
 def _migrate_peers_table() -> None:
-    inspector = inspect(engine)
-    if "peers" not in inspector.get_table_names():
-        return
-
-    columns = {column["name"] for column in inspector.get_columns("peers")}
     datetime_type = _datetime_sql_type()
     with engine.begin() as connection:
+        inspector = inspect(connection)
+        if "peers" not in inspector.get_table_names():
+            return
+        columns = {column["name"] for column in inspector.get_columns("peers")}
         if "created_at" not in columns:
             connection.execute(
                 text(f"ALTER TABLE peers ADD COLUMN created_at {datetime_type}")
@@ -118,12 +117,11 @@ def _migrate_peers_table() -> None:
 
 
 def _migrate_gui_settings_table() -> None:
-    inspector = inspect(engine)
-    if "gui_settings" not in inspector.get_table_names():
-        return
-
-    columns = {column["name"] for column in inspector.get_columns("gui_settings")}
     with engine.begin() as connection:
+        inspector = inspect(connection)
+        if "gui_settings" not in inspector.get_table_names():
+            return
+        columns = {column["name"] for column in inspector.get_columns("gui_settings")}
         if "theme_mode" not in columns:
             connection.execute(
                 text(

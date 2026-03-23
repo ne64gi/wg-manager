@@ -7,9 +7,14 @@ export default defineConfig({
   fullyParallel: false,
   retries: process.env.CI ? 1 : 0,
   reporter: [["list"], ["html", { open: "never" }]],
+  expect: {
+    timeout: 10000,
+  },
   use: {
     baseURL,
     trace: "on-first-retry",
+    actionTimeout: 10000,
+    navigationTimeout: 15000,
   },
   projects: [
     {

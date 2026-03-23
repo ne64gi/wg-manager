@@ -5,7 +5,7 @@ const username = process.env.E2E_USERNAME ?? "playwright-admin";
 const password = process.env.E2E_PASSWORD ?? "playwright-pass-123!";
 const runId = Date.now().toString();
 const subnetOctet = (Number(runId.slice(-3)) % 200) + 20;
-const networkCidr = `10.${subnetOctet}.0.1/24`;
+const networkCidr = `10.${subnetOctet}.0.0/24`;
 const allowedIps = `10.${subnetOctet}.0.0/24`;
 const names = {
   group: `smoke-group-${runId}`,
@@ -14,11 +14,43 @@ const names = {
 };
 
 async function ensureAuthenticated(page: Parameters<typeof test>[0]["page"]) {
-  const setupStatusResponse = await page.request.get(`${origin}/api/auth/setup-status`);
-  expect(setupStatusResponse.ok()).toBeTruthy();
+  let setupStatusResponse;
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    try {
+      setupStatusResponse = await page.request.get(`${origin}/api/auth/setup-status`);
+      if (setupStatusResponse.ok()) {
+        break;
+      }
+    } catch {
+      // The web container can still be settling on the internal network for a moment.
+    }
+    await page.waitForTimeout(500);
+  }
+  expect(setupStatusResponse?.ok()).toBeTruthy();
   const setupStatus = (await setupStatusResponse.json()) as { has_login_users: boolean };
 
   await page.goto("/");
+  await page.waitForLoadState("domcontentloaded");
+  await expect
+    .poll(
+      async () => {
+        const authVisible = await page.getByTestId("login-submit").isVisible().catch(() => false);
+        const dashboardVisible = await page
+          .getByTestId("dashboard-sync-state")
+          .isVisible()
+          .catch(() => false);
+
+        if (dashboardVisible) {
+          return "dashboard";
+        }
+        if (authVisible) {
+          return "auth";
+        }
+        return "loading";
+      },
+      { timeout: 10000 },
+    )
+    .not.toBe("loading");
 
   if (await page.getByTestId("dashboard-sync-state").isVisible().catch(() => false)) {
     return;
@@ -54,19 +86,22 @@ test.describe.serial("v1 smoke", () => {
     await page.getByTestId("groups-create-network-cidr").fill(networkCidr);
     await page.getByTestId("groups-create-allowed-ips").fill(allowedIps);
     await page.getByTestId("groups-create-submit").click();
+    await expect(page.getByText(names.group).first()).toBeVisible({ timeout: 10000 });
 
     await page.getByTestId("nav-users").click();
     await page.getByTestId("users-add-button").click();
     await page.getByTestId("users-create-group").selectOption({ label: names.group });
     await page.getByTestId("users-create-name").fill(names.user);
     await page.getByTestId("users-create-submit").click();
+    await expect(page.getByText(names.user).first()).toBeVisible({ timeout: 10000 });
 
     await page.getByTestId("nav-peers").click();
     await page.getByTestId("peers-add-button").click();
     await page.getByTestId("peers-create-user").selectOption({ label: names.user });
     await page.getByTestId("peers-create-name").fill(names.peer);
     await page.getByTestId("peers-create-submit").click();
-    await expect(page.getByText(names.peer).first()).toBeVisible();
+    await page.getByTestId("peers-search").fill(names.peer);
+    await expect(page.getByText(names.peer).first()).toBeVisible({ timeout: 10000 });
   });
 
   test("reveal actions are visible and logs controls load", async ({ page }) => {
@@ -81,7 +116,7 @@ test.describe.serial("v1 smoke", () => {
     await page.getByTestId("reveal-close").click();
 
     await page.getByTestId("peers-apply-button").click();
-    await expect(page.getByTestId("toast-stack")).toBeVisible();
+    await expect(page.getByText(/Config applied\.|設定を適用しました。/).first()).toBeVisible();
 
     await page.getByTestId("nav-dashboard").click();
     await expect(page.getByTestId("dashboard-sync-state")).toBeVisible();
@@ -103,5 +138,20 @@ test.describe.serial("v1 smoke", () => {
 
     await accordion.locator("summary").click();
     await expect(accordion.getByText(names.user).first()).toBeVisible();
+  });
+
+  test("desktop sidebar can collapse into icon-only navigation", async ({ page }) => {
+    await ensureAuthenticated(page);
+
+    await page.setViewportSize({ width: 1440, height: 960 });
+    await page.getByTestId("sidebar-toggle").click();
+    await expect(page.getByTestId("app-shell")).toHaveClass(/app-shell-sidebar-collapsed/);
+  });
+
+  test("settings shows the runtime adapter in build information", async ({ page }) => {
+    await ensureAuthenticated(page);
+
+    await page.getByTestId("nav-settings").click();
+    await expect(page.getByTestId("settings-runtime-adapter")).toHaveValue("docker_container");
   });
 });

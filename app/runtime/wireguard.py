@@ -20,15 +20,10 @@ class ExecResult:
 
 
 class WireGuardRuntime(Protocol):
-    container_name: str
+    adapter_name: str
     interface_name: str
-    config_path: str
 
     def ensure_available(self) -> None: ...
-
-    def exec(self, command: list[str], *, capture_output: bool = False) -> ExecResult: ...
-
-    def interface_exists(self) -> bool: ...
 
     def read_dump(self) -> ExecResult: ...
 
@@ -46,6 +41,8 @@ class UnixHTTPConnection(http.client.HTTPConnection):
 
 
 class DockerWireGuardRuntime:
+    adapter_name = "docker_container"
+
     def __init__(
         self,
         *,
@@ -63,7 +60,7 @@ class DockerWireGuardRuntime:
         socket_path = Path(self._docker_socket_path)
         if not socket_path.exists():
             raise ValueError(
-                f"Docker socket '{self._docker_socket_path}' is not available"
+                f"runtime control socket '{self._docker_socket_path}' is not available"
             )
 
     def _docker_request_json(
@@ -89,7 +86,7 @@ class DockerWireGuardRuntime:
 
         if response.status >= 400:
             message = raw.decode("utf-8", errors="replace") if raw else response.reason
-            raise ValueError(f"Docker API error {response.status}: {message}")
+            raise ValueError(f"runtime control request failed ({response.status}): {message}")
 
         if not raw:
             return None
@@ -118,7 +115,7 @@ class DockerWireGuardRuntime:
 
         if response.status >= 400:
             message = raw.decode("utf-8", errors="replace") if raw else response.reason
-            raise ValueError(f"Docker API error {response.status}: {message}")
+            raise ValueError(f"runtime control request failed ({response.status}): {message}")
         return raw
 
     def _demux_exec_output(self, raw: bytes) -> tuple[str, str]:
@@ -160,7 +157,7 @@ class DockerWireGuardRuntime:
             },
         )
         if not isinstance(create_response, dict) or "Id" not in create_response:
-            raise ValueError("failed to create WireGuard exec instance")
+            raise ValueError("failed to create runtime command instance")
 
         exec_id = create_response["Id"]
         raw_output = self._docker_request_raw(
@@ -177,14 +174,14 @@ class DockerWireGuardRuntime:
                 f"/v1.41/exec/{quote(exec_id, safe='')}/json",
             )
             if not isinstance(payload, dict):
-                raise ValueError("failed to inspect WireGuard exec instance")
+                raise ValueError("failed to inspect runtime command instance")
             inspect_response = payload
             if not payload.get("Running", False):
                 break
             time.sleep(0.1)
 
         if inspect_response is None or inspect_response.get("Running", False):
-            raise ValueError("timed out while executing command in WireGuard container")
+            raise ValueError("timed out while executing runtime command")
 
         stdout, stderr = self._demux_exec_output(raw_output) if capture_output else ("", "")
         return ExecResult(

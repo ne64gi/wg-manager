@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 
-import { getPreviewLocale, getPreviewTheme } from "./lib/i18n";
+import { getPreviewTheme, getStoredPreviewLocale } from "./lib/i18n";
 import { useAuth } from "./modules/auth/AuthContext";
 import { useGuiSettingsQuery } from "./modules/gui/useGuiSettingsQuery";
 import { AppLayout } from "./ui/AppLayout";
@@ -41,14 +41,17 @@ export default function App() {
 
     function applyGuiPreferences() {
       const previewTheme = getPreviewTheme();
+      const previewLocale = getStoredPreviewLocale();
       const themeMode =
-        auth.isAuthenticated
+        previewTheme ??
+        (auth.isAuthenticated
           ? (guiSettingsQuery.data?.theme_mode ?? "system")
-          : (previewTheme ?? "system");
+          : "system");
       const locale =
-        auth.isAuthenticated
+        previewLocale ??
+        (auth.isAuthenticated
           ? (guiSettingsQuery.data?.default_locale ?? "en")
-          : getPreviewLocale();
+          : "en");
       const resolvedTheme =
         themeMode === "system" ? (mediaQuery.matches ? "dark" : "light") : themeMode;
 

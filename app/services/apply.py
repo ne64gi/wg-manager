@@ -4,23 +4,21 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from app.runtime import get_wireguard_runtime
+from app.runtime import RuntimeService, get_runtime_service
 from app.schemas import ApplyResult
 from app.services.audit import log_operation
 from app.services.config_generation import generate_server_config
 from app.services.domain import get_server_state
 
 
-def _run_wireguard_apply() -> None:
-    runtime = get_wireguard_runtime()
-    runtime.apply_config()
-
-
-def apply_server_config(session: Session) -> ApplyResult:
-    artifacts = generate_server_config(session)
+def apply_server_config(
+    session: Session,
+    runtime_service: RuntimeService | None = None,
+) -> ApplyResult:
+    runtime_service = runtime_service or get_runtime_service()
+    artifacts = generate_server_config(session, runtime_service=runtime_service)
     server = get_server_state(session)
-    runtime = get_wireguard_runtime()
-    _run_wireguard_apply()
+    runtime = runtime_service.apply_config()
 
     applied_at = datetime.now(timezone.utc)
     log_operation(
@@ -31,7 +29,7 @@ def apply_server_config(session: Session) -> ApplyResult:
         details={
             "config_path": artifacts.server_config_path,
             "peer_count": artifacts.peer_count,
-            "container_name": runtime.container_name,
+            "runtime_adapter": runtime.runtime_adapter,
             "interface_name": runtime.interface_name,
             "applied_at": applied_at.isoformat(),
         },
@@ -40,7 +38,7 @@ def apply_server_config(session: Session) -> ApplyResult:
     return ApplyResult(
         server_config_path=artifacts.server_config_path,
         peer_count=artifacts.peer_count,
-        container_name=runtime.container_name,
+        runtime_adapter=runtime.runtime_adapter,
         interface_name=runtime.interface_name,
         applied_at=applied_at,
     )
