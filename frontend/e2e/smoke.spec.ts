@@ -188,4 +188,26 @@ test.describe.serial("v1 smoke", () => {
     await expect(page.locator("html")).toHaveAttribute("data-theme-mode", "light");
     await expect(page.getByTestId("settings-page-heading")).toContainText("設定");
   });
+
+  test("settings interface MTU and error log level persist after save", async ({ page }) => {
+    await ensureAuthenticated(page);
+
+    await page.getByTestId("nav-settings").click();
+    await page.getByTestId("settings-interface-mtu").fill("1380");
+    await page.getByTestId("settings-interface-save").click();
+    await expect(page.getByText(/Endpoint settings saved\.|エンドポイント設定を保存しました。/).first()).toBeVisible();
+    await page.getByTestId("settings-error-log-level-select").selectOption("error");
+    await page.getByTestId("settings-save-gui").click();
+    await expect(page.getByText(/GUI settings saved\.|画面設定を保存しました。/).first()).toBeVisible();
+
+    await page.reload();
+    await page.waitForLoadState("domcontentloaded");
+
+    await expect(page.getByTestId("settings-interface-mtu")).toHaveValue("1380");
+    await expect(page.getByTestId("settings-error-log-level-select")).toHaveValue("error");
+
+    await page.getByTestId("nav-logs").click();
+    await expect(page.getByText(/Current error log level|現在のエラーログレベル/).first()).toBeVisible();
+    await expect(page.getByText(/Error|エラー/).first()).toBeVisible();
+  });
 });

@@ -167,6 +167,7 @@ export function SettingsPage() {
             <label className="field">
               <span>{t("settings.error_log_level", "Error log level")}</span>
               <select
+                data-testid="settings-error-log-level-select"
                 value={formState.error_log_level ?? "warning"}
                 onChange={(event) =>
                   setFormState((current) => ({
@@ -246,7 +247,11 @@ export function SettingsPage() {
         <Panel
           title={t("settings.endpoint_heading", "Endpoint settings")}
           actions={
-            <button className="primary-button" onClick={() => endpointMutation.mutate()}>
+            <button
+              className="primary-button"
+              data-testid="settings-interface-save"
+              onClick={() => endpointMutation.mutate()}
+            >
               {t("common.save", "Save")}
             </button>
           }

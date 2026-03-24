@@ -56,3 +56,13 @@ This keeps behavior stable while making the app easier to move later:
 - if a topology view appears during `1.2`, keep it as a lightweight structural preview rather than a feature-rich graph
 - continue moving page-owned query/mutation orchestration into feature modules before touching larger visual work
 - keep the remaining page-local helper logic small, and prefer feature modules for query/mutation/form state by default
+
+## `1.2.1` Thin Polish Direction
+
+This follow-up should stay intentionally small.
+
+Useful examples:
+
+- add stable browser-test selectors around newly important Settings controls
+- extend smoke around Settings persistence instead of broadening into full regression coverage
+- prefer confidence and consistency work over visible redesign
