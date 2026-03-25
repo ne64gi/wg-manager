@@ -174,3 +174,48 @@ def test_runtime_service_writes_server_and_peer_artifacts(tmp_path) -> None:
     assert peer_config_path.read_text(encoding="utf-8").endswith("/32\n")
     assert peer_qr_path.exists()
     assert peer_qr_path.read_bytes() == b"<svg />"
+
+
+def test_extract_interface_address_from_config(tmp_path) -> None:
+    config_path = tmp_path / "wg0.conf"
+    config_path.write_text("""[Interface]\nAddress = 10.99.0.1/24\n\n[Peer]\n""", encoding="utf-8")
+
+    runtime = DockerWireGuardRuntime(
+        docker_socket_path="/var/run/docker.sock",
+        container_name="wg-studio-wireguard",
+        interface_name="wg0",
+        config_path=str(config_path),
+        docker_api_version="v1.41",
+    )
+
+    assert runtime._extract_interface_address_from_config() == "10.99.0.1/24"
+
+
+def test_ensure_interface_address_and_route_fix_commands(tmp_path) -> None:
+    config_path = tmp_path / "wg0.conf"
+    config_path.write_text("""[Interface]\nAddress = 10.99.0.1/24\n""", encoding="utf-8")
+
+    class FakeRuntime(DockerWireGuardRuntime):
+        def __init__(self):
+            super().__init__(
+                docker_socket_path="/var/run/docker.sock",
+                container_name="wg-studio-wireguard",
+                interface_name="wg0",
+                config_path=str(config_path),
+                docker_api_version="v1.41",
+            )
+            self.calls = []
+
+        def exec(self, command, *, capture_output=False):
+            self.calls.append(command)
+            if command[:3] == ["sh", "-lc", f"ip -4 addr show wg0"]:
+                return ExecResult(exit_code=0, stdout="inet 10.99.0.2/24 brd 10.99.0.255 scope global wg0\n", stderr="")
+            return ExecResult(exit_code=0, stdout="", stderr="")
+
+    runtime = FakeRuntime()
+    runtime._ensure_interface_address()
+    runtime._ensure_route()
+
+    assert ["ip", "-4", "addr", "flush", "dev", "wg0"] in runtime.calls
+    assert ["ip", "-4", "addr", "add", "10.99.0.1/24", "dev", "wg0"] in runtime.calls
+    assert ["ip", "-4", "route", "replace", "10.99.0.0/24", "dev", "wg0"] in runtime.calls

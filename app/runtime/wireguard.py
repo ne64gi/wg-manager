@@ -212,6 +212,71 @@ class DockerWireGuardRuntime:
             return f"{prefix} with exit code {result.exit_code}: {detail}"
         return f"{prefix} with exit code {result.exit_code}"
 
+    def _extract_interface_address_from_config(self) -> str | None:
+        try:
+            content = Path(self.config_path).read_text(encoding="utf-8")
+        except FileNotFoundError:
+            return None
+
+        lines = [line.strip() for line in content.splitlines()]
+        in_interface = False
+        for line in lines:
+            if line.startswith("[") and line.endswith("]"):
+                in_interface = line.lower() == "[interface]"
+                continue
+            if not in_interface or not line:
+                continue
+            if line.startswith("Address"):
+                parts = line.split("=", 1)
+                if len(parts) == 2:
+                    return parts[1].strip()
+        return None
+
+    def _get_interface_addresses(self) -> list[str]:
+        result = self.exec(
+            ["sh", "-lc", f"ip -4 addr show {self.interface_name}"],
+            capture_output=True,
+        )
+        if result.exit_code != 0:
+            return []
+
+        addrs: list[str] = []
+        for line in result.stdout.splitlines():
+            line = line.strip()
+            if line.startswith("inet "):
+                parts = line.split()
+                if len(parts) >= 2:
+                    addrs.append(parts[1])
+        return addrs
+
+    def _ensure_interface_address(self) -> None:
+        desired_address = self._extract_interface_address_from_config()
+        if not desired_address:
+            return
+
+        current_addrs = self._get_interface_addresses()
+        if desired_address in current_addrs:
+            return
+
+        self.exec(["ip", "-4", "addr", "flush", "dev", self.interface_name])
+        self.exec(["ip", "-4", "addr", "add", desired_address, "dev", self.interface_name])
+
+    def _ensure_route(self) -> None:
+        desired_address = self._extract_interface_address_from_config()
+        if not desired_address:
+            return
+
+        import ipaddress
+
+        try:
+            network = ipaddress.ip_network(desired_address, strict=False)
+        except ValueError:
+            return
+
+        self.exec(
+            ["ip", "-4", "route", "replace", str(network), "dev", self.interface_name]
+        )
+
     def apply_config(self) -> None:
         self.ensure_available()
 
@@ -222,21 +287,23 @@ class DockerWireGuardRuntime:
             )
             if result.exit_code != 0:
                 raise ValueError(self._format_apply_error("wg-quick up failed", result))
-            return
+        else:
+            result = self.exec(
+                [
+                    "sh",
+                    "-lc",
+                    (
+                        f"wg-quick strip {self.config_path} | "
+                        f"wg syncconf {self.interface_name} /dev/stdin"
+                    ),
+                ],
+                capture_output=True,
+            )
+            if result.exit_code != 0:
+                raise ValueError(self._format_apply_error("wg syncconf failed", result))
 
-        result = self.exec(
-            [
-                "sh",
-                "-lc",
-                (
-                    f"wg-quick strip {self.config_path} | "
-                    f"wg syncconf {self.interface_name} /dev/stdin"
-                ),
-            ],
-            capture_output=True,
-        )
-        if result.exit_code != 0:
-            raise ValueError(self._format_apply_error("wg syncconf failed", result))
+        self._ensure_interface_address()
+        self._ensure_route()
 def get_wireguard_runtime() -> WireGuardRuntime:
     if settings.runtime_adapter != "docker_container":
         raise ValueError(

@@ -53,6 +53,8 @@ export function useSettingsPageData() {
   const [endpointAddress, setEndpointAddress] = useState("");
   const [endpointPort, setEndpointPort] = useState("51820");
   const [interfaceMtu, setInterfaceMtu] = useState("");
+  const [serverAddress, setServerAddress] = useState("");
+  const [serverDns, setServerDns] = useState("");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
@@ -94,6 +96,8 @@ export function useSettingsPageData() {
           ? ""
           : String(initialSettingsQuery.data.interface_mtu),
       );
+      setServerAddress(initialSettingsQuery.data.server_address);
+      setServerDns(initialSettingsQuery.data.server_dns.join(", "));
     }
   }, [initialSettingsQuery.data]);
 
@@ -128,6 +132,8 @@ export function useSettingsPageData() {
         endpoint_address: endpointAddress,
         endpoint_port: Number(endpointPort),
         interface_mtu: interfaceMtu.trim() ? Number(interfaceMtu) : null,
+        server_address: serverAddress,
+        server_dns: serverDns.split(",").map((item) => item.trim()).filter((item) => item),
       }),
     onSuccess: async () => {
       pushToast(t("settings.endpoint_saved", "Endpoint settings saved."));
@@ -287,6 +293,10 @@ export function useSettingsPageData() {
     setEndpointPort,
     interfaceMtu,
     setInterfaceMtu,
+    serverAddress,
+    setServerAddress,
+    serverDns,
+    setServerDns,
     newUsername,
     setNewUsername,
     newPassword,
