@@ -18,6 +18,7 @@ class Settings(BaseModel):
     wireguard_container_name: str = "wg-studio-wireguard"
     wireguard_interface_name: str = "wg0"
     wireguard_config_path: str = "/config/wg_confs/wg0.conf"
+    docker_api_version: str = "v1.41"
     bootstrap_admin_username: str | None = None
     bootstrap_admin_password: str | None = None
     jwt_secret_key: str = "change-me"
@@ -62,6 +63,7 @@ settings = Settings(
     wireguard_config_path=os.getenv(
         "WG_CONTAINER_CONFIG_PATH", "/config/wg_confs/wg0.conf"
     ),
+    docker_api_version=os.getenv("DOCKER_API_VERSION", "v1.41"),
     bootstrap_admin_username=os.getenv("WG_BOOTSTRAP_ADMIN_USERNAME"),
     bootstrap_admin_password=os.getenv("WG_BOOTSTRAP_ADMIN_PASSWORD"),
     jwt_secret_key=os.getenv("WG_JWT_SECRET_KEY", "change-me"),

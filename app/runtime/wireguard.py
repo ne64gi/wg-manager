@@ -50,11 +50,13 @@ class DockerWireGuardRuntime:
         container_name: str,
         interface_name: str,
         config_path: str,
+        docker_api_version: str = "v1.41",
     ) -> None:
         self._docker_socket_path = docker_socket_path
         self.container_name = container_name
         self.interface_name = interface_name
         self.config_path = config_path
+        self.docker_api_version = docker_api_version
 
     def ensure_available(self) -> None:
         socket_path = Path(self._docker_socket_path)
@@ -149,7 +151,7 @@ class DockerWireGuardRuntime:
         container_name = quote(self.container_name, safe="")
         create_response = self._docker_request_json(
             "POST",
-            f"/v1.41/containers/{container_name}/exec",
+            f"/{self.docker_api_version}/containers/{container_name}/exec",
             body={
                 "AttachStdout": capture_output,
                 "AttachStderr": capture_output,
@@ -162,7 +164,7 @@ class DockerWireGuardRuntime:
         exec_id = create_response["Id"]
         raw_output = self._docker_request_raw(
             "POST",
-            f"/v1.41/exec/{quote(exec_id, safe='')}/start",
+            f"/{self.docker_api_version}/exec/{quote(exec_id, safe='')}/start",
             body={"Detach": False, "Tty": False},
         )
 
@@ -171,7 +173,7 @@ class DockerWireGuardRuntime:
         while time.monotonic() < deadline:
             payload = self._docker_request_json(
                 "GET",
-                f"/v1.41/exec/{quote(exec_id, safe='')}/json",
+                f"/{self.docker_api_version}/exec/{quote(exec_id, safe='')}/json",
             )
             if not isinstance(payload, dict):
                 raise ValueError("failed to inspect runtime command instance")
@@ -245,4 +247,5 @@ def get_wireguard_runtime() -> WireGuardRuntime:
         container_name=settings.wireguard_container_name,
         interface_name=settings.wireguard_interface_name,
         config_path=settings.wireguard_config_path,
+        docker_api_version=settings.docker_api_version,
     )

@@ -44,6 +44,17 @@ def test_get_wireguard_runtime_rejects_unknown_adapter() -> None:
         settings.runtime_adapter = previous_adapter
 
 
+def test_get_wireguard_runtime_respects_docker_api_version() -> None:
+    previous_api_version = settings.docker_api_version
+    settings.docker_api_version = "v1.44"
+    try:
+        runtime = get_wireguard_runtime()
+        assert isinstance(runtime, DockerWireGuardRuntime)
+        assert runtime.docker_api_version == "v1.44"
+    finally:
+        settings.docker_api_version = previous_api_version
+
+
 def test_parse_wg_dump_returns_runtime_rows() -> None:
     raw = (
         "private\tpublic\t51820\toff\n"
