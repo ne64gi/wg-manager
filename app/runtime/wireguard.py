@@ -56,6 +56,8 @@ class DockerWireGuardRuntime:
         self.container_name = container_name
         self.interface_name = interface_name
         self.config_path = config_path
+        if docker_api_version and not docker_api_version.startswith("v"):
+            docker_api_version = f"v{docker_api_version}"
         self.docker_api_version = docker_api_version
 
     def ensure_available(self) -> None:
