@@ -274,6 +274,8 @@ export type InitialSettings = {
   endpoint_address: string;
   endpoint_port: number;
   interface_mtu: number | null;
+  server_address: string;
+  server_dns: string[];
   created_at: string;
   updated_at: string;
 };
@@ -282,6 +284,8 @@ export type InitialSettingsUpdate = {
   endpoint_address: string;
   endpoint_port: number;
   interface_mtu?: number | null;
+  server_address: string;
+  server_dns: string[];
 };
 
 export type RevealedPeerArtifacts = {

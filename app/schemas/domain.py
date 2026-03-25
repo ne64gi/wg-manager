@@ -396,6 +396,8 @@ class InitialSettingsUpdate(BaseModel):
     endpoint_address: str = Field(min_length=1, max_length=255)
     endpoint_port: int = Field(ge=1, le=65535)
     interface_mtu: int | None = Field(default=None, ge=576, le=9000)
+    server_address: str | None = Field(default=None, min_length=1, max_length=45)
+    server_dns: list[str] | None = Field(default=None)
 
 
 class InitialSettingsRead(BaseModel):
@@ -405,6 +407,8 @@ class InitialSettingsRead(BaseModel):
     endpoint_address: str
     endpoint_port: int
     interface_mtu: int | None
+    server_address: str
+    server_dns: list[str]
     created_at: datetime
     updated_at: datetime
 

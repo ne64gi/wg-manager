@@ -240,6 +240,12 @@ def get_initial_settings(session: Session) -> InitialSettings:
         session.add(initial_settings)
         session.commit()
         session.refresh(initial_settings)
+
+    # enrich with server-side values so the API can return a single payload
+    server_state = get_server_state(session)
+    setattr(initial_settings, "server_address", server_state.server_address)
+    setattr(initial_settings, "server_dns", server_state.dns)
+
     return initial_settings
 
 
@@ -251,8 +257,21 @@ def update_initial_settings(
     initial_settings.endpoint_port = payload.endpoint_port
     initial_settings.interface_mtu = payload.interface_mtu
     initial_settings.updated_at = datetime.now(timezone.utc)
+
+    server_state = get_server_state(session)
+    if payload.server_address is not None:
+        server_state.server_address = payload.server_address
+    if payload.server_dns is not None:
+        server_state.dns = payload.server_dns
+    server_state.updated_at = datetime.now(timezone.utc)
+
     session.commit()
     session.refresh(initial_settings)
+    session.refresh(server_state)
+
+    setattr(initial_settings, "server_address", server_state.server_address)
+    setattr(initial_settings, "server_dns", server_state.dns)
+
     log_operation(
         "initial_settings.update",
         "initial_settings",
@@ -262,8 +281,34 @@ def update_initial_settings(
             "endpoint_address": initial_settings.endpoint_address,
             "endpoint_port": initial_settings.endpoint_port,
             "interface_mtu": initial_settings.interface_mtu,
+            "server_address": server_state.server_address,
+            "server_dns": server_state.dns,
         },
     )
+
+    try:
+        from app.services.apply import apply_server_config
+
+        apply_server_config(session)
+        log_operation(
+            "initial_settings.apply",
+            "initial_settings",
+            initial_settings.id,
+            source="service",
+            details={
+                "server_address": server_state.server_address,
+                "server_dns": server_state.dns,
+            },
+        )
+    except Exception as exc:
+        log_operation(
+            "initial_settings.apply_failed",
+            "initial_settings",
+            initial_settings.id,
+            source="service",
+            details={"error": str(exc)},
+        )
+
     return initial_settings
 
 

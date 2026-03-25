@@ -285,6 +285,34 @@ export function SettingsPage() {
               </div>
             </label>
             <label className="field">
+              <span>{t("settings.server_address", "Server address")}</span>
+              <input
+                value={serverAddress}
+                onChange={(event) => setServerAddress(event.target.value)}
+                placeholder={t("settings.server_address_placeholder", "e.g. 10.255.255.1/32")}
+              />
+              <div className="muted-text">
+                {t(
+                  "settings.server_address_hint",
+                  "Server IP address used in generated WireGuard server config.",
+                )}
+              </div>
+            </label>
+            <label className="field">
+              <span>{t("settings.server_dns", "Server DNS")}</span>
+              <input
+                value={serverDns}
+                onChange={(event) => setServerDns(event.target.value)}
+                placeholder={t("settings.server_dns_placeholder", "e.g. 1.1.1.1,8.8.8.8")}
+              />
+              <div className="muted-text">
+                {t(
+                  "settings.server_dns_hint",
+                  "Comma-separated DNS servers used in generated peer configs.",
+                )}
+              </div>
+            </label>
+            <label className="field">
               <span>{t("settings.interface_mtu", "Interface MTU")}</span>
               <input
                 data-testid="settings-interface-mtu"

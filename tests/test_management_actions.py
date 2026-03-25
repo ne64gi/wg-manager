@@ -3,15 +3,18 @@ from pathlib import Path
 from app.core import settings
 from app.db import AuditBase, Base, SessionLocal, audit_engine, engine
 from app.models import GroupScope
-from app.schemas import GroupCreate, GroupUpdate, PeerCreate, PeerUpdate, UserCreate, UserUpdate
+from app.schemas import GroupCreate, GroupUpdate, InitialSettingsUpdate, PeerCreate, PeerUpdate, UserCreate, UserUpdate
 from app.services import (
     create_group,
     create_peer,
     create_user,
     generate_peer_artifacts,
     generate_server_config,
+    get_initial_settings,
+    get_server_state,
     reissue_peer_keys,
     reveal_peer_artifacts,
+    update_initial_settings,
     update_group,
     update_peer,
     update_user,
@@ -130,6 +133,91 @@ def test_update_entities_and_reissue_peer_keys(tmp_path: Path) -> None:
         settings.artifact_root = previous_root
         settings.server_endpoint = previous_endpoint
         settings.server_address = previous_address
+
+
+def test_initial_settings_update_server_address_and_dns(tmp_path: Path) -> None:
+    reset_db()
+    previous_root = settings.artifact_root
+    previous_endpoint = settings.server_endpoint
+    previous_address = settings.server_address
+    previous_dns = settings.server_dns
+
+    settings.artifact_root = str(tmp_path)
+    settings.server_endpoint = "vpn.test.local"
+    settings.server_address = "10.99.0.1/24"
+    settings.server_dns = ["1.1.1.1"]
+
+    try:
+        with SessionLocal() as session:
+            initial = get_initial_settings(session)
+            assert initial.endpoint_address == "vpn.test.local"
+            assert initial.endpoint_port == 51820
+
+            updated = update_initial_settings(
+                session,
+                InitialSettingsUpdate(
+                    endpoint_address="vpn.updated.local",
+                    endpoint_port=51821,
+                    interface_mtu=1400,
+                    server_address="10.99.0.2/24",
+                    server_dns=["8.8.8.8", "8.8.4.4"],
+                ),
+            )
+
+            assert updated.endpoint_address == "vpn.updated.local"
+            assert updated.endpoint_port == 51821
+            assert updated.interface_mtu == 1400
+            assert updated.server_address == "10.99.0.2/24"
+            assert updated.server_dns == ["8.8.8.8", "8.8.4.4"]
+
+            server_state = get_server_state(session)
+            assert server_state.server_address == "10.99.0.2/24"
+            assert server_state.dns == ["8.8.8.8", "8.8.4.4"]
+    finally:
+        settings.artifact_root = previous_root
+        settings.server_endpoint = previous_endpoint
+        settings.server_address = previous_address
+        settings.server_dns = previous_dns
+
+
+def test_initial_settings_update_triggers_apply(tmp_path: Path, monkeypatch) -> None:
+    reset_db()
+    previous_root = settings.artifact_root
+    previous_endpoint = settings.server_endpoint
+    previous_address = settings.server_address
+    previous_dns = settings.server_dns
+
+    settings.artifact_root = str(tmp_path)
+    settings.server_endpoint = "vpn.test.local"
+    settings.server_address = "10.99.0.1/24"
+    settings.server_dns = ["1.1.1.1"]
+
+    applied = {"count": 0}
+
+    def fake_apply(session):
+        applied["count"] += 1
+
+    monkeypatch.setattr("app.services.apply.apply_server_config", fake_apply)
+
+    try:
+        with SessionLocal() as session:
+            update_initial_settings(
+                session,
+                InitialSettingsUpdate(
+                    endpoint_address="vpn.updated.local",
+                    endpoint_port=51821,
+                    interface_mtu=1400,
+                    server_address="10.99.0.2/24",
+                    server_dns=["8.8.8.8", "8.8.4.4"],
+                ),
+            )
+
+            assert applied["count"] == 1
+    finally:
+        settings.artifact_root = previous_root
+        settings.server_endpoint = previous_endpoint
+        settings.server_address = previous_address
+        settings.server_dns = previous_dns
 
 
 def test_peer_toggle_blocks_generation_when_inactive(tmp_path: Path) -> None:
