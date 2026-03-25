@@ -220,3 +220,155 @@ ICMP依存排除
 ここ直すと
 
 👉 「完全なネットワークコントロールプレーン」になる
+
+
+
+ただ今回のトラブル踏まえると
+
+UIは完成してるけど
+
+👉 下のレイヤーがまだ“信頼できる基盤”になってない
+
+フィードバック（プロダクト視点）
+🔥 1. 「同期済み」表示の危険性
+
+今ここ👇
+
+同期済み
+期待ピア数 = ランタイムピア数
+
+でも実際は
+
+👉 通信できてない状態が普通にあり得る
+
+対策
+
+👉 ステータス分けるべき
+
+Config Sync（今のやつ）
+Runtime Health（実通信）
+例
+✔ Config Sync OK
+⚠ Runtime Degraded（ping/ng）
+🔥 2. runtime未接続の意味が曖昧
+
+今の表示：
+
+ランタイム未接続
+
+👉 これ原因が分からん
+
+対策
+
+👉 分解表示
+
+Docker API NG
+wg0 not found
+route mismatch
+permission error
+🔥 3. ネットワークレイヤの可視化が足りない
+
+今のUIは
+
+👉 論理（ユーザー・ピア）に寄ってる
+
+追加すると爆上がりする
+👇 これ
+wg0 status
+address
+routing状態
+listen port
+nftables状態
+UIイメージ
+[Network Runtime]
+
+wg0: UP
+Address: 10.88.61.1/24
+Route: OK
+Firewall: OK
+Listen: 51820
+🔥 4. applyの責務が弱い
+
+今の apply
+
+👉 「config書く」寄り
+
+本来あるべき
+
+👉 「desired stateに収束させる」
+
+つまり：
+
+wg0 なければ作る
+addressズレてたら直す
+routeズレてたら直す
+peerズレてたらsync
+🔥 5. “見えてないリスク”の表示不足
+
+今回みたいなやつ
+
+👉 UI上は全部正常に見える
+
+追加したい警告
+route mismatch
+multiple interface address
+docker api version mismatch
+wg0 missing
+🔥 6. Reveal設計めっちゃいい（これは強い）
+
+これ👇
+
+未表示のピア設定
+
+👉 これ普通のツールにない
+
+強化するといい
+revealログ（誰がいつ表示したか）
+ワンタイムURL
+QR有効期限
+
+👉 SaaS化できるレベル
+
+🔥 7. APIを内部限定にしてる設計は正しい
+
+これはそのままでOK
+
+👉 Traefikで
+
+/ → web
+/api → api（内部）
+
+この設計かなり良い
+
+🔥 8. 一番デカい改善ポイント（核心）
+
+👉 runtime abstractionが弱い
+
+今：
+
+docker exec で wg 操作
+将来の壁
+host直WG
+systemd WG
+k8s
+複数WG
+解決
+
+👉 runtime adapter をちゃんと分離
+
+DockerRuntime
+HostRuntime
+SSHRuntime
+総評
+今の位置
+
+👉 「めちゃくちゃ良いUIを持ったPoC」
+
+ここ直すと
+
+👉 「売れるプロダクト」になる
+
+一言でいうと
+
+👉 上は完成してる
+👉 下を“インフラとして信用できる状態”にすれば勝ち
