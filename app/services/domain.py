@@ -285,6 +285,30 @@ def update_initial_settings(
             "server_dns": server_state.dns,
         },
     )
+
+    try:
+        from app.services.apply import apply_server_config
+
+        apply_server_config(session)
+        log_operation(
+            "initial_settings.apply",
+            "initial_settings",
+            initial_settings.id,
+            source="service",
+            details={
+                "server_address": server_state.server_address,
+                "server_dns": server_state.dns,
+            },
+        )
+    except Exception as exc:
+        log_operation(
+            "initial_settings.apply_failed",
+            "initial_settings",
+            initial_settings.id,
+            source="service",
+            details={"error": str(exc)},
+        )
+
     return initial_settings
 
 

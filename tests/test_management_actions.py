@@ -180,6 +180,46 @@ def test_initial_settings_update_server_address_and_dns(tmp_path: Path) -> None:
         settings.server_dns = previous_dns
 
 
+def test_initial_settings_update_triggers_apply(tmp_path: Path, monkeypatch) -> None:
+    reset_db()
+    previous_root = settings.artifact_root
+    previous_endpoint = settings.server_endpoint
+    previous_address = settings.server_address
+    previous_dns = settings.server_dns
+
+    settings.artifact_root = str(tmp_path)
+    settings.server_endpoint = "vpn.test.local"
+    settings.server_address = "10.99.0.1/24"
+    settings.server_dns = ["1.1.1.1"]
+
+    applied = {"count": 0}
+
+    def fake_apply(session):
+        applied["count"] += 1
+
+    monkeypatch.setattr("app.services.apply.apply_server_config", fake_apply)
+
+    try:
+        with SessionLocal() as session:
+            update_initial_settings(
+                session,
+                InitialSettingsUpdate(
+                    endpoint_address="vpn.updated.local",
+                    endpoint_port=51821,
+                    interface_mtu=1400,
+                    server_address="10.99.0.2/24",
+                    server_dns=["8.8.8.8", "8.8.4.4"],
+                ),
+            )
+
+            assert applied["count"] == 1
+    finally:
+        settings.artifact_root = previous_root
+        settings.server_endpoint = previous_endpoint
+        settings.server_address = previous_address
+        settings.server_dns = previous_dns
+
+
 def test_peer_toggle_blocks_generation_when_inactive(tmp_path: Path) -> None:
     reset_db()
     previous_root = settings.artifact_root
