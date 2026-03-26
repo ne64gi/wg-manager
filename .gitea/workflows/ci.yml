@@ -1,62 +1,76 @@
-name: ci
+name: Deploy WG Studio
 
 on:
   push:
-    branches: [main, develop]
-  pull_request:
-  workflow_dispatch:
+    branches:
+      - master
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'docker-compose.yml'
+      - '.env.example'
+      - '.gitea/workflows/**'
 
 jobs:
-  smoke:
-    runs-on: ubuntu-latest
+  deploy-wg-studio:
+    runs-on: [self-hosted, fuyumori-net-runner]
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: https://github.com/actions/checkout@v4
 
-      - name: Prepare env
+      - name: Create .env from secrets
         run: |
-          cp .env.example .env
-          sed -i 's/^WG_SERVER_ENDPOINT=.*/WG_SERVER_ENDPOINT=127.0.0.1/' .env || true
-          sed -i 's/^WG_JWT_SECRET_KEY=.*/WG_JWT_SECRET_KEY=ci-secret-key/' .env || true
-          {
-            echo "WG_BOOTSTRAP_ADMIN_USERNAME=admin"
-            echo "WG_BOOTSTRAP_ADMIN_PASSWORD=admin123456"
-          } >> .env
+          cat <<EOF > .env
+          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+          POSTGRES_AUDIT_DB=${{ secrets.POSTGRES_AUDIT_DB }}
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          LOG_DATABASE_URL=${{ secrets.LOG_DATABASE_URL }}
 
-      - name: Build and start stack
+          ARTIFACT_ROOT=/wg/config
+          WG_STUDIO_API_URL=http://wg-studio-api:8000
+          WG_RUNTIME_ADAPTER=docker_container
+          WG_CONTAINER_NAME=wg-studio-wireguard
+          WG_INTERFACE_NAME=wg0
+          WG_CONTAINER_CONFIG_PATH=/config/wg_confs/wg0.conf
+
+          WG_SERVER_ENDPOINT=${{ secrets.WG_SERVER_ENDPOINT }}
+          WG_SERVER_LISTEN_PORT=51820
+          WG_SERVER_ADDRESS=10.88.61.1/32
+          WG_SERVER_DNS=1.1.1.1
+
+          WG_BOOTSTRAP_ADMIN_USERNAME=${{ secrets.WG_BOOTSTRAP_ADMIN_USERNAME }}
+          WG_BOOTSTRAP_ADMIN_PASSWORD=${{ secrets.WG_BOOTSTRAP_ADMIN_PASSWORD }}
+          WG_JWT_SECRET_KEY=${{ secrets.WG_JWT_SECRET_KEY }}
+          WG_JWT_ACCESS_TOKEN_TTL_MINUTES=15
+          WG_JWT_REFRESH_TOKEN_TTL_DAYS=30
+          WG_AUTHZ_ENABLED=false
+          WG_AUTHZ_FAIL_CLOSED=false
+          WG_AUTHZ_DEFAULT_ALLOW=true
+          WG_CORS_ALLOWED_ORIGINS=${{ secrets.WG_CORS_ALLOWED_ORIGINS }}
+
+          TZ=Asia/Tokyo
+          EOF
+
+      - name: Validate compose config
         run: |
-          docker compose up -d --build
+          docker compose config
+
+      - name: Build and restart services
+        run: |
+          docker compose up -d --build --remove-orphans
 
       - name: Wait for API health
         run: |
           for i in $(seq 1 60); do
-            if docker compose exec -T wg-studio-api python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/health').read().decode())"; then
+            if docker compose exec -T wg-studio-api sh -c "wget -qO- http://127.0.0.1:8000/health >/dev/null"; then
               exit 0
             fi
             sleep 2
           done
-          echo "API health check failed"
+          echo "Health check failed"
           docker compose ps
           docker compose logs --no-color
           exit 1
-
-      - name: CLI smoke
-        run: |
-          docker compose --profile tools run --rm wg-studio-cli setup-status
-
-      - name: E2E smoke
-        run: |
-          docker compose --profile test run --rm wg-studio-e2e
-
-      - name: Dump logs on failure
-        if: failure()
-        run: |
-          docker compose ps
-          docker compose logs --no-color > ci-docker.log || true
-          tail -n 300 ci-docker.log || true
-
-      - name: Cleanup
-        if: always()
-        run: |
-          docker compose down -v
