@@ -17,6 +17,10 @@
   - ここでは「動作を変えずに読みやすくする」ことを優先
   - 明らかな重複は消さず、比較しやすいように近接配置
   - 重複箇所には [重複候補] コメントを付与
+  - 分割前の命名基準:
+    - ブロック prefix を固定する (`login-*`, `sidebar-*`, `toolbar-*`)
+    - modifier は意味が読める名前にする (`*-wide`, `*-active`, `*-online`)
+    - `-xui` や `-on` のような曖昧な suffix は残さない
 */
 
 /* =========================================================
@@ -1119,7 +1123,7 @@ h2 {
   margin-bottom: 8px;
 }
 
-.toggle-chip-on {
+.toggle-chip-active {
   background: rgba(67, 171, 107, 0.18);
   color: #9ef2b3;
 }
@@ -1183,7 +1187,7 @@ h2 {
   font-size: 0.85rem;
 }
 
-.status-online {
+.status-pill-online {
   background: rgba(67, 171, 107, 0.18);
   color: #9ef2b3;
 }
@@ -1236,7 +1240,7 @@ h2 {
   gap: 18px;
 }
 
-.login-card-xui {
+.login-card-wide {
   width: min(100%, 540px);
   position: relative;
   z-index: 1;
@@ -1940,7 +1944,7 @@ h2 {
   .toolbar-card,
   .modal-card,
   .login-card,
-  .login-card-xui {
+  .login-card-wide {
     width: 100%;
     min-width: 0;
   }
@@ -1960,7 +1964,7 @@ h2 {
     min-height: 220px;
   }
 
-  .login-card-xui {
+  .login-card-wide {
     padding: 24px;
   }
 

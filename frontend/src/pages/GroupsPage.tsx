@@ -89,7 +89,7 @@ export function GroupsPage() {
               <tr key={group.id}>
                 <td>
                   <button
-                    className={`toggle-chip ${group.is_active ? "toggle-chip-on" : ""}`}
+                    className={`toggle-chip ${group.is_active ? "toggle-chip-active" : ""}`}
                     onClick={() => toggleMutation.mutate(group)}
                   >
                     {group.is_active ? t("common.on", "On") : t("common.off", "Off")}
@@ -135,13 +135,13 @@ export function GroupsPage() {
                     {t(`groups.scope_${group.scope}`, group.scope)} / {group.network_cidr}
                   </div>
                 </div>
-                <div className={`status-pill ${group.is_active ? "status-online" : ""}`}>
+                <div className={`status-pill ${group.is_active ? "status-pill-online" : ""}`}>
                       {group.is_active ? t("common.enabled", "Enabled") : t("common.disabled", "Disabled")}
                 </div>
               </div>
               <div className="mobile-record-actions">
                 <button
-                  className={`toggle-chip ${group.is_active ? "toggle-chip-on" : ""}`}
+                  className={`toggle-chip ${group.is_active ? "toggle-chip-active" : ""}`}
                   onClick={() => toggleMutation.mutate(group)}
                 >
                   {group.is_active ? t("common.on", "On") : t("common.off", "Off")}

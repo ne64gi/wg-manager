@@ -95,7 +95,7 @@ export function UsersPage() {
               <tr key={user.id}>
                 <td>
                   <button
-                    className={`toggle-chip ${user.is_active ? "toggle-chip-on" : ""}`}
+                    className={`toggle-chip ${user.is_active ? "toggle-chip-active" : ""}`}
                     onClick={() => toggleMutation.mutate(user)}
                   >
                     {user.is_active ? t("common.on", "On") : t("common.off", "Off")}
@@ -140,13 +140,13 @@ export function UsersPage() {
                     {groupNames.get(user.group_id) ?? `Group ${user.group_id}`}
                   </div>
                 </div>
-                <div className={`status-pill ${user.is_active ? "status-online" : ""}`}>
+                <div className={`status-pill ${user.is_active ? "status-pill-online" : ""}`}>
                   {user.is_active ? t("common.enabled", "Enabled") : t("common.disabled", "Disabled")}
                 </div>
               </div>
               <div className="mobile-record-actions">
                 <button
-                  className={`toggle-chip ${user.is_active ? "toggle-chip-on" : ""}`}
+                  className={`toggle-chip ${user.is_active ? "toggle-chip-active" : ""}`}
                   onClick={() => toggleMutation.mutate(user)}
                 >
                   {user.is_active ? t("common.on", "On") : t("common.off", "Off")}

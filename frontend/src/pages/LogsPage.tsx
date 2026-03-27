@@ -1,6 +1,6 @@
 import { formatDateTime } from "../lib/format";
 import { t } from "../lib/i18n";
-import { useGuiLogsPage } from "../modules/gui/useGuiLogsPage";
+import { useGuiLogsPageData } from "../modules/gui/useGuiLogsPageData";
 import { Panel } from "../ui/Cards";
 import { DataTable } from "../ui/Table";
 
@@ -22,7 +22,7 @@ export function LogsPage() {
     setSearch,
     previousPage,
     nextPage,
-  } = useGuiLogsPage();
+  } = useGuiLogsPageData();
 
   return (
     <div className="page-stack">

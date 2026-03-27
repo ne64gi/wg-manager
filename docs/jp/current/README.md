@@ -7,3 +7,4 @@
 - config / apply
 - API
 - auth / reveal ルール
+- 命名規則

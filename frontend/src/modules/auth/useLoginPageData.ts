@@ -11,7 +11,7 @@ import {
   setPreviewTheme,
 } from "../preferences/previewPreferences";
 
-export function useLoginPageState(onAuthenticated?: () => void) {
+export function useLoginPageData(onAuthenticated?: () => void) {
   const auth = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

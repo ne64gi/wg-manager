@@ -47,7 +47,7 @@ export function DashboardPage() {
           <Panel title={t("dashboard.sync_state", "Apply and drift status")}>
             <div className="page-stack" data-testid="dashboard-sync-state">
               <div className="action-row">
-                <div className={`status-pill ${syncState?.status === "synced" ? "status-online" : ""}`}>
+                <div className={`status-pill ${syncState?.status === "synced" ? "status-pill-online" : ""}`}>
                   {syncState?.status === "synced"
                     ? t("dashboard.sync_synced", "Synced")
                     : syncState?.status === "runtime_unavailable"

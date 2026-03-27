@@ -1,5 +1,5 @@
 import { t } from "../lib/i18n";
-import { useLoginPageState } from "../modules/auth/useLoginPageState";
+import { useLoginPageData } from "../modules/auth/useLoginPageData";
 import {
   BrandIcon,
   EyeIcon,
@@ -34,14 +34,14 @@ export function LoginPage({
     toggleTheme,
     needsSetup,
     handleSubmit,
-  } = useLoginPageState(onAuthenticated);
+  } = useLoginPageData(onAuthenticated);
 
   return (
     <div className="login-shell">
       <div className="login-backdrop-glow login-backdrop-glow-left" />
       <div className="login-backdrop-glow login-backdrop-glow-right" />
       <form
-        className="login-card login-card-xui"
+        className="login-card login-card-wide"
         data-testid="login-form"
         onSubmit={handleSubmit}
       >

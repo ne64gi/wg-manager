@@ -7,3 +7,4 @@ Use this folder for current product behavior and reference material.
 - config and apply behavior
 - API routes
 - auth and reveal rules
+- naming rules

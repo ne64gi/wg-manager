@@ -6,7 +6,7 @@ import { useAuth } from "../auth/AuthContext";
 import { useGuiSettingsQuery } from "./useGuiSettingsQuery";
 import { queryKeys } from "../queryKeys";
 
-export function useGuiLogsPage() {
+export function useGuiLogsPageData() {
   const auth = useAuth();
   const guiSettingsQuery = useGuiSettingsQuery();
   const [offset, setOffset] = useState(0);

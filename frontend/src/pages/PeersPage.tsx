@@ -94,13 +94,13 @@ export function PeersPage() {
               return (
                 <tr key={peer.peer_id}>
                   <td>
-                    <div className={`status-pill ${peer.is_online ? "status-online" : ""}`}>
+                    <div className={`status-pill ${peer.is_online ? "status-pill-online" : ""}`}>
                       {peer.is_online ? t("common.online", "Online") : t("common.offline", "Offline")}
                     </div>
                   </td>
                   <td>
                     <button
-                      className={`toggle-chip ${peer.is_active ? "toggle-chip-on" : ""}`}
+                      className={`toggle-chip ${peer.is_active ? "toggle-chip-active" : ""}`}
                       onClick={() =>
                         toggleMutation.mutate({
                           peerId: peer.peer_id,
@@ -185,7 +185,7 @@ export function PeersPage() {
                       {peer.user_name} / {groupName}
                     </div>
                   </div>
-                  <div className={`status-pill ${peer.is_online ? "status-online" : ""}`}>
+                  <div className={`status-pill ${peer.is_online ? "status-pill-online" : ""}`}>
                     {peer.is_online ? t("common.online", "Online") : t("common.offline", "Offline")}
                   </div>
                 </div>
@@ -195,7 +195,7 @@ export function PeersPage() {
                 </div>
                 <div className="mobile-record-actions">
                   <button
-                    className={`toggle-chip ${peer.is_active ? "toggle-chip-on" : ""}`}
+                    className={`toggle-chip ${peer.is_active ? "toggle-chip-active" : ""}`}
                     onClick={() =>
                       toggleMutation.mutate({
                         peerId: peer.peer_id,
