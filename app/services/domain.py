@@ -14,7 +14,7 @@ import app.models  # noqa: F401  # ensure all SQLAlchemy models register before 
 from app.core import settings
 from app.db import Base, engine
 from app.models import Group, InitialSettings, Peer, ServerState, User
-from app.schemas import (
+from app.schemas.domain import (
     GroupAllocationUpdate,
     GroupCreate,
     GroupUpdate,

@@ -7,7 +7,7 @@ from app.api.deps import require_authenticated_login_user
 from app.db import get_session
 from app.models import LoginUser
 from app.core import get_system_version, settings
-from app.schemas import (
+from app.schemas.gui import (
     GuiLogListRead,
     GuiLogRead,
     GuiSettingsRead,

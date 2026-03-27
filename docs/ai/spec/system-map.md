@@ -9,6 +9,26 @@
 - runtime proxy: `docker/frontend/nginx.conf`
 - compose entry: `docker-compose.yml`
 
+## Split Target
+
+Long-term target layers:
+
+- `core`: product-agnostic auth, session, audit, reusable admin workflows
+- `design`: theme, layout, tokens, shared UI presentation
+- `wg`: WireGuard-specific domain, runtime, config, drift, and topology behavior
+
+Current repository is not fully split this way yet.
+Use this target when naming new modules or deciding where refactors should move.
+
+Current backend naming direction:
+
+- `app/schemas/auth.py`: auth and session contract types
+- `app/schemas/gui.py`: GUI-specific settings, login-user, and log contract types
+- `app/schemas/status.py`: observed runtime and traffic contract types
+- `app/schemas/state.py`: export/import state contract types
+- `app/schemas/config.py`: generated/apply artifact contract types
+- `app/schemas/domain.py`: WG domain entity contract types
+
 ## Primary Data Model
 
 - `Group`

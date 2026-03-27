@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import require_authenticated_login_user
 from app.db import get_session
 from app.models import LoginUser
-from app.schemas import (
+from app.schemas.status import (
     GroupTrafficSummaryRead,
     PeerStatusRead,
     SyncStateRead,

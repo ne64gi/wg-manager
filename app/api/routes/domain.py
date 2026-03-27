@@ -7,7 +7,7 @@ from app.authz import authorize
 from app.api.deps import require_authenticated_login_user
 from app.db import get_session
 from app.models import LoginUser
-from app.schemas import (
+from app.schemas.domain import (
     GroupAllocationUpdate,
     GroupCreate,
     GroupRead,
@@ -18,13 +18,11 @@ from app.schemas import (
     PeerRead,
     PeerResolvedAccess,
     PeerUpdate,
-    StateExportRead,
-    StateImportRequest,
-    StateImportResultRead,
     UserCreate,
     UserRead,
     UserUpdate,
 )
+from app.schemas.state import StateExportRead, StateImportRequest, StateImportResultRead
 from app.services import (
     create_group,
     create_peer,
