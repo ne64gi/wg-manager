@@ -1,41 +1,76 @@
+/*
+  一旦「ファイルを分ける前」に、同一ファイル内で責務ごとに整理した版。
+  目的:
+  1. どこに何があるか分かるようにする
+  2. 後で物理ファイル分割しやすくする
+  3. 重複定義を隣接配置して比較しやすくする
+
+  推奨分割先:
+  - 01_tokens.css        : :root / theme variables
+  - 02_base.css          : reset / element base
+  - 03_layout.css        : app shell / sidebar / content / responsive shell
+  - 04_components.css    : buttons / fields / tables / modal / toast / tabs / accordion
+  - 05_pages.css         : login / dashboard / topology / page-specific UI
+  - 06_utilities.css     : muted-text / pills / helper classes
+
+  NOTE:
+  - ここでは「動作を変えずに読みやすくする」ことを優先
+  - 明らかな重複は消さず、比較しやすいように近接配置
+  - 重複箇所には [重複候補] コメントを付与
+*/
+
+/* =========================================================
+   01. THEME TOKENS / DESIGN VARIABLES
+   分割候補: styles/base.css
+   ========================================================= */
+
 :root {
   color-scheme: dark;
   font-family: "Segoe UI", "Helvetica Neue", sans-serif;
   line-height: 1.5;
   font-weight: 400;
+
   --wg-red: #9f1d20;
   --wg-red-strong: #bf272a;
   --wg-red-soft: rgba(159, 29, 32, 0.18);
   --accent-blue: #5f83d9;
   --accent-green: #20c6a6;
+
   --bg-start: #09111f;
   --bg-mid: #101a2e;
   --bg-end: #0c1426;
   --bg-glow-top: rgba(71, 100, 158, 0.24);
   --bg-glow-red: rgba(159, 29, 32, 0.16);
+
   --text-main: #edf2ff;
   --text-strong: #ffffff;
   --text-muted: #9eb0d8;
   --text-soft: #b6c6eb;
+
   --panel-bg: rgba(10, 19, 35, 0.76);
   --panel-border: rgba(127, 153, 214, 0.16);
   --panel-shadow: 0 18px 54px rgba(2, 7, 18, 0.28);
+
   --sidebar-bg: rgba(6, 12, 23, 0.92);
   --sidebar-border: rgba(127, 153, 214, 0.16);
   --nav-hover: rgba(105, 134, 207, 0.16);
   --nav-active: linear-gradient(135deg, rgba(159, 29, 32, 0.24), rgba(95, 131, 217, 0.16));
+
   --surface-strong: rgba(7, 13, 26, 0.72);
   --surface-soft: rgba(7, 13, 26, 0.42);
   --field-border: rgba(127, 153, 214, 0.16);
   --table-border: rgba(127, 153, 214, 0.14);
   --table-header: #9eb0d8;
+
   --primary-button: linear-gradient(135deg, var(--wg-red), var(--wg-red-strong));
   --secondary-button-bg: rgba(125, 145, 193, 0.14);
   --danger-button-bg: rgba(181, 58, 76, 0.18);
   --success-button: linear-gradient(135deg, #0ca78f, #11c0a5);
+
   --info-banner-bg: rgba(79, 126, 221, 0.14);
   --info-banner-border: rgba(104, 149, 232, 0.28);
   --info-banner-text: #d7e6ff;
+
   --toast-bg: rgba(9, 14, 26, 0.94);
   --toast-border: rgba(255, 255, 255, 0.08);
   --toast-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
@@ -43,6 +78,7 @@
   --toast-error-bg: rgba(38, 12, 18, 0.96);
   --toast-error-border: rgba(214, 80, 80, 0.38);
   --toast-info-border: rgba(159, 29, 32, 0.3);
+
   --login-card-bg: linear-gradient(180deg, rgba(24, 35, 61, 0.94), rgba(12, 19, 34, 0.96));
   --login-card-glow: radial-gradient(circle at top right, rgba(159, 29, 32, 0.16), transparent 32%);
   --login-settings-button-bg: linear-gradient(180deg, rgba(13, 94, 95, 0.92), rgba(16, 132, 127, 0.74));
@@ -55,6 +91,7 @@
   --login-input-bg: rgba(24, 36, 61, 0.96);
   --login-input-text: #eef3ff;
   --login-input-icon: #95a7cc;
+
   background:
     radial-gradient(circle at top, var(--bg-glow-top), transparent 30%),
     radial-gradient(circle at top right, var(--bg-glow-red), transparent 26%),
@@ -64,32 +101,40 @@
 
 :root[data-theme="light"] {
   color-scheme: light;
+
   --bg-start: #f5f7fb;
   --bg-mid: #eef3fb;
   --bg-end: #e5edf9;
   --bg-glow-top: rgba(95, 131, 217, 0.16);
   --bg-glow-red: rgba(159, 29, 32, 0.11);
+
   --text-main: #182033;
   --text-strong: #101726;
   --text-muted: #5f6f91;
   --text-soft: #4c607f;
+
   --panel-bg: rgba(255, 255, 255, 0.82);
   --panel-border: rgba(83, 105, 146, 0.18);
   --panel-shadow: 0 16px 38px rgba(48, 66, 104, 0.12);
+
   --sidebar-bg: rgba(255, 255, 255, 0.9);
   --sidebar-border: rgba(83, 105, 146, 0.18);
   --nav-hover: rgba(159, 29, 32, 0.1);
   --nav-active: linear-gradient(135deg, rgba(159, 29, 32, 0.16), rgba(95, 131, 217, 0.12));
+
   --surface-strong: rgba(245, 248, 253, 0.96);
   --surface-soft: rgba(243, 246, 252, 0.92);
   --field-border: rgba(83, 105, 146, 0.18);
   --table-border: rgba(83, 105, 146, 0.14);
   --table-header: #5b6c8d;
+
   --secondary-button-bg: rgba(95, 111, 145, 0.12);
   --danger-button-bg: rgba(181, 58, 76, 0.14);
+
   --info-banner-bg: rgba(95, 131, 217, 0.1);
   --info-banner-border: rgba(95, 131, 217, 0.2);
   --info-banner-text: #28457f;
+
   --toast-bg: rgba(255, 255, 255, 0.96);
   --toast-border: rgba(83, 105, 146, 0.18);
   --toast-shadow: 0 16px 36px rgba(48, 66, 104, 0.16);
@@ -97,6 +142,7 @@
   --toast-error-bg: rgba(255, 240, 243, 0.98);
   --toast-error-border: rgba(181, 58, 76, 0.24);
   --toast-info-border: rgba(159, 29, 32, 0.18);
+
   --login-card-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(241, 246, 252, 0.98));
   --login-card-glow: radial-gradient(circle at top right, rgba(95, 131, 217, 0.12), transparent 32%);
   --login-settings-button-bg: linear-gradient(180deg, rgba(236, 246, 255, 0.96), rgba(220, 236, 252, 0.98));
@@ -110,6 +156,11 @@
   --login-input-text: #182033;
   --login-input-icon: #7284a5;
 }
+
+/* =========================================================
+   02. RESET / ELEMENT BASE
+   分割候補: styles/base.css
+   ========================================================= */
 
 * {
   box-sizing: border-box;
@@ -143,6 +194,25 @@ a {
   min-height: 100vh;
 }
 
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 2rem;
+}
+
+h2 {
+  font-size: 1.1rem;
+}
+
+/* =========================================================
+   03. APP LAYOUT / SHELL
+   分割候補: styles/layout.css
+   ========================================================= */
+
 .app-shell {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
@@ -158,6 +228,34 @@ a {
 .mobile-nav-backdrop {
   display: none;
 }
+
+.content-shell {
+  padding: 28px;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+.page-stack {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.sidebar-collapsed-hidden {
+  display: none;
+}
+
+/* =========================================================
+   04. SIDEBAR / BRAND / NAVIGATION
+   分割候補: styles/sidebar.css
+   ========================================================= */
 
 .sidebar {
   display: flex;
@@ -309,12 +407,26 @@ a {
   gap: 12px;
 }
 
-/* =========================================
-   分ける候補: styles/layout.css
-   やってること:
-   - サイドバー下部のユーザーメニュー
-   - ユーザーポップオーバー
-   ========================================= */
+.sidebar-user {
+  color: var(--text-soft);
+  font-size: 0.95rem;
+}
+
+.sidebar-logout-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.sidebar-logout-button-collapsed {
+  padding-inline: 10px;
+}
+
+/* =========================================================
+   05. SIDEBAR USER MENU / POPOVER
+   分割候補: styles/sidebar.css or styles/components/user-menu.css
+   ========================================================= */
 
 .sidebar-user-menu {
   position: relative;
@@ -403,41 +515,10 @@ a {
   color: var(--wg-red);
 }
 
-@media (max-width: 860px) {
-  .sidebar-user-popover,
-  .sidebar-user-popover-collapsed {
-    left: 0;
-    right: 0;
-    transform: none;
-    width: 100%;
-  }
-}
-
-.sidebar-user {
-  color: var(--text-soft);
-  font-size: 0.95rem;
-}
-
-.content-shell {
-  padding: 28px;
-  min-width: 0;
-  overflow-x: clip;
-}
-
-.sidebar-collapsed-hidden {
-  display: none;
-}
-
-.sidebar-logout-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.sidebar-logout-button-collapsed {
-  padding-inline: 10px;
-}
+/* =========================================================
+   06. MOBILE TOPBAR / MOBILE NAV
+   分割候補: styles/layout.css
+   ========================================================= */
 
 .mobile-topbar {
   align-items: center;
@@ -472,18 +553,10 @@ a {
   color: var(--text-strong);
 }
 
-.page-stack {
-  display: grid;
-  gap: 20px;
-  min-width: 0;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-}
+/* =========================================================
+   07. TOOLBAR / PAGE HEADER / FILTER AREA
+   分割候補: styles/components/form.css
+   ========================================================= */
 
 .toolbar-card {
   display: flex;
@@ -553,23 +626,10 @@ a {
   letter-spacing: 0.08em;
 }
 
-h1,
-h2,
-p {
-  margin: 0;
-}
-
-h1 {
-  font-size: 2rem;
-}
-
-h2 {
-  font-size: 1.1rem;
-}
-
-.muted-text {
-  color: var(--text-muted);
-}
+/* =========================================================
+   08. GENERAL CARDS / PANELS / GRID SYSTEMS
+   分割候補: styles/layout.css or styles/components/panel.css
+   ========================================================= */
 
 .stats-grid {
   display: grid;
@@ -647,12 +707,134 @@ h2 {
   align-content: start;
 }
 
+/* =========================================================
+   09. TABLE / LIST / DATA DISPLAY
+   分割候補: styles/components/table.css
+   ========================================================= */
+
 .table-shell {
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
 }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--table-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.data-table th {
+  color: var(--table-header);
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.desktop-table {
+  display: block;
+}
+
+.mobile-list {
+  display: none;
+}
+
+.mobile-record {
+  display: grid;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--table-border);
+}
+
+.mobile-record-main,
+.mobile-record-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mobile-record-meta {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.mobile-record-title {
+  color: var(--text-strong);
+  font-weight: 700;
+}
+
+.mobile-record-subtitle {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.mobile-record-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mobile-info {
+  position: relative;
+}
+
+.mobile-info-trigger {
+  min-width: 76px;
+}
+
+.mobile-info-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  width: min(280px, calc(100vw - 48px));
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid var(--panel-border);
+  background: color-mix(in srgb, var(--panel-bg) 96%, transparent);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--panel-shadow);
+}
+
+.mobile-info-body {
+  display: grid;
+  gap: 10px;
+}
+
+.mobile-info-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 92px) minmax(0, 1fr);
+  gap: 8px 10px;
+  color: var(--text-main);
+  font-size: 0.9rem;
+}
+
+.mobile-info-grid strong {
+  color: var(--text-soft);
+}
+
+.table-pagination {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* =========================================================
+   10. CHART / DASHBOARD VISUALS
+   分割候補: styles/pages/dashboard.css
+   ========================================================= */
 
 .chart-placeholder {
   position: relative;
@@ -727,10 +909,37 @@ h2 {
   align-content: start;
 }
 
-.accordion-list {
+.bar-row {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
+
+.bar-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-main);
+  font-size: 0.95rem;
+}
+
+.bar-track {
+  height: 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-muted) 18%, transparent);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--wg-red), #dd6a45);
+}
+
+/* =========================================================
+   11. TOPOLOGY / NETWORK PREVIEW
+   分割候補: styles/pages/dashboard.css or styles/pages/topology.css
+   ========================================================= */
 
 .topology-preview {
   display: grid;
@@ -811,6 +1020,16 @@ h2 {
   font-size: 0.88rem;
 }
 
+/* =========================================================
+   12. ACCORDION
+   分割候補: styles/components/accordion.css
+   ========================================================= */
+
+.accordion-list {
+  display: grid;
+  gap: 12px;
+}
+
 .accordion-card {
   border: 1px solid var(--table-border);
   border-radius: 18px;
@@ -864,57 +1083,18 @@ h2 {
   transform: rotate(45deg);
 }
 
+/* [重複候補]
+   accordion-content は後半でも再定義されている。
+   ここでは「初期定義」。
+*/
 .accordion-content {
   padding: 0 16px 16px;
 }
 
-.bar-row {
-  display: grid;
-  gap: 8px;
-}
-
-.bar-row-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--text-main);
-  font-size: 0.95rem;
-}
-
-.bar-track {
-  height: 12px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--text-muted) 18%, transparent);
-  overflow: hidden;
-}
-
-.bar-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--wg-red), #dd6a45);
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.data-table th,
-.data-table td {
-  padding: 12px 10px;
-  border-bottom: 1px solid var(--table-border);
-  text-align: left;
-  vertical-align: top;
-}
-
-.data-table th {
-  color: var(--table-header);
-  font-size: 0.84rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
+/* =========================================================
+   13. BUTTONS / ACTIONS / BADGES / PILLS
+   分割候補: styles/components/button.css + styles/utilities.css
+   ========================================================= */
 
 .action-row {
   display: flex;
@@ -1007,6 +1187,11 @@ h2 {
   background: rgba(67, 171, 107, 0.18);
   color: #9ef2b3;
 }
+
+/* =========================================================
+   14. LOGIN PAGE
+   分割候補: styles/pages/login.css
+   ========================================================= */
 
 .screen-message,
 .login-shell {
@@ -1281,6 +1466,11 @@ h2 {
   background: linear-gradient(135deg, #0b7d8b, #1aa39c);
 }
 
+/* =========================================================
+   15. FORM FIELDS / CHECKBOX / INFO BANNERS
+   分割候補: styles/components/form.css
+   ========================================================= */
+
 .field {
   display: grid;
   gap: 6px;
@@ -1328,6 +1518,20 @@ h2 {
   background: rgba(193, 129, 34, 0.18);
   color: #ffd48d;
 }
+
+.info-banner {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--info-banner-border);
+  background: var(--info-banner-bg);
+  color: var(--info-banner-text);
+}
+
+/* =========================================================
+   16. MODAL / REVEAL / INLINE FORM
+   分割候補: styles/components/modal.css
+   ========================================================= */
 
 .modal-backdrop {
   position: fixed;
@@ -1423,6 +1627,10 @@ h2 {
   margin-top: 4px;
 }
 
+/* [重複候補]
+   settings-checkbox-row / copy / title はこの後にも再掲されている。
+   ここでは「初期定義」。
+*/
 .settings-checkbox-row {
   align-items: center;
 }
@@ -1444,14 +1652,10 @@ h2 {
   line-height: 1.35;
 }
 
-.info-banner {
-  margin-top: 16px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid var(--info-banner-border);
-  background: var(--info-banner-bg);
-  color: var(--info-banner-text);
-}
+/* =========================================================
+   17. TOASTS / NOTIFICATIONS
+   分割候補: styles/components/toast.css
+   ========================================================= */
 
 .toast-stack {
   position: fixed;
@@ -1504,6 +1708,11 @@ h2 {
   cursor: pointer;
 }
 
+/* =========================================================
+   18. LOG LEVEL PILLS
+   分割候補: styles/utilities.css
+   ========================================================= */
+
 .log-level-pill {
   display: inline-flex;
   align-items: center;
@@ -1548,96 +1757,21 @@ h2 {
   color: #ffe3e3;
 }
 
-.desktop-table {
-  display: block;
-}
+/* =========================================================
+   19. UTILITIES
+   分割候補: styles/utilities.css
+   ========================================================= */
 
-.mobile-list {
-  display: none;
-}
-
-.mobile-record {
-  display: grid;
-  gap: 12px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--table-border);
-}
-
-.mobile-record-main,
-.mobile-record-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.mobile-record-meta {
+.muted-text {
   color: var(--text-muted);
-  font-size: 0.9rem;
 }
 
-.mobile-record-title {
-  color: var(--text-strong);
-  font-weight: 700;
-}
-
-.mobile-record-subtitle {
-  color: var(--text-muted);
-  font-size: 0.88rem;
-}
-
-.mobile-record-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.mobile-info {
-  position: relative;
-}
-
-.mobile-info-trigger {
-  min-width: 76px;
-}
-
-.mobile-info-popover {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  z-index: 20;
-  width: min(280px, calc(100vw - 48px));
-  padding: 12px;
-  border-radius: 18px;
-  border: 1px solid var(--panel-border);
-  background: color-mix(in srgb, var(--panel-bg) 96%, transparent);
-  backdrop-filter: blur(20px);
-  box-shadow: var(--panel-shadow);
-}
-
-.mobile-info-body {
-  display: grid;
-  gap: 10px;
-}
-
-.mobile-info-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 92px) minmax(0, 1fr);
-  gap: 8px 10px;
-  color: var(--text-main);
-  font-size: 0.9rem;
-}
-
-.mobile-info-grid strong {
-  color: var(--text-soft);
-}
-
-.table-pagination {
-  margin-top: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
+/* =========================================================
+   20. RESPONSIVE: <= 1080px
+   分割候補: styles/responsive.css
+   NOTE:
+   ブレークポイントごとにまとめると追いやすい。
+   ========================================================= */
 
 @media (max-width: 1080px) {
   .stats-grid,
@@ -1648,6 +1782,11 @@ h2 {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================
+   21. RESPONSIVE: >= 1081px DASHBOARD GRID
+   分割候補: styles/pages/dashboard.css or responsive.css
+   ========================================================= */
 
 @media (min-width: 1081px) {
   .dashboard-top-grid,
@@ -1670,12 +1809,28 @@ h2 {
   .dashboard-panel-span-7 {
     grid-column: span 7;
   }
+
   .dashboard-panel-span-12 {
     grid-column: 1 / -1;
-  }  
+  }
 }
 
+/* =========================================================
+   22. RESPONSIVE: <= 860px CORE LAYOUT
+   [重複候補] 同じブレークポイントが後半でも複数回出てくる。
+   まずは「メインのモバイルレイアウト調整」をここに集約。
+   分割候補: styles/responsive.css
+   ========================================================= */
+
 @media (max-width: 860px) {
+  .sidebar-user-popover,
+  .sidebar-user-popover-collapsed {
+    left: 0;
+    right: 0;
+    transform: none;
+    width: 100%;
+  }
+
   .app-shell {
     grid-template-columns: 1fr;
   }
@@ -1814,6 +1969,20 @@ h2 {
     grid-template-columns: 1fr;
   }
 
+  .login-settings-panel {
+    justify-self: end;
+  }
+}
+
+/* =========================================================
+   23. [重複候補] TABS: 1回目の定義
+   NOTE:
+   元ファイルでは max-width: 860px ブロックの途中に近い位置で出現している。
+   ここでは比較しやすいように独立配置。
+   後半の再定義と見比べるため、削除せず保持。
+   分割候補: styles/components/tabs.css
+   ========================================================= */
+
 .tabs {
   display: flex;
   gap: 8px;
@@ -1848,12 +2017,16 @@ h2 {
   /* No specific styles needed */
 }
 
-  .login-settings-panel {
-    justify-self: end;
-  }
-}
+/* =========================================================
+   24. [重複候補] TABS: 2回目の定義
+   差分ポイント:
+   - .tabs の margin-bottom が 24px -> 16px
+   - .tab-button display が flex -> inline-flex
+   - gap / padding が微妙に違う
+   - svg サイズ定義が追加されている
+   これが今の「どっちが正」の混乱ポイント。
+   ========================================================= */
 
-/* タブ */
 .tabs {
   display: flex;
   gap: 8px;
@@ -1883,7 +2056,14 @@ h2 {
   height: 18px;
 }
 
-/* アコーディオン中身 */
+/* =========================================================
+   25. [重複候補] ACCORDION CONTENT 再定義
+   差分ポイント:
+   - 以前: padding: 0 16px 16px;
+   - ここ: display:flex / gap:16px / padding:16px;
+   つまり単なる追加ではなく、挙動ごと変わってる。
+   ========================================================= */
+
 .accordion-content {
   padding: 16px;
   display: flex;
@@ -1891,12 +2071,26 @@ h2 {
   gap: 16px;
 }
 
-/* 保存ボタン位置 */
+/* =========================================================
+   26. [重複候補] ACTION ROW 再定義
+   差分ポイント:
+   - 以前: wrap前提の汎用 action-row
+   - ここ: 保存ボタン寄せ用で justify-content:flex-end が追加
+   これは本来 .action-row--end みたいに分けるべき。
+   ========================================================= */
+
 .action-row {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
 }
+
+/* =========================================================
+   27. [重複候補] SETTINGS CHECKBOX 再定義
+   差分ポイント:
+   - copy に flex: 1 1 auto が追加
+   - title は実質同内容
+   ========================================================= */
 
 .settings-checkbox-row {
   align-items: center;
@@ -1914,6 +2108,12 @@ h2 {
   font-size: 0.92rem;
   line-height: 1.35;
 }
+
+/* =========================================================
+   28. RESPONSIVE: <= 860px TABS 専用
+   [重複候補] 同じブレークポイントの別ブロック
+   分離は正しいが、最終的には 860px を1箇所に寄せたい。
+   ========================================================= */
 
 @media (max-width: 860px) {
   .tabs {
@@ -1951,6 +2151,11 @@ h2 {
     flex: 0 0 auto;
   }
 }
+
+/* =========================================================
+   29. RESPONSIVE: <= 860px PAGE HEADER 専用
+   [重複候補] 同じブレークポイントの別ブロック
+   ========================================================= */
 
 @media (max-width: 860px) {
   .page-header {
