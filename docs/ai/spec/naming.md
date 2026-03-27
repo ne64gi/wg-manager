@@ -89,3 +89,12 @@ The first naming cleanup slice is:
 - no API contract rename
 - no schema rename
 - no query-key rename unless required by a code-level rename
+
+## Backend Slice
+
+For backend naming cleanup, prefer:
+
+- schema module names that match responsibility boundaries: `domain`, `auth`, `gui`, `status`, `state`, `config`
+- keeping schema class names stable while moving them into the correct module
+- preserving `app.schemas` as the compatibility import surface during the transition
+- avoiding API path renames in the same slice as schema module cleanup

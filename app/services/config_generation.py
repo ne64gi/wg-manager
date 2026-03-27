@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.models import Group, Peer, User
 from app.runtime import RuntimeService, get_runtime_service
-from app.schemas import (
+from app.schemas.config import (
     GeneratedPeerArtifacts,
     GeneratedServerArtifacts,
     RevealedPeerArtifacts,

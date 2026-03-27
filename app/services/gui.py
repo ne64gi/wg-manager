@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core import settings
 from app.models import GuiSettings, LoginUser
-from app.schemas import GuiSettingsUpdate, LoginUserCreate, LoginUserUpdate
+from app.schemas.gui import GuiSettingsUpdate, LoginUserCreate, LoginUserUpdate
 from app.services.audit import log_gui_event, log_operation
 
 

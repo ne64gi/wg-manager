@@ -8,22 +8,17 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from app.models import Group, Peer, User
-from app.schemas import (
-    BundleWarningRead,
-    GroupCreate,
-    InitialSettingsRead,
-    InitialSettingsUpdate,
+from app.schemas import GroupCreate, InitialSettingsRead, InitialSettingsUpdate, UserCreate
+from app.schemas.config import BundleWarningRead
+from app.schemas.gui import GuiSettingsUpdate
+from app.schemas.state import (
     StateExportRead,
-    StateImportRequest,
-    StateImportResultRead,
-    UserCreate,
-)
-from app.schemas.domain import (
-    GuiSettingsUpdate,
     StateExportGroup,
     StateExportGuiSettings,
     StateExportPeer,
     StateExportServerState,
+    StateImportRequest,
+    StateImportResultRead,
     StateExportUser,
 )
 from app.services.audit import log_gui_event, log_operation

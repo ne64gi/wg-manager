@@ -1,6 +1,4 @@
-from app.schemas.domain import (
-    ApplyResult,
-    BundleWarningRead,
+from app.schemas.auth import (
     AuthChangePasswordRequest,
     AuthenticatedLoginUserRead,
     AuthLoginRequest,
@@ -8,39 +6,51 @@ from app.schemas.domain import (
     AuthRefreshRequest,
     AuthSetupRequest,
     AuthSetupStatusRead,
+    TokenPairRead,
+)
+from app.schemas.config import (
+    ApplyResult,
+    BundleWarningRead,
     GeneratedPeerArtifacts,
     GeneratedServerArtifacts,
-    GroupTrafficSummaryRead,
-    GuiLogRead,
-    GuiLogListRead,
-    GuiSettingsRead,
-    GuiSettingsUpdate,
+    RevealedPeerArtifacts,
+    ServerStateRead,
+)
+from app.schemas.domain import (
     GroupAllocationUpdate,
     GroupCreate,
     GroupRead,
     GroupUpdate,
     InitialSettingsRead,
     InitialSettingsUpdate,
-    LoginUserCreate,
-    LoginUserRead,
-    LoginUserUpdate,
     PeerCreate,
     PeerRead,
     PeerResolvedAccess,
     PeerUpdate,
-    PeerStatusRead,
-    RevealedPeerArtifacts,
-    ServerStateRead,
+    UserCreate,
+    UserRead,
+    UserUpdate,
+)
+from app.schemas.gui import (
+    GuiLogListRead,
+    GuiLogRead,
+    GuiSettingsRead,
+    GuiSettingsUpdate,
+    LoginUserCreate,
+    LoginUserRead,
+    LoginUserUpdate,
+    SystemVersionRead,
+)
+from app.schemas.state import (
     StateExportRead,
     StateImportRequest,
     StateImportResultRead,
-    SystemVersionRead,
+)
+from app.schemas.status import (
+    GroupTrafficSummaryRead,
+    PeerStatusRead,
     SyncStateRead,
-    TokenPairRead,
-    UserCreate,
     UserTrafficSummaryRead,
-    UserRead,
-    UserUpdate,
     WireGuardOverviewRead,
     WireGuardOverviewHistoryPointRead,
 )

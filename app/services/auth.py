@@ -12,7 +12,8 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.core import settings
 from app.models import LoginSession, LoginUser
-from app.schemas import AuthLoginRequest, LoginUserCreate, LoginUserUpdate, TokenPairRead
+from app.schemas.auth import AuthLoginRequest, TokenPairRead
+from app.schemas.gui import LoginUserCreate, LoginUserUpdate
 from app.services.audit import log_gui_event, log_operation
 from app.services.gui import create_login_user, update_login_user, verify_password
 

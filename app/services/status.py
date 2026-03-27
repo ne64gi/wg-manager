@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.runtime import get_runtime_service
 from app.models import Peer, PeerTrafficSnapshot, User
-from app.schemas import (
+from app.schemas.status import (
     GroupTrafficSummaryRead,
     PeerStatusRead,
     SyncStateRead,
