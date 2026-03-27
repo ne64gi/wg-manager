@@ -454,8 +454,10 @@ h2 {
 }
 
 .sidebar-user-popover-collapsed {
-  left: 50%;
-  transform: translateX(-50%);
+  left: calc(100% + 12px);
+  bottom: 0;
+  transform: none;
+  width: min(260px, calc(100vw - 124px));
 }
 
 .sidebar-user-popover-main {
