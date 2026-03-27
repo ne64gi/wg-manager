@@ -17,8 +17,8 @@ import {
 import { confirmAction, downloadBlob } from "../../lib/browser/actions";
 import { t, translateErrorMessage } from "../../lib/i18n";
 import type { GuiSettingsUpdate, StateExport } from "../../types";
-import { useToast } from "../../ui/ToastProvider";
-import { useAuth } from "../auth/AuthContext";
+import { useToast } from "../../design/ui/ToastProvider";
+import { useAuth } from "../../core/auth/AuthContext";
 import { queryKeys } from "../queryKeys";
 import {
   clearPreviewTheme,

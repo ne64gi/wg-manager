@@ -11,7 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ApiError, getAuthMe, login, logout, refresh } from "../../lib/api";
 import { readLocalStorage, removeLocalStorage, writeLocalStorage } from "../../lib/browser/storage";
-import { queryKeys } from "../queryKeys";
+import { queryKeys } from "../../modules/queryKeys";
 import type { AuthLoginRequest, AuthenticatedLoginUser, TokenPair } from "../../types";
 
 type AuthState = {

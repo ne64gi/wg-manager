@@ -4,7 +4,7 @@ import { formatDateTime } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useSettingsPageData } from "../modules/gui/useSettingsPageData";
 import type { GuiSettingsUpdate } from "../types";
-import { DataTable } from "../ui/Table";
+import { DataTable } from "../design/ui/Table";
 import { GlobeIcon, LockIcon, SettingsIcon } from "../ui/Icons";
 
 type TabKey = "general" | "server" | "security";

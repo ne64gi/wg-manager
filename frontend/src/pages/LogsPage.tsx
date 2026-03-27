@@ -1,8 +1,8 @@
 import { formatDateTime } from "../lib/format";
 import { t } from "../lib/i18n";
 import { useGuiLogsPageData } from "../modules/gui/useGuiLogsPageData";
-import { Panel } from "../ui/Cards";
-import { DataTable } from "../ui/Table";
+import { Panel } from "../design/ui/Cards";
+import { DataTable } from "../design/ui/Table";
 
 export function LogsPage() {
   const {

@@ -5,9 +5,9 @@ import {
   getBundleWarningText,
   useUsersPageData,
 } from "../modules/users/useUsersPageData";
-import { Panel } from "../ui/Cards";
+import { Panel } from "../design/ui/Cards";
 import { MobileInfoPopover } from "../ui/MobileInfoPopover";
-import { DataTable } from "../ui/Table";
+import { DataTable } from "../design/ui/Table";
 
 export function UsersPage() {
   const {

@@ -7,7 +7,7 @@ import { LogsPage } from "../pages/LogsPage";
 import { PeersPage } from "../pages/PeersPage";
 import { SettingsPage } from "../pages/SettingsPage";
 import { UsersPage } from "../pages/UsersPage";
-import { useAuth } from "../modules/auth/AuthContext";
+import { useAuth } from "../core/auth/AuthContext";
 import { AppShell } from "./AppShell";
 
 function ProtectedLayout() {

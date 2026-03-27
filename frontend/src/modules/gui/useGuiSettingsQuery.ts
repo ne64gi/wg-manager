@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { getGuiSettings } from "../../lib/api";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../../core/auth/AuthContext";
 import { queryKeys } from "../queryKeys";
 
 export function useGuiSettingsQuery() {

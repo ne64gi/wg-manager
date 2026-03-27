@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { getAuthSetupStatus, setupInitialLoginUser } from "../../lib/api";
 import { t, translateErrorMessage } from "../../lib/i18n";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../../core/auth/AuthContext";
 import {
   getPreviewLocale,
   getPreviewTheme,

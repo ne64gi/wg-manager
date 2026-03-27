@@ -11,8 +11,8 @@ import {
 } from "../../lib/api";
 import { t } from "../../lib/i18n";
 import type { UserTrafficSummary } from "../../types";
-import { useToast } from "../../ui/ToastProvider";
-import { useAuth } from "../auth/AuthContext";
+import { useToast } from "../../design/ui/ToastProvider";
+import { useAuth } from "../../core/auth/AuthContext";
 import { useGuiSettingsQuery } from "../gui/useGuiSettingsQuery";
 import { queryKeys } from "../queryKeys";
 

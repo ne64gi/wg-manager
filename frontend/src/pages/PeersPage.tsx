@@ -1,10 +1,10 @@
 import { confirmAction } from "../lib/browser/actions";
 import { formatBytes } from "../lib/format";
 import { t } from "../lib/i18n";
-import { Panel, StatCard } from "../ui/Cards";
+import { Panel, StatCard } from "../design/ui/Cards";
 import { MobileInfoPopover } from "../ui/MobileInfoPopover";
 import { RevealModal } from "../ui/RevealModal";
-import { DataTable } from "../ui/Table";
+import { DataTable } from "../design/ui/Table";
 import {
   canManagePeerSecrets,
   formatDeleteConfirm,

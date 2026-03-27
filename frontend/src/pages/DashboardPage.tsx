@@ -1,7 +1,7 @@
 import { formatBytes, formatDateTime } from "../lib/format";
 import { t } from "../lib/i18n";
 import { translateDriftReason, useDashboardData } from "../modules/dashboard/useDashboardData";
-import { StatCard, Panel } from "../ui/Cards";
+import { StatCard, Panel } from "../design/ui/Cards";
 
 export function DashboardPage() {
   const {

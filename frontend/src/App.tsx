@@ -1,7 +1,7 @@
-import { useAuth } from "./modules/auth/AuthContext";
+import { useAuth } from "./core/auth/AuthContext";
 import { useApplyDocumentPreferences } from "./modules/preferences/useApplyDocumentPreferences";
 import { useGuiSettingsQuery } from "./modules/gui/useGuiSettingsQuery";
-import { ToastProvider } from "./ui/ToastProvider";
+import { ToastProvider } from "./design/ui/ToastProvider";
 import { AppRoutes } from "./app/AppRoutes";
 
 export default function App() {

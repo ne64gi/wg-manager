@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import type { ComponentType, PropsWithChildren } from "react";
 
-import { readLocalStorage, writeLocalStorage } from "../lib/browser/storage";
-import { t } from "../lib/i18n";
+import { readLocalStorage, writeLocalStorage } from "../../lib/browser/storage";
+import { t } from "../../lib/i18n";
 import {
   BrandIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   LogoutIcon,
   MenuIcon,
-} from "./Icons";
+} from "../../ui/Icons";
 
 export type AppNavItem = {
   to: string;

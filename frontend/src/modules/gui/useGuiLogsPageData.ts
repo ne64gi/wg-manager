@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { listGuiLogs } from "../../lib/api";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../../core/auth/AuthContext";
 import { useGuiSettingsQuery } from "./useGuiSettingsQuery";
 import { queryKeys } from "../queryKeys";
 

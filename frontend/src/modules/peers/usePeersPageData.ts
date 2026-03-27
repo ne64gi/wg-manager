@@ -15,8 +15,8 @@ import {
 import { confirmAction } from "../../lib/browser/actions";
 import { formatApplyFailureMessage, t } from "../../lib/i18n";
 import type { Group, RevealedPeerArtifacts, User } from "../../types";
-import { useToast } from "../../ui/ToastProvider";
-import { useAuth } from "../auth/AuthContext";
+import { useToast } from "../../design/ui/ToastProvider";
+import { useAuth } from "../../core/auth/AuthContext";
 import { useGuiSettingsQuery } from "../gui/useGuiSettingsQuery";
 import { queryKeys } from "../queryKeys";
 

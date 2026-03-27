@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { useAuth } from "../modules/auth/AuthContext";
-import { AppLayout, type AppNavItem } from "../ui/AppLayout";
+import { useAuth } from "../core/auth/AuthContext";
+import { AppLayout, type AppNavItem } from "../design/ui/AppLayout";
 import {
   DashboardIcon,
   GroupIcon,
