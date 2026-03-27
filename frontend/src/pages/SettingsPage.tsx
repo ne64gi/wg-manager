@@ -78,7 +78,7 @@ export function SettingsPage() {
 
   return (
     <div className="page-stack">
-      <div className="page-header">
+      <div className="page-header settings-page-header">
         <div>
           <div className="eyebrow">{t("settings.eyebrow", "Settings")}</div>
           <h1 data-testid="settings-page-heading">
@@ -87,14 +87,14 @@ export function SettingsPage() {
         </div>
       </div>
 
-      <div className="tabs">
+      <div className="tabs settings-tabs">
         <button
           type="button"
           className={`tab-button ${tab === "general" ? "active" : ""}`}
           onClick={() => setTab("general")}
         >
           <SettingsIcon />
-          <span>{t("settings.general_tab", "一般")}</span>
+          <span>{t("settings.general_tab", "General")}</span>
         </button>
 
         <button
@@ -103,7 +103,7 @@ export function SettingsPage() {
           onClick={() => setTab("server")}
         >
           <GlobeIcon />
-          <span>{t("settings.server_tab", "サーバー設定")}</span>
+          <span>{t("settings.server_tab", "Server")}</span>
         </button>
 
         <button
@@ -112,7 +112,7 @@ export function SettingsPage() {
           onClick={() => setTab("security")}
         >
           <LockIcon />
-          <span>{t("settings.security_tab", "セキュリティ設定")}</span>
+          <span>{t("settings.security_tab", "Security")}</span>
         </button>
       </div>
 

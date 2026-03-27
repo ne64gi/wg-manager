@@ -256,9 +256,14 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "settings.eyebrow": "設定",
   "settings.theme_mode": "テーマ",
   "settings.default_locale": "既定の表示言語",
+  "settings.general_tab": "一般",
+  "settings.server_tab": "サーバー",
+  "settings.security_tab": "セキュリティ",
   "settings.error_log_level": "エラーログ記録レベル",
   "settings.gui_heading": "画面設定",
+  "settings.language_and_time": "表示言語と更新間隔",
   "settings.endpoint_heading": "WireGuard エンドポイント設定",
+  "settings.server_runtime": "サーバーランタイム",
   "settings.login_users_heading": "ログインユーザー",
   "settings.version_heading": "ビルド情報",
   "settings.system_version": "システムバージョン",
@@ -289,6 +294,12 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "settings.endpoint_save_failed": "エンドポイント設定の保存に失敗しました。",
   "settings.endpoint_address": "エンドポイントアドレス",
   "settings.endpoint_port": "エンドポイントポート",
+  "settings.server_address": "サーバーアドレス",
+  "settings.server_address_placeholder": "例: 10.255.255.1/32",
+  "settings.server_address_hint": "生成する WireGuard サーバー設定で使うサーバー側 IP アドレスです。",
+  "settings.server_dns": "サーバー DNS",
+  "settings.server_dns_placeholder": "例: 1.1.1.1,8.8.8.8",
+  "settings.server_dns_hint": "生成するピア設定で使う DNS サーバーをカンマ区切りで指定します。",
   "settings.interface_mtu": "インターフェース MTU",
   "settings.interface_mtu_placeholder": "任意",
   "settings.endpoint_port_hint": "Peer 設定に埋め込む公開ポート番号です。",
@@ -373,4 +384,3 @@ export function formatApplyFailureMessage(
     .replace("{action}", action)
     .replace("{error}", errorMessage ?? "");
 }
-

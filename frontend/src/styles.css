@@ -2154,6 +2154,22 @@ h2 {
     height: 18px;
     flex: 0 0 auto;
   }
+
+  .settings-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-tabs .tab-button {
+    flex-direction: row;
+    justify-content: flex-start;
+    text-align: left;
+    padding: 12px 14px;
+  }
+
+  .settings-tabs .tab-button span {
+    font-size: 0.92rem;
+    line-height: 1.25;
+  }
 }
 
 /* =========================================================
@@ -2174,5 +2190,16 @@ h2 {
 
   .eyebrow {
     margin-bottom: 4px;
+  }
+
+  .settings-page-header {
+    align-items: stretch;
+  }
+
+  .settings-page-header h1 {
+    font-size: clamp(1.8rem, 8vw, 2.3rem);
+    line-height: 1.08;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
   }
 }
