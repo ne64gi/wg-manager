@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 
-import { copyText, downloadBlob, downloadDataUrl } from "../lib/browser/actions";
-import { t } from "../lib/i18n";
+import { copyText, downloadBlob, downloadDataUrl } from "../core/browser/actions";
+import { t } from "../core/i18n";
 import type { RevealedPeerArtifacts } from "../types";
 
 export function RevealModal({

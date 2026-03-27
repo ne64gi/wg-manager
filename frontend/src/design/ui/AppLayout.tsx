@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { ComponentType, PropsWithChildren } from "react";
 
-import { readLocalStorage, writeLocalStorage } from "../../lib/browser/storage";
-import { t } from "../../lib/i18n";
+import { readLocalStorage, writeLocalStorage } from "../../core/browser/storage";
+import { t } from "../../core/i18n";
 import {
   BrandIcon,
   ChevronLeftIcon,

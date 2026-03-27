@@ -1,5 +1,5 @@
 import { useAuth } from "./core/auth/AuthContext";
-import { useApplyDocumentPreferences } from "./modules/preferences/useApplyDocumentPreferences";
+import { useApplyDocumentPreferences } from "./core/preferences/useApplyDocumentPreferences";
 import { useGuiSettingsQuery } from "./modules/gui/useGuiSettingsQuery";
 import { ToastProvider } from "./design/ui/ToastProvider";
 import { AppRoutes } from "./app/AppRoutes";

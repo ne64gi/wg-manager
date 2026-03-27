@@ -12,8 +12,8 @@ import {
   revealPeerArtifacts,
   updatePeer,
 } from "../../lib/api";
-import { confirmAction } from "../../lib/browser/actions";
-import { formatApplyFailureMessage, t } from "../../lib/i18n";
+import { confirmAction } from "../../core/browser/actions";
+import { formatApplyFailureMessage, t } from "../../core/i18n";
 import type { Group, RevealedPeerArtifacts, User } from "../../types";
 import { useToast } from "../../design/ui/ToastProvider";
 import { useAuth } from "../../core/auth/AuthContext";

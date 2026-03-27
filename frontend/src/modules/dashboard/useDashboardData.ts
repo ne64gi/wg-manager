@@ -9,7 +9,7 @@ import {
   getSyncState,
   getUserSummaries,
 } from "../../lib/api";
-import { t } from "../../lib/i18n";
+import { t } from "../../core/i18n";
 import type { UserTrafficSummary } from "../../types";
 import { useToast } from "../../design/ui/ToastProvider";
 import { useAuth } from "../../core/auth/AuthContext";

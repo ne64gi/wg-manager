@@ -1,5 +1,5 @@
 import { formatDateTime } from "../lib/format";
-import { t } from "../lib/i18n";
+import { t } from "../core/i18n";
 import { useGuiLogsPageData } from "../modules/gui/useGuiLogsPageData";
 import { Panel } from "../design/ui/Cards";
 import { DataTable } from "../design/ui/Table";

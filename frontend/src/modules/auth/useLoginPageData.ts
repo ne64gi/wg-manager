@@ -2,14 +2,14 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { getAuthSetupStatus, setupInitialLoginUser } from "../../lib/api";
-import { t, translateErrorMessage } from "../../lib/i18n";
+import { t, translateErrorMessage } from "../../core/i18n";
 import { useAuth } from "../../core/auth/AuthContext";
 import {
   getPreviewLocale,
   getPreviewTheme,
   setPreviewLocale,
   setPreviewTheme,
-} from "../preferences/previewPreferences";
+} from "../../core/preferences/previewPreferences";
 
 export function useLoginPageData(onAuthenticated?: () => void) {
   const auth = useAuth();

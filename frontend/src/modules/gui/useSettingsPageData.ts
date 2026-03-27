@@ -14,8 +14,8 @@ import {
   updateGuiSettings,
   updateInitialSettings,
 } from "../../lib/api";
-import { confirmAction, downloadBlob } from "../../lib/browser/actions";
-import { t, translateErrorMessage } from "../../lib/i18n";
+import { confirmAction, downloadBlob } from "../../core/browser/actions";
+import { t, translateErrorMessage } from "../../core/i18n";
 import type { GuiSettingsUpdate, StateExport } from "../../types";
 import { useToast } from "../../design/ui/ToastProvider";
 import { useAuth } from "../../core/auth/AuthContext";
@@ -26,7 +26,7 @@ import {
   getStoredPreviewLocale,
   setPreviewLocale,
   setPreviewTheme,
-} from "../preferences/previewPreferences";
+} from "../../core/preferences/previewPreferences";
 
 export function useSettingsPageData() {
   const auth = useAuth();

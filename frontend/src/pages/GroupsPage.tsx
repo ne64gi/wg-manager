@@ -1,5 +1,5 @@
-import { confirmAction, downloadBlob } from "../lib/browser/actions";
-import { t } from "../lib/i18n";
+import { confirmAction, downloadBlob } from "../core/browser/actions";
+import { t } from "../core/i18n";
 import {
   formatDeleteConfirm,
   getBundleWarningText,

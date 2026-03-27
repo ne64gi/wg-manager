@@ -2,7 +2,7 @@ import {
   readLocalStorage,
   removeLocalStorage,
   writeLocalStorage,
-} from "../../lib/browser/storage";
+} from "../browser/storage";
 
 const PREVIEW_LOCALE_KEY = "wg-studio-preview-locale";
 const PREVIEW_THEME_KEY = "wg-studio-preview-theme";

@@ -10,7 +10,7 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ApiError, getAuthMe, login, logout, refresh } from "../../lib/api";
-import { readLocalStorage, removeLocalStorage, writeLocalStorage } from "../../lib/browser/storage";
+import { readLocalStorage, removeLocalStorage, writeLocalStorage } from "../browser/storage";
 import { queryKeys } from "../../modules/queryKeys";
 import type { AuthLoginRequest, AuthenticatedLoginUser, TokenPair } from "../../types";
 

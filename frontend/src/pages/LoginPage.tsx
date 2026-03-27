@@ -1,4 +1,4 @@
-import { t } from "../lib/i18n";
+import { t } from "../core/i18n";
 import { useLoginPageData } from "../modules/auth/useLoginPageData";
 import {
   BrandIcon,

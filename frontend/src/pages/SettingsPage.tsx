@@ -1,7 +1,7 @@
 import { useRef, useState, type ReactNode } from "react";
 
 import { formatDateTime } from "../lib/format";
-import { t } from "../lib/i18n";
+import { t } from "../core/i18n";
 import { useSettingsPageData } from "../modules/gui/useSettingsPageData";
 import type { GuiSettingsUpdate } from "../types";
 import { DataTable } from "../design/ui/Table";

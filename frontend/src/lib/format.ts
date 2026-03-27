@@ -1,4 +1,4 @@
-import { getUiLocale } from "./i18n";
+import { getUiLocale } from "../core/i18n";
 
 const BYTE_UNITS = ["B", "KB", "MB", "GB", "TB"];
 
