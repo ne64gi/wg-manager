@@ -84,7 +84,7 @@ export function LoginPage({
                       onChange={(event) => changeLocale(event.target.value)}
                     >
                       <option value="en">{t("locale.en_flag", "🇺🇸 English")}</option>
-                      <option value="ja">{t("locale.ja_flag", "🇯🇵 日本語")}</option>
+                      <option value="ja">{t("locale.ja_flag", "🇯🇵 Japanese")}</option>
                     </select>
                   </div>
                 </label>

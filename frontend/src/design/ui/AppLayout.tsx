@@ -198,7 +198,7 @@ export function AppLayout({
                       onEditProfile?.();
                     }}
                   >
-                    {t("common.edit", "編集")}
+                    {t("common.edit", "Edit")}
                   </button>
 
                   <button
@@ -211,7 +211,7 @@ export function AppLayout({
                       await onLogout();
                     }}
                   >
-                    {t("auth.logout", "ログアウト")}
+                    {t("auth.logout", "Logout")}
                   </button>
                 </div>
               </div>
