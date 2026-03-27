@@ -31,7 +31,6 @@ from app.services import (
     delete_peer,
     delete_user,
     export_domain_state,
-    get_initial_settings,
     get_group,
     get_peer,
     get_user,
@@ -42,12 +41,12 @@ from app.services import (
     reissue_peer_keys,
     revoke_peer,
     resolve_peer_access,
-    update_initial_settings,
     update_group,
     update_group_allocation,
     update_peer,
     update_user,
 )
+from app.services.system import get_initial_settings, update_initial_settings
 
 router = APIRouter()
 

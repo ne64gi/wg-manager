@@ -17,7 +17,8 @@ from app.schemas.config import (
     RevealedPeerArtifacts,
 )
 from app.services.audit import log_gui_event, log_operation
-from app.services.domain import ensure_peer_keys, get_initial_settings, get_server_state
+from app.services.domain import ensure_peer_keys
+from app.services.system import get_initial_settings, get_server_state
 
 
 def get_peer_config_path(peer_name: str) -> Path:

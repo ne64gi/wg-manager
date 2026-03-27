@@ -8,7 +8,7 @@ from app.runtime import RuntimeService, get_runtime_service
 from app.schemas.config import ApplyResult
 from app.services.audit import log_operation
 from app.services.config_generation import generate_server_config
-from app.services.domain import get_server_state
+from app.services.system import get_server_state
 
 
 def apply_server_config(

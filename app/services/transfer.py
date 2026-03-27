@@ -26,13 +26,15 @@ from app.services.config_generation import reveal_peer_artifacts
 from app.services.domain import (
     create_group,
     create_user,
-    get_initial_settings,
-    get_server_state,
     list_groups,
     reissue_peer_keys,
-    update_initial_settings,
 )
 from app.services.gui import get_gui_settings, update_gui_settings
+from app.services.system import (
+    get_initial_settings,
+    get_server_state,
+    update_initial_settings,
+)
 
 
 def _sanitize_name(value: str) -> str:

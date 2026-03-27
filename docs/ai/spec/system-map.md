@@ -28,6 +28,8 @@ Current backend naming direction:
 - `app/schemas/state.py`: export/import state contract types
 - `app/schemas/config.py`: generated/apply artifact contract types
 - `app/schemas/domain.py`: WG domain entity contract types
+- `app/services/system.py`: temporary boundary for startup, server state, and initial settings lifecycle
+- `app/services/domain.py`: WG entity CRUD and allocation rules
 
 ## Primary Data Model
 
