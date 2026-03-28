@@ -2,6 +2,8 @@
 
 これはルート一覧です。挙動ルールは [`auth-and-api-rules.md`](auth-and-api-rules.md) も合わせて読んでください。
 
+バックアップ運用は [`backup-and-restore.md`](backup-and-restore.md) を参照してください。
+
 ## 基本エンドポイント
 
 - `GET /health`

@@ -2,6 +2,8 @@
 
 This page is the endpoint index.
 
+For operator backup flows, also read [`backup-and-restore.md`](backup-and-restore.md).
+
 For behavior rules that are not obvious from the route list, also read:
 
 - [`../guide/quick-start.md`](../guide/quick-start.md)

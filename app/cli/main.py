@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from urllib import error, request
 
 import typer
@@ -14,6 +15,7 @@ from app.schemas import (
     LoginUserCreate,
     LoginUserUpdate,
     PeerCreate,
+    StateImportRequest,
     UserCreate,
 )
 from app.services import (
@@ -25,7 +27,9 @@ from app.services import (
     delete_login_user,
     delete_peer,
     delete_user,
+    export_domain_state,
     has_login_users,
+    import_domain_state,
     init_db,
     list_groups,
     list_login_users,
@@ -44,6 +48,7 @@ peer_app = typer.Typer()
 config_app = typer.Typer()
 settings_app = typer.Typer()
 login_user_app = typer.Typer()
+state_app = typer.Typer()
 
 app.add_typer(group_app, name="group")
 app.add_typer(user_app, name="user")
@@ -51,6 +56,7 @@ app.add_typer(peer_app, name="peer")
 app.add_typer(config_app, name="config")
 app.add_typer(settings_app, name="settings")
 app.add_typer(login_user_app, name="login-user")
+app.add_typer(state_app, name="state")
 
 
 @app.callback()
@@ -352,6 +358,31 @@ def config_generate_server_command() -> None:
 @config_app.command("apply")
 def config_apply_command() -> None:
     print_json(api_request("POST", "/config/server/apply"))
+
+
+@state_app.command("export")
+def state_export_command(
+    output: Path = typer.Option(..., "--output", dir_okay=False, writable=True),
+) -> None:
+    with SessionLocal() as session:
+        payload = export_domain_state(session)
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        json.dumps(payload.model_dump(mode="json"), indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    typer.echo(str(output))
+
+
+@state_app.command("import")
+def state_import_command(
+    input_path: Path = typer.Option(..., "--input", exists=True, dir_okay=False, readable=True),
+) -> None:
+    payload = StateImportRequest.model_validate_json(input_path.read_text(encoding="utf-8"))
+    with SessionLocal() as session:
+        result = import_domain_state(session, payload)
+    print_json(result.model_dump(mode="json"))
 
 
 @settings_app.command("show")

@@ -154,8 +154,20 @@ case "$command_name" in
   e2e)
     run_isolated_e2e "$@"
     ;;
+  backup-db)
+    ./scripts/backup-db.sh "$@"
+    ;;
+  restore-db)
+    ./scripts/restore-db.sh "$@"
+    ;;
+  export-state)
+    ./scripts/export-state.sh "$@"
+    ;;
+  import-state)
+    ./scripts/import-state.sh "$@"
+    ;;
   *)
-    echo "Unsupported command '$command_name'. Use: up, build, restart, down, ps, logs, wait, health, smoke, cli, e2e." >&2
+    echo "Unsupported command '$command_name'. Use: up, build, restart, down, ps, logs, wait, health, smoke, cli, e2e, backup-db, restore-db, export-state, import-state." >&2
     exit 1
     ;;
 esac
