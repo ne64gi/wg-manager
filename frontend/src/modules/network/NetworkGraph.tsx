@@ -29,7 +29,7 @@ export function NetworkGraph({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const elements = useMemo(() => buildGraphElements(groups), [groups]);
+  const elements = useMemo(() => buildGraphElements(groups, layoutMode), [groups, layoutMode]);
 
   useEffect(() => {
     if (!containerRef.current) {
@@ -271,7 +271,7 @@ export function NetworkGraph({
   return <div className="network-graph-canvas" data-testid="network-3d-scene" ref={containerRef} />;
 }
 
-function buildGraphElements(groups: TopologyGroup[]): ElementDefinition[] {
+function buildGraphElements(groups: TopologyGroup[], layoutMode: NetworkGraphLayout): ElementDefinition[] {
   const elements: ElementDefinition[] = [];
   const totals = groups.reduce(
     (accumulator, group) => ({
@@ -330,7 +330,7 @@ function buildGraphElements(groups: TopologyGroup[]): ElementDefinition[] {
       elements.push({
         data: {
           id: userId,
-          parent: groupId,
+          ...(layoutMode === "organic" ? { parent: groupId } : {}),
           label: `${user.user_name}\n${user.online_peer_count}/${user.peer_count} online`,
           kind: "user",
           title: user.user_name,
@@ -358,7 +358,7 @@ function buildGraphElements(groups: TopologyGroup[]): ElementDefinition[] {
         elements.push({
           data: {
             id: peerId,
-            parent: groupId,
+            ...(layoutMode === "organic" ? { parent: groupId } : {}),
             label: `${peer.peer_name}\n${peer.assigned_ip}`,
             kind: "peer",
             title: peer.peer_name,
