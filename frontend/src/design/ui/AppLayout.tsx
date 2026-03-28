@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
-import type { ComponentType, PropsWithChildren } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { ComponentType, CSSProperties, PropsWithChildren } from "react";
+import { createPortal } from "react-dom";
 
 import { readLocalStorage, writeLocalStorage } from "../../core/browser/storage";
 import { t } from "../../core/i18n";
@@ -38,6 +39,9 @@ export function AppLayout({
   });
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
+  const userTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const userPopoverRef = useRef<HTMLDivElement | null>(null);
+  const [userPopoverStyle, setUserPopoverStyle] = useState<CSSProperties | null>(null);
 
   useEffect(() => {
     writeLocalStorage("wg-studio.desktop-nav-collapsed", String(isDesktopNavCollapsed));
@@ -45,8 +49,14 @@ export function AppLayout({
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
-      if (!userMenuRef.current) return;
-      if (!userMenuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        userMenuRef.current?.contains(target) ||
+        userPopoverRef.current?.contains(target)
+      ) {
+        return;
+      }
+      if (isUserMenuOpen) {
         setIsUserMenuOpen(false);
       }
     }
@@ -64,7 +74,64 @@ export function AppLayout({
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleEscape);
     };
-  }, []);
+  }, [isUserMenuOpen]);
+
+  useLayoutEffect(() => {
+    if (!isUserMenuOpen || !userTriggerRef.current) {
+      return;
+    }
+
+    function updateUserPopoverPosition() {
+      const triggerRect = userTriggerRef.current?.getBoundingClientRect();
+      if (!triggerRect) {
+        return;
+      }
+
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const gap = 12;
+      const popoverWidth = Math.min(260, viewportWidth - 32);
+      let left = isDesktopNavCollapsed
+        ? triggerRect.right + gap
+        : triggerRect.left;
+
+      if (left + popoverWidth > viewportWidth - 16) {
+        left = viewportWidth - popoverWidth - 16;
+      }
+      if (left < 16) {
+        left = 16;
+      }
+
+      const estimatedHeight = userPopoverRef.current?.offsetHeight ?? 190;
+      let top = triggerRect.top - estimatedHeight - gap;
+
+      if (top < 16) {
+        top = Math.min(triggerRect.bottom + gap, viewportHeight - estimatedHeight - 16);
+      }
+      if (top < 16) {
+        top = 16;
+      }
+
+      setUserPopoverStyle({
+        position: "fixed",
+        top,
+        left,
+        width: popoverWidth,
+        bottom: "auto",
+        transform: "none",
+        zIndex: 4000,
+      });
+    }
+
+    updateUserPopoverPosition();
+    window.addEventListener("resize", updateUserPopoverPosition);
+    window.addEventListener("scroll", updateUserPopoverPosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updateUserPopoverPosition);
+      window.removeEventListener("scroll", updateUserPopoverPosition, true);
+    };
+  }, [isDesktopNavCollapsed, isUserMenuOpen]);
 
   function closeMobileNav() {
     setIsMobileNavOpen(false);
@@ -162,6 +229,7 @@ export function AppLayout({
             className={`sidebar-user-menu${isDesktopNavCollapsed ? " sidebar-user-menu-collapsed" : ""}`}
           >
             <button
+              ref={userTriggerRef}
               type="button"
               className={`secondary-button sidebar-user-trigger${
                 isDesktopNavCollapsed ? " sidebar-user-trigger-collapsed" : ""
@@ -176,51 +244,55 @@ export function AppLayout({
               </span>
             </button>
 
-            {isUserMenuOpen ? (
-              <div
-                className={`sidebar-user-popover${
-                  isDesktopNavCollapsed ? " sidebar-user-popover-collapsed" : ""
-                }`}
-              >
-                <div className="sidebar-user-popover-main">
-                  <div className="sidebar-user-popover-name">{currentUsername ?? "-"}</div>
-                  <div className="sidebar-user-popover-email">mailaddress（未実装）</div>
-                </div>
-
-                <div className="sidebar-user-popover-separator" />
-
-                <div className="sidebar-user-popover-actions">
-                  <button
-                    type="button"
-                    className="ghost-button sidebar-user-popover-action"
-                    onClick={() => {
-                      setIsUserMenuOpen(false);
-                      onEditProfile?.();
-                    }}
-                  >
-                    {t("common.edit", "Edit")}
-                  </button>
-
-                  <button
-                    type="button"
-                    className="ghost-button sidebar-user-popover-action sidebar-user-popover-action-danger"
-                    data-testid="nav-logout"
-                    onClick={async () => {
-                      setIsUserMenuOpen(false);
-                      closeMobileNav();
-                      await onLogout();
-                    }}
-                  >
-                    {t("auth.logout", "Logout")}
-                  </button>
-                </div>
-              </div>
-            ) : null}
           </div>
         </div>
       </aside>
 
       <main className="content-shell">{children}</main>
+
+      {isUserMenuOpen && userPopoverStyle
+        ? createPortal(
+            <div
+              ref={userPopoverRef}
+              className="sidebar-user-popover"
+              style={userPopoverStyle}
+            >
+              <div className="sidebar-user-popover-main">
+                <div className="sidebar-user-popover-name">{currentUsername ?? "-"}</div>
+                <div className="sidebar-user-popover-email">mailaddress（未実装）</div>
+              </div>
+
+              <div className="sidebar-user-popover-separator" />
+
+              <div className="sidebar-user-popover-actions">
+                <button
+                  type="button"
+                  className="ghost-button sidebar-user-popover-action"
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    onEditProfile?.();
+                  }}
+                >
+                  {t("common.edit", "Edit")}
+                </button>
+
+                <button
+                  type="button"
+                  className="ghost-button sidebar-user-popover-action sidebar-user-popover-action-danger"
+                  data-testid="nav-logout"
+                  onClick={async () => {
+                    setIsUserMenuOpen(false);
+                    closeMobileNav();
+                    await onLogout();
+                  }}
+                >
+                  {t("auth.logout", "Logout")}
+                </button>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
