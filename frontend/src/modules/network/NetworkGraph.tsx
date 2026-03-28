@@ -92,14 +92,12 @@ export function NetworkGraph({
             shape: "round-rectangle",
             "background-color": "rgba(50, 64, 87, 0.22)",
             "border-color": "#8f9db3",
-            width: 220,
-            height: 180,
             "font-size": "12px",
             "font-weight": 700,
             "text-max-width": "132px",
             "text-valign": "top",
             "text-halign": "center",
-            padding: "28px",
+            padding: "24px",
             "border-style": "solid",
           },
         },
@@ -417,12 +415,13 @@ function buildHierarchyPositions(groups: TopologyGroup[]): Record<string, { x: n
     "server:root": { x: 0, y: 0 },
   };
 
-  const groupGapX = 360;
-  const groupBaseY = 240;
-  const userGapX = 150;
-  const userBaseY = 120;
-  const peerGapX = 92;
-  const peerGapY = 88;
+  const groupGapX = 420;
+  const groupCenterY = 270;
+  const userGapX = 170;
+  const userCenterY = groupCenterY + 36;
+  const peerGapX = 88;
+  const peerGapY = 86;
+  const peerStartY = userCenterY + 118;
 
   groups.forEach((group, groupIndex) => {
     const groupOffsetX = (groupIndex - (groups.length - 1) / 2) * groupGapX;
@@ -432,7 +431,7 @@ function buildHierarchyPositions(groups: TopologyGroup[]): Record<string, { x: n
       const userOffsetX = (userIndex - (group.users.length - 1) / 2) * userGapX;
       positions[userId] = {
         x: groupOffsetX + userOffsetX,
-        y: groupBaseY + userBaseY,
+        y: userCenterY,
       };
 
       user.peers.forEach((peer, peerIndex) => {
@@ -444,7 +443,7 @@ function buildHierarchyPositions(groups: TopologyGroup[]): Record<string, { x: n
 
         positions[peerId] = {
           x: groupOffsetX + userOffsetX + centeredColumn * peerGapX,
-          y: groupBaseY + userBaseY + 108 + row * peerGapY,
+          y: peerStartY + row * peerGapY,
         };
       });
     });
