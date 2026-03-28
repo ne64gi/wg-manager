@@ -815,6 +815,10 @@
   align-items: start;
 }
 
+.network-inspector-grid {
+  margin-top: 16px;
+}
+
 .network-stats-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
@@ -911,6 +915,10 @@
   border-radius: 18px;
   border: 1px solid var(--table-border);
   background: color-mix(in srgb, var(--surface-soft) 92%, transparent);
+}
+
+.network-group-summary-list {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .network-group-summary-header {

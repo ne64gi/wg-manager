@@ -50,8 +50,8 @@ export function NetworkPage() {
         <StatCard title={t("network.hidden_peers", "Hidden / unrevealed")} value={`${metrics.hiddenPeers}`} />
       </div>
 
-      <div className="two-column-grid network-layout-grid">
-        <div className="dashboard-panel-span-8">
+      <div className="dashboard-top-grid network-layout-grid">
+        <div className="dashboard-panel-span-12">
           <Panel
             title={t("network.scene", "Relationship graph")}
             actions={
@@ -115,8 +115,10 @@ export function NetworkPage() {
             )}
           </Panel>
         </div>
+      </div>
 
-        <div className="dashboard-panel-span-4 network-side-stack">
+      <div className="dashboard-bottom-grid network-inspector-grid">
+        <div className="dashboard-panel-span-6 network-side-stack">
           <Panel title={t("network.legend", "Legend")}>
             <div className="network-legend-list">
               <div className="network-legend-item">
@@ -155,7 +157,9 @@ export function NetworkPage() {
               </div>
             </div>
           </Panel>
+        </div>
 
+        <div className="dashboard-panel-span-6 network-side-stack">
           <Panel title={t("network.focus_details", "Node details")}>
             {selection ? (
               <div className="network-detail-card">
@@ -184,44 +188,44 @@ export function NetworkPage() {
               </div>
             )}
           </Panel>
-
-          <Panel title={t("network.focus_summary", "Focus summary")}>
-            <div className="network-group-summary-list">
-              {visibleGroups.map((group) => (
-                <section className="network-group-summary" key={group.group_id}>
-                  <div className="network-group-summary-header">
-                    <strong>{group.group_name}</strong>
-                    <span className={`status-pill ${group.online_peer_count ? "status-pill-online" : ""}`}>
-                      {group.online_peer_count} / {group.peer_count}
-                    </span>
-                  </div>
-                  <div className="muted-text">
-                    {group.group_scope} · {group.user_count} {t("network.users", "Users")}
-                  </div>
-                  <div className="network-summary-traffic">
-                    {formatBytes(
-                      group.users.reduce(
-                        (sum, user) => sum + user.peers.reduce((peerSum, peer) => peerSum + peer.total_bytes, 0),
-                        0,
-                      ),
-                    )}
-                  </div>
-                  <div className="network-mini-user-list">
-                    {group.users.map((user) => (
-                      <div className="network-mini-user" key={user.user_id}>
-                        <span>{user.user_name}</span>
-                        <span>
-                          {user.online_peer_count}/{user.peer_count}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
-          </Panel>
         </div>
       </div>
+
+      <Panel title={t("network.focus_summary", "Focus summary")}>
+        <div className="network-group-summary-list">
+          {visibleGroups.map((group) => (
+            <section className="network-group-summary" key={group.group_id}>
+              <div className="network-group-summary-header">
+                <strong>{group.group_name}</strong>
+                <span className={`status-pill ${group.online_peer_count ? "status-pill-online" : ""}`}>
+                  {group.online_peer_count} / {group.peer_count}
+                </span>
+              </div>
+              <div className="muted-text">
+                {group.group_scope} · {group.user_count} {t("network.users", "Users")}
+              </div>
+              <div className="network-summary-traffic">
+                {formatBytes(
+                  group.users.reduce(
+                    (sum, user) => sum + user.peers.reduce((peerSum, peer) => peerSum + peer.total_bytes, 0),
+                    0,
+                  ),
+                )}
+              </div>
+              <div className="network-mini-user-list">
+                {group.users.map((user) => (
+                  <div className="network-mini-user" key={user.user_id}>
+                    <span>{user.user_name}</span>
+                    <span>
+                      {user.online_peer_count}/{user.peer_count}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </Panel>
     </div>
   );
 }

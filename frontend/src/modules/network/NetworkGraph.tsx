@@ -99,18 +99,20 @@ export function NetworkGraph({
             "text-halign": "center",
             padding: "24px",
             "border-style": "solid",
+            "min-width": 280,
+            "min-height": 230,
           },
         },
         {
           selector: ".graph-node-user",
           style: {
-            shape: "ellipse",
+            shape: "round-rectangle",
             "background-color": "#33455c",
             "border-color": "#91a0b8",
-            width: 110,
-            height: 110,
+            width: 132,
+            height: 88,
             "font-size": "11px",
-            "text-max-width": "90px",
+            "text-max-width": "104px",
           },
         },
         {
@@ -211,15 +213,10 @@ export function NetworkGraph({
             positions: (node: cytoscape.NodeSingular) => hierarchyPositions[node.id()] ?? node.position(),
           }
         : {
-            name: "concentric",
-            animate: false,
+            name: "preset",
+            fit: true,
             padding: 36,
-            spacingFactor: 1.15,
-            concentric: (node: cytoscape.NodeSingular) => {
-              const weight = node.data("weight");
-              return typeof weight === "number" ? weight : 0;
-            },
-            levelWidth: () => 1,
+            positions: (node: cytoscape.NodeSingular) => buildOrganicPositions(groups)[node.id()] ?? node.position(),
           }) as any,
     ).run();
 
@@ -444,6 +441,52 @@ function buildHierarchyPositions(groups: TopologyGroup[]): Record<string, { x: n
         positions[peerId] = {
           x: groupOffsetX + userOffsetX + centeredColumn * peerGapX,
           y: peerStartY + row * peerGapY,
+        };
+      });
+    });
+  });
+
+  return positions;
+}
+
+function buildOrganicPositions(groups: TopologyGroup[]): Record<string, { x: number; y: number }> {
+  const positions: Record<string, { x: number; y: number }> = {
+    "server:root": { x: 0, y: 0 },
+  };
+
+  const columns = Math.max(1, Math.min(3, groups.length));
+  const groupGapX = 420;
+  const groupGapY = 360;
+  const groupBaseY = 260;
+
+  groups.forEach((group, groupIndex) => {
+    const column = groupIndex % columns;
+    const row = Math.floor(groupIndex / columns);
+    const centeredColumn = column - (columns - 1) / 2;
+    const groupCenterX = centeredColumn * groupGapX;
+    const groupCenterY = groupBaseY + row * groupGapY;
+
+    group.users.forEach((user, userIndex) => {
+      const userId = `user:${user.user_id}`;
+      const userCount = Math.max(group.users.length, 1);
+      const userAngle = (Math.PI * 2 * userIndex) / userCount;
+      const userRadiusX = userCount === 1 ? 0 : 92;
+      const userRadiusY = userCount === 1 ? 0 : 58;
+      const userX = groupCenterX + Math.cos(userAngle) * userRadiusX;
+      const userY = groupCenterY - 8 + Math.sin(userAngle) * userRadiusY;
+
+      positions[userId] = { x: userX, y: userY };
+
+      user.peers.forEach((peer, peerIndex) => {
+        const peerId = `peer:${peer.peer_id}`;
+        const peersInRow = Math.max(1, Math.min(3, user.peers.length));
+        const rowIndex = Math.floor(peerIndex / peersInRow);
+        const columnIndex = peerIndex % peersInRow;
+        const centeredPeerColumn = columnIndex - (Math.min(peersInRow, user.peers.length) - 1) / 2;
+
+        positions[peerId] = {
+          x: userX + centeredPeerColumn * 86,
+          y: userY + 110 + rowIndex * 80,
         };
       });
     });
