@@ -8,6 +8,7 @@ export const queryKeys = {
   peerStatuses: ["status", "peers"] as const,
   userSummaries: ["status", "users-summary"] as const,
   groupSummaries: ["status", "groups-summary"] as const,
+  topology: ["status", "topology"] as const,
   groups: ["domain", "groups"] as const,
   users: ["domain", "users"] as const,
   peers: ["domain", "peers"] as const,

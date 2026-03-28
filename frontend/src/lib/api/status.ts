@@ -2,6 +2,7 @@ import type {
   GroupTrafficSummary,
   PeerStatus,
   SyncState,
+  TopologyGroup,
   UserTrafficSummary,
   WireGuardOverview,
   WireGuardOverviewHistoryPoint,
@@ -36,4 +37,8 @@ export function getUserSummaries(accessToken: string): Promise<UserTrafficSummar
 
 export function getGroupSummaries(accessToken: string): Promise<GroupTrafficSummary[]> {
   return request<GroupTrafficSummary[]>("/status/groups-summary", { accessToken });
+}
+
+export function getTopology(accessToken: string): Promise<TopologyGroup[]> {
+  return request<TopologyGroup[]>("/status/topology", { accessToken });
 }

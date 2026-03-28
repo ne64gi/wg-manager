@@ -80,3 +80,36 @@ class GroupTrafficSummaryRead(BaseModel):
     total_received_bytes: int
     total_sent_bytes: int
     total_usage_bytes: int
+
+
+class PeerTopologyNodeRead(BaseModel):
+    peer_id: int
+    peer_name: str
+    assigned_ip: str
+    is_active: bool
+    is_online: bool
+    is_revealed: bool
+    latest_handshake_at: datetime | None
+    total_bytes: int
+
+
+class UserTopologyNodeRead(BaseModel):
+    user_id: int
+    user_name: str
+    is_active: bool
+    peer_count: int
+    active_peer_count: int
+    online_peer_count: int
+    peers: list[PeerTopologyNodeRead]
+
+
+class GroupTopologyNodeRead(BaseModel):
+    group_id: int
+    group_name: str
+    group_scope: GroupScope
+    is_active: bool
+    user_count: int
+    peer_count: int
+    active_peer_count: int
+    online_peer_count: int
+    users: list[UserTopologyNodeRead]

@@ -20,6 +20,116 @@
     radial-gradient(circle at 80% 10%, var(--wg-red-soft), transparent 28%);
 }
 
+.chart-panel-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.chart-panel-stack-expanded {
+  gap: 20px;
+}
+
+.chart-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.chart-summary-card {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--table-border);
+  background: color-mix(in srgb, var(--surface-soft) 92%, transparent);
+}
+
+.chart-summary-card span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.chart-summary-card strong {
+  color: var(--text-strong);
+  font-size: 0.98rem;
+}
+
+.chart-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.chart-range-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-soft) 94%, transparent);
+  border: 1px solid var(--table-border);
+}
+
+.chart-range-button {
+  border: 0;
+  color: var(--text-muted);
+  background: transparent;
+  padding: 7px 12px;
+  border-radius: 999px;
+}
+
+.chart-range-button-active {
+  color: var(--text-strong);
+  background: color-mix(in srgb, var(--wg-red-soft) 68%, var(--surface-strong));
+}
+
+.chart-shell {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 56px;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.chart-shell-expanded .chart-placeholder {
+  min-height: 440px;
+}
+
+.chart-canvas-wrap {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.chart-y-axis,
+.chart-x-axis {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.chart-y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 260px;
+  padding-block: 8px 16px;
+}
+
+.chart-y-axis-right {
+  text-align: right;
+}
+
+.chart-x-axis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.chart-x-axis span:last-child {
+  text-align: right;
+}
+
 .chart-grid {
   position: absolute;
   inset: 0;
@@ -72,6 +182,48 @@
 
 .chart-overlay-title {
   font-weight: 600;
+}
+
+.chart-empty-state {
+  display: grid;
+  gap: 10px;
+  min-height: 260px;
+  place-content: center;
+  text-align: center;
+}
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+
+.chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-legend-line {
+  width: 18px;
+  height: 0;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+
+.chart-legend-line-primary {
+  border-top-color: var(--wg-red-strong);
+}
+
+.chart-legend-line-secondary {
+  border-top-color: rgba(95, 131, 217, 0.85);
+  border-top-style: dashed;
+}
+
+.timeline-modal-card {
+  width: min(1100px, calc(100vw - 48px));
 }
 
 .bar-list {
@@ -191,6 +343,38 @@
   font-size: 0.88rem;
 }
 
+.topology-peer-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.topology-peer-chip {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--table-border);
+  background: color-mix(in srgb, var(--surface-strong) 82%, transparent);
+}
+
+.topology-peer-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.topology-peer-name {
+  color: var(--text-strong);
+  font-weight: 600;
+}
+
+.topology-peer-meta {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
 .runtime-overview-list {
   display: grid;
   gap: 10px;
@@ -221,6 +405,30 @@
   text-align: right;
   line-height: 1.35;
   word-break: break-word;
+}
+
+.runtime-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 84px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  text-transform: capitalize;
+  background: color-mix(in srgb, var(--surface-soft) 92%, transparent);
+  border: 1px solid var(--table-border);
+}
+
+.runtime-status-badge-online {
+  color: #d8ffe7;
+  background: rgba(24, 148, 108, 0.2);
+  border-color: rgba(57, 196, 144, 0.24);
+}
+
+.runtime-status-badge-offline {
+  color: #ffd6d7;
+  background: rgba(159, 29, 32, 0.18);
+  border-color: rgba(191, 39, 42, 0.2);
 }
 
 /* =========================================================
@@ -625,6 +833,28 @@
 }
 
 @media (max-width: 860px) {
+  .chart-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .chart-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-y-axis {
+    min-height: auto;
+    flex-direction: row;
+    padding: 0;
+  }
+
+  .chart-y-axis-right {
+    text-align: left;
+  }
+
+  .chart-x-axis {
+    font-size: 0.72rem;
+  }
+
   .qr-card {
     min-height: 220px;
   }

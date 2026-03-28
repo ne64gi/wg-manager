@@ -7,6 +7,7 @@ from app.api.deps import require_authenticated_login_user
 from app.db import get_session
 from app.models import LoginUser
 from app.core import get_system_version, settings
+from app.runtime import get_runtime_service
 from app.schemas.gui import (
     GuiLogListRead,
     GuiLogRead,
@@ -22,6 +23,7 @@ from app.services import (
     delete_login_user,
     get_gui_settings,
     get_login_user,
+    get_server_state,
     list_gui_logs,
     list_gui_logs_page,
     list_login_users,
@@ -35,12 +37,24 @@ router = APIRouter()
 @router.get("/gui/version", response_model=SystemVersionRead)
 def get_system_version_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
 ) -> SystemVersionRead:
     version = get_system_version()
+    runtime = get_runtime_service().describe()
+    server_state = get_server_state(session)
     return SystemVersionRead(
         version=version,
         frontend_version=version,
         runtime_adapter=settings.runtime_adapter,
+        interface_name=runtime.interface_name,
+        runtime_container_name=runtime.container_name,
+        runtime_image_name=runtime.image_name,
+        runtime_status=runtime.status,
+        runtime_running=runtime.is_running,
+        runtime_started_at=runtime.started_at,
+        runtime_uptime_seconds=runtime.uptime_seconds,
+        runtime_restart_count=runtime.restart_count,
+        last_server_state_change_at=server_state.updated_at,
     )
 
 

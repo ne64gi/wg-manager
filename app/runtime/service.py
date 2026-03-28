@@ -1,17 +1,25 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
 from app.runtime.artifacts import ArtifactStore, get_artifact_store
 from app.runtime.dump import RuntimePeerDumpRow, parse_wg_dump
-from app.runtime.wireguard import WireGuardRuntime, get_wireguard_runtime
+from app.runtime.wireguard import RuntimeMetadata, WireGuardRuntime, get_wireguard_runtime
 
 
 @dataclass
 class RuntimeDescriptor:
     runtime_adapter: str
     interface_name: str
+    container_name: str | None = None
+    image_name: str | None = None
+    status: str | None = None
+    is_running: bool | None = None
+    started_at: datetime | None = None
+    uptime_seconds: int | None = None
+    restart_count: int | None = None
 
 
 @dataclass
@@ -36,9 +44,24 @@ class RuntimeService:
         self._artifact_store = artifact_store or get_artifact_store()
 
     def describe(self) -> RuntimeDescriptor:
+        try:
+            metadata = self._runtime.describe_runtime()
+        except ValueError:
+            metadata = RuntimeMetadata(
+                runtime_adapter=self._runtime.adapter_name,
+                interface_name=self._runtime.interface_name,
+            )
+
         return RuntimeDescriptor(
-            runtime_adapter=self._runtime.adapter_name,
-            interface_name=self._runtime.interface_name,
+            runtime_adapter=metadata.runtime_adapter,
+            interface_name=metadata.interface_name,
+            container_name=metadata.container_name,
+            image_name=metadata.image_name,
+            status=metadata.status,
+            is_running=metadata.is_running,
+            started_at=metadata.started_at,
+            uptime_seconds=metadata.uptime_seconds,
+            restart_count=metadata.restart_count,
         )
 
     def server_config_path(self) -> Path:

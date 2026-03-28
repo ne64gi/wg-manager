@@ -24,6 +24,15 @@ export type SystemVersion = {
   version: string;
   frontend_version: string;
   runtime_adapter: string;
+  interface_name: string;
+  runtime_container_name: string | null;
+  runtime_image_name: string | null;
+  runtime_status: string | null;
+  runtime_running: boolean | null;
+  runtime_started_at: string | null;
+  runtime_uptime_seconds: number | null;
+  runtime_restart_count: number | null;
+  last_server_state_change_at: string | null;
 };
 
 export type TokenPair = {
@@ -115,6 +124,39 @@ export type GroupTrafficSummary = {
   total_received_bytes: number;
   total_sent_bytes: number;
   total_usage_bytes: number;
+};
+
+export type TopologyPeer = {
+  peer_id: number;
+  peer_name: string;
+  assigned_ip: string;
+  is_active: boolean;
+  is_online: boolean;
+  is_revealed: boolean;
+  latest_handshake_at: string | null;
+  total_bytes: number;
+};
+
+export type TopologyUser = {
+  user_id: number;
+  user_name: string;
+  is_active: boolean;
+  peer_count: number;
+  active_peer_count: number;
+  online_peer_count: number;
+  peers: TopologyPeer[];
+};
+
+export type TopologyGroup = {
+  group_id: number;
+  group_name: string;
+  group_scope: string;
+  is_active: boolean;
+  user_count: number;
+  peer_count: number;
+  active_peer_count: number;
+  online_peer_count: number;
+  users: TopologyUser[];
 };
 
 export type Group = {

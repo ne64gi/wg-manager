@@ -5,6 +5,7 @@ import json
 import socket
 import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Protocol
 from urllib.parse import quote
@@ -19,11 +20,25 @@ class ExecResult:
     stderr: str
 
 
+@dataclass
+class RuntimeMetadata:
+    runtime_adapter: str
+    interface_name: str
+    container_name: str | None = None
+    image_name: str | None = None
+    status: str | None = None
+    is_running: bool | None = None
+    started_at: datetime | None = None
+    uptime_seconds: int | None = None
+    restart_count: int | None = None
+
+
 class WireGuardRuntime(Protocol):
     adapter_name: str
     interface_name: str
 
     def ensure_available(self) -> None: ...
+    def describe_runtime(self) -> RuntimeMetadata: ...
 
     def read_dump(self) -> ExecResult: ...
 
@@ -192,6 +207,54 @@ class DockerWireGuardRuntime:
             exit_code=int(inspect_response.get("ExitCode", 1)),
             stdout=stdout,
             stderr=stderr,
+        )
+
+    def describe_runtime(self) -> RuntimeMetadata:
+        self.ensure_available()
+        container_name = quote(self.container_name, safe="")
+        payload = self._docker_request_json(
+            "GET",
+            f"/{self.docker_api_version}/containers/{container_name}/json",
+        )
+        if not isinstance(payload, dict):
+            raise ValueError("failed to inspect runtime container")
+
+        state = payload.get("State")
+        config = payload.get("Config")
+        if not isinstance(state, dict):
+            state = {}
+        if not isinstance(config, dict):
+            config = {}
+
+        started_at: datetime | None = None
+        raw_started_at = state.get("StartedAt")
+        if isinstance(raw_started_at, str) and raw_started_at and not raw_started_at.startswith(
+            "0001-01-01"
+        ):
+            try:
+                started_at = datetime.fromisoformat(raw_started_at.replace("Z", "+00:00"))
+            except ValueError:
+                started_at = None
+
+        uptime_seconds: int | None = None
+        if started_at is not None:
+            uptime_seconds = max(
+                0,
+                int((datetime.now(timezone.utc) - started_at).total_seconds()),
+            )
+
+        status = state.get("Status")
+        restart_count = state.get("RestartCount")
+        return RuntimeMetadata(
+            runtime_adapter=self.adapter_name,
+            interface_name=self.interface_name,
+            container_name=self.container_name,
+            image_name=config.get("Image") if isinstance(config.get("Image"), str) else None,
+            status=status if isinstance(status, str) else None,
+            is_running=bool(state.get("Running")) if "Running" in state else None,
+            started_at=started_at,
+            uptime_seconds=uptime_seconds,
+            restart_count=restart_count if isinstance(restart_count, int) else None,
         )
 
     def interface_exists(self) -> bool:

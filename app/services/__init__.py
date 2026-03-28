@@ -64,6 +64,7 @@ from app.services.gui import (
 from app.services.status import get_wireguard_overview, get_wireguard_peer_statuses
 from app.services.status import (
     get_group_traffic_summaries,
+    get_wireguard_topology,
     get_wireguard_sync_state,
     get_user_traffic_summaries,
     get_wireguard_overview_history,
@@ -115,6 +116,7 @@ __all__ = [
     "get_wireguard_sync_state",
     "get_wireguard_overview_history",
     "get_wireguard_peer_statuses",
+    "get_wireguard_topology",
     "get_user_traffic_summaries",
     "has_login_users",
     "init_db",

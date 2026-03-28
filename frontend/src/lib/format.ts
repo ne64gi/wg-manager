@@ -56,3 +56,33 @@ export function formatRelativeTime(value: string | null): string {
     ? `${Math.floor(deltaSeconds / 86400)}日前`
     : `${Math.floor(deltaSeconds / 86400)}d ago`;
 }
+
+export function formatDurationCompact(totalSeconds: number | null): string {
+  const locale = getUiLocale();
+  if (totalSeconds === null || Number.isNaN(totalSeconds)) {
+    return locale === "ja" ? "不明" : "Unknown";
+  }
+
+  const seconds = Math.max(0, Math.floor(totalSeconds));
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+
+  if (locale === "ja") {
+    if (days > 0) {
+      return `${days}日 ${hours}時間`;
+    }
+    if (hours > 0) {
+      return `${hours}時間 ${minutes}分`;
+    }
+    return `${minutes}分`;
+  }
+
+  if (days > 0) {
+    return `${days}d ${hours}h`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
+}

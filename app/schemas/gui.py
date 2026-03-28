@@ -158,3 +158,12 @@ class SystemVersionRead(BaseModel):
     version: str
     frontend_version: str
     runtime_adapter: str
+    interface_name: str
+    runtime_container_name: str | None = None
+    runtime_image_name: str | None = None
+    runtime_status: str | None = None
+    runtime_running: bool | None = None
+    runtime_started_at: datetime | None = None
+    runtime_uptime_seconds: int | None = None
+    runtime_restart_count: int | None = None
+    last_server_state_change_at: datetime | None = None

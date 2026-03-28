@@ -7,6 +7,7 @@ from app.api.deps import require_authenticated_login_user
 from app.db import get_session
 from app.models import LoginUser
 from app.schemas.status import (
+    GroupTopologyNodeRead,
     GroupTrafficSummaryRead,
     PeerStatusRead,
     SyncStateRead,
@@ -16,6 +17,7 @@ from app.schemas.status import (
 )
 from app.services import (
     get_group_traffic_summaries,
+    get_wireguard_topology,
     get_user_traffic_summaries,
     get_wireguard_overview,
     get_wireguard_overview_history,
@@ -92,5 +94,16 @@ def get_group_traffic_summaries_endpoint(
 ) -> list[GroupTrafficSummaryRead]:
     try:
         return get_group_traffic_summaries(session)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/status/topology", response_model=list[GroupTopologyNodeRead])
+def get_wireguard_topology_endpoint(
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> list[GroupTopologyNodeRead]:
+    try:
+        return get_wireguard_topology(session)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

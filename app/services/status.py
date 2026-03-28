@@ -8,9 +8,12 @@ from sqlalchemy.orm import Session, joinedload
 from app.runtime import get_runtime_service
 from app.models import Peer, PeerTrafficSnapshot, User
 from app.schemas.status import (
+    GroupTopologyNodeRead,
     GroupTrafficSummaryRead,
     PeerStatusRead,
+    PeerTopologyNodeRead,
     SyncStateRead,
+    UserTopologyNodeRead,
     UserTrafficSummaryRead,
     WireGuardOverviewHistoryPointRead,
     WireGuardOverviewRead,
@@ -339,3 +342,75 @@ def get_wireguard_overview_history(
             )
         )
     return history
+
+
+def get_wireguard_topology(session: Session) -> list[GroupTopologyNodeRead]:
+    statuses = get_wireguard_peer_statuses(session)
+    statuses_by_peer_id = {status.peer_id: status for status in statuses}
+    peer_rows = list(
+        session.scalars(
+            select(Peer)
+            .options(joinedload(Peer.user).joinedload(User.group))
+            .order_by(Peer.user_id, Peer.name)
+        )
+    )
+
+    groups: dict[int, GroupTopologyNodeRead] = {}
+    users_by_group: dict[tuple[int, int], UserTopologyNodeRead] = {}
+    for peer in peer_rows:
+        status = statuses_by_peer_id.get(peer.id)
+        if status is None:
+            continue
+
+        group = peer.user.group
+        group_node = groups.get(group.id)
+        if group_node is None:
+            group_node = GroupTopologyNodeRead(
+                group_id=group.id,
+                group_name=group.name,
+                group_scope=group.scope,
+                is_active=group.is_active,
+                user_count=0,
+                peer_count=0,
+                active_peer_count=0,
+                online_peer_count=0,
+                users=[],
+            )
+            groups[group.id] = group_node
+
+        user_key = (group.id, peer.user.id)
+        user_node = users_by_group.get(user_key)
+        if user_node is None:
+            user_node = UserTopologyNodeRead(
+                user_id=peer.user.id,
+                user_name=peer.user.name,
+                is_active=peer.user.is_active,
+                peer_count=0,
+                active_peer_count=0,
+                online_peer_count=0,
+                peers=[],
+            )
+            users_by_group[user_key] = user_node
+            group_node.users.append(user_node)
+            group_node.user_count += 1
+
+        user_node.peers.append(
+            PeerTopologyNodeRead(
+                peer_id=peer.id,
+                peer_name=peer.name,
+                assigned_ip=peer.assigned_ip,
+                is_active=peer.is_active,
+                is_online=status.is_online,
+                is_revealed=peer.is_revealed,
+                latest_handshake_at=status.latest_handshake_at,
+                total_bytes=status.total_bytes,
+            )
+        )
+        user_node.peer_count += 1
+        user_node.active_peer_count += 1 if peer.is_active else 0
+        user_node.online_peer_count += 1 if status.is_online else 0
+        group_node.peer_count += 1
+        group_node.active_peer_count += 1 if peer.is_active else 0
+        group_node.online_peer_count += 1 if status.is_online else 0
+
+    return sorted(groups.values(), key=lambda item: item.group_name)
