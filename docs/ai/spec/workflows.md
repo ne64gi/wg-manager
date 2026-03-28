@@ -13,7 +13,7 @@ Compose profile note:
 
 - runtime services start without extra profiles
 - use `docker compose --profile tools run --rm wg-studio-cli ...` for CLI/admin tasks
-- use `docker compose --profile test run --rm wg-studio-e2e` for Playwright smoke
+- use `./scripts/stack.sh smoke` or the isolated `docker-compose.e2e.yml` stack for Playwright smoke
 
 ## Normal Operator Flow
 

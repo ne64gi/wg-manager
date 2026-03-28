@@ -35,7 +35,7 @@ Default services:
 Profile-scoped helper services:
 
 - `wg-studio-cli` (`tools`)
-- `wg-studio-e2e` (`test`)
+- `wg-studio-e2e` (isolated compose)
 
 Notable runtime behavior:
 
@@ -104,7 +104,7 @@ Additional wrapper commands:
 - `health`
   - show compose service state, wait for API readiness, and verify both API health and web reachability from inside the stack
 - `smoke`
-  - wait for stack readiness first, then run the Playwright smoke suite through the `test` profile
+  - boot an isolated compose stack first, then run the Playwright smoke suite there
 
 Push and refresh the local remote-tracking ref in one step:
 
@@ -161,17 +161,15 @@ Preferred wrapper-first smoke path:
 Or directly through Docker Compose:
 
 ```bash
-docker compose --profile test run --rm \
-  -e E2E_BASE_URL=http://wg-studio-web/wg-studio/ \
-  -e E2E_USERNAME=admin \
-  -e E2E_PASSWORD=supersecret123 \
-  wg-studio-e2e
+docker compose -f docker-compose.e2e.yml -p wg-studio-e2e up -d --build
+docker compose -f docker-compose.e2e.yml -p wg-studio-e2e run --rm wg-studio-e2e npm run test:e2e
+docker compose -f docker-compose.e2e.yml -p wg-studio-e2e down -v
 ```
 
 Environment notes:
 
-- the wrapper-based `smoke` command now performs a bounded readiness wait before launching Playwright
+- the wrapper-based `smoke` command now boots an isolated stack and performs a bounded readiness wait before launching Playwright
 - if no login users exist, the smoke suite uses the setup screen and creates the first admin user from `E2E_USERNAME` and `E2E_PASSWORD`
 - if login users already exist, the suite expects those credentials to be valid
-- tests create uniquely named `Group`, `User`, and `Peer` records and do not currently clean them up automatically
+- browser E2E uses isolated PostgreSQL and artifact volumes, so it does not mutate the normal operator stack
 - local `npm run test:e2e` remains available when Node and Playwright are installed on the host

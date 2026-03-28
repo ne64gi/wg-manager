@@ -14,7 +14,7 @@ Give AI contributors a low-ambiguity map from change type to the minimum require
 ### Browser smoke tests
 
 - preferred runner: `./scripts/stack.sh smoke` or `pwsh ./scripts/stack.ps1 smoke`
-- direct runner: `docker compose --profile test run --rm wg-studio-e2e`
+- direct runner: `docker compose -f docker-compose.e2e.yml -p wg-studio-e2e run --rm wg-studio-e2e npm run test:e2e`
 - framework: Playwright
 - role: catch cross-layer regressions that unit or service tests miss
 - scope: minimal release smoke, expanded incrementally through the `1.2.x` line

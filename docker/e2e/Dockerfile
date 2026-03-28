@@ -6,5 +6,6 @@ COPY frontend/package.json ./
 RUN npm install
 
 COPY frontend ./
+COPY VERSION /app/VERSION
 
 CMD ["npx", "playwright", "test"]

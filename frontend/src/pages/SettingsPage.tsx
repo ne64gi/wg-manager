@@ -13,14 +13,16 @@ function Accordion({
   title,
   children,
   defaultOpen = true,
+  summaryTestId,
 }: {
   title: string;
   children: ReactNode;
   defaultOpen?: boolean;
+  summaryTestId?: string;
 }) {
   return (
     <details className="accordion-card" open={defaultOpen}>
-      <summary className="accordion-summary">
+      <summary className="accordion-summary" data-testid={summaryTestId}>
         <span className="accordion-title">{title}</span>
         <span className="accordion-summary-chevron">⌄</span>
       </summary>
@@ -185,6 +187,7 @@ export function SettingsPage() {
             <Accordion
               title={t("settings.language_and_time", "Language and time")}
               defaultOpen={false}
+              summaryTestId="settings-language-and-time-summary"
             >
               <div className="form-grid">
                 <label className="field">
@@ -247,6 +250,7 @@ export function SettingsPage() {
                   </span>
                   <input
                     type="number"
+                    data-testid="settings-snapshot-retention-days"
                     value={formState.traffic_snapshot_retention_days ?? 30}
                     onChange={(event) =>
                       setFormState((current) => ({

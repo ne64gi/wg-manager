@@ -1,0 +1,93 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: wg-studio-e2e-postgres
+    environment:
+      POSTGRES_USER: wgstudio
+      POSTGRES_PASSWORD: wgstudio
+      POSTGRES_DB: wg_studio_e2e
+    volumes:
+      - postgres_data_e2e:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - wg-studio-e2e-internal
+
+  wireguard:
+    build:
+      context: .
+      dockerfile: docker/wireguard/Dockerfile
+    container_name: wg-studio-e2e-wireguard
+    volumes:
+      - wg_config_e2e:/config
+    networks:
+      - wg-studio-e2e-internal
+
+  wg-studio-api:
+    build:
+      context: .
+    container_name: wg-studio-e2e-api
+    working_dir: /app
+    command: ["uvicorn", "app.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://wgstudio:wgstudio@postgres:5432/wg_studio_e2e
+      LOG_DATABASE_URL: postgresql+psycopg://wgstudio:wgstudio@postgres:5432/wg_studio_audit
+      ARTIFACT_ROOT: /wg/config
+      WG_RUNTIME_ADAPTER: docker_container
+      WG_CONTAINER_NAME: wg-studio-e2e-wireguard
+      WG_CONTAINER_CONFIG_PATH: /config/wg_confs/wg0.conf
+      WG_BOOTSTRAP_ADMIN_USERNAME: playwright-admin
+      WG_BOOTSTRAP_ADMIN_PASSWORD: playwright-pass-123!
+      WG_JWT_SECRET_KEY: e2e-only-secret
+      WG_SERVER_ENDPOINT: 127.0.0.1
+      WG_SERVER_LISTEN_PORT: 51820
+      WG_SERVER_ADDRESS: 10.255.255.1/32
+      WG_SERVER_DNS: 1.1.1.1
+    volumes:
+      - ./app:/app/app
+      - wg_config_e2e:/wg/config
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - wg-studio-e2e-internal
+
+  wg-studio-web:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    container_name: wg-studio-e2e-web
+    depends_on:
+      - wg-studio-api
+    networks:
+      - wg-studio-e2e-internal
+
+  wg-studio-e2e:
+    build:
+      context: .
+      dockerfile: docker/e2e/Dockerfile
+    container_name: wg-studio-e2e-runner
+    working_dir: /app/frontend
+    depends_on:
+      - wg-studio-web
+    environment:
+      E2E_BASE_URL: http://wg-studio-web/wg-studio/
+      E2E_USERNAME: playwright-admin
+      E2E_PASSWORD: playwright-pass-123!
+    networks:
+      - wg-studio-e2e-internal
+
+volumes:
+  postgres_data_e2e:
+  wg_config_e2e:
+
+networks:
+  wg-studio-e2e-internal:
+    internal: true

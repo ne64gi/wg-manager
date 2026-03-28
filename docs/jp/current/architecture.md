@@ -20,7 +20,7 @@
 profile 付きの補助サービス:
 
 - `wg-studio-cli`: 内部 Docker ネットワーク上の管理 / 開発用コンテナ（`tools`）
-- `wg-studio-e2e`: Playwright smoke 実行用コンテナ（`test`）
+- `wg-studio-e2e`: Playwright smoke 実行用の隔離 stack
 
 セキュリティを意識した実行時の選択:
 

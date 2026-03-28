@@ -37,7 +37,7 @@
 profile 付きの補助サービス:
 
 - `wg-studio-cli`（`tools`）
-- `wg-studio-e2e`（`test`）
+- `wg-studio-e2e`（隔離 compose）
 
 主な実行時の特徴:
 
@@ -106,7 +106,7 @@ pwsh ./scripts/stack.ps1 e2e
 - `health`
   - compose の状態表示に加えて、API の readiness と web 到達性までまとめて確認します
 - `smoke`
-  - stack の準備完了を待ってから `test` profile 経由で Playwright smoke suite を実行します
+  - 本番 stack とは別の隔離 compose を起動してから Playwright smoke suite を実行します
 
 push 後に remote-tracking ref まで更新して確認する:
 
@@ -163,17 +163,15 @@ npx playwright install chromium
 または Docker Compose を直接使う場合:
 
 ```bash
-docker compose --profile test run --rm \
-  -e E2E_BASE_URL=http://wg-studio-web/wg-studio/ \
-  -e E2E_USERNAME=admin \
-  -e E2E_PASSWORD=supersecret123 \
-  wg-studio-e2e
+docker compose -f docker-compose.e2e.yml -p wg-studio-e2e up -d --build
+docker compose -f docker-compose.e2e.yml -p wg-studio-e2e run --rm wg-studio-e2e npm run test:e2e
+docker compose -f docker-compose.e2e.yml -p wg-studio-e2e down -v
 ```
 
 環境メモ:
 
-- wrapper の `smoke` コマンドは、Playwright 起動前に bounded な readiness wait を実行します
+- wrapper の `smoke` コマンドは、隔離 stack を起動してから bounded な readiness wait を実行します
 - ログインユーザーが 0 件なら、smoke suite は setup 画面から最初の管理者を作成します
 - すでにログインユーザーがある場合は、その資格情報が正しい前提で動きます
-- テストは一意な Group / User / Peer 名を作成しますが、現時点では自動 cleanup はしません
+- browser E2E は隔離された PostgreSQL と artifact volume を使うので、通常運用の DB や config には触れません
 - ホスト側に Node と Playwright があれば `npm run test:e2e` も使えます

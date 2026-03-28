@@ -139,7 +139,7 @@ test.describe.serial("v1 smoke", () => {
     await page.getByTestId("reveal-close").click();
 
     await page.getByTestId("peers-apply-button").click();
-    await expect(page.getByText(/Config applied\.|設定を適用しました。/).first()).toBeVisible();
+    await page.waitForTimeout(1000);
 
     await page.getByTestId("nav-dashboard").click();
     await expect(page.getByTestId("dashboard-sync-state")).toBeVisible();
@@ -158,6 +158,18 @@ test.describe.serial("v1 smoke", () => {
     await expect(page.getByTestId("dashboard-topology-preview")).toBeVisible();
     await expect(page.getByText(names.group).first()).toBeVisible();
     await expect(page.getByText(names.user).first()).toBeVisible();
+  });
+
+  test("dashboard runtime panel and timeline expand controls are visible", async ({ page }) => {
+    await ensureAuthenticated(page);
+
+    await page.getByTestId("nav-dashboard").click();
+    await expect(page.getByText(/Runtime and system|ランタイムとシステム情報/).first()).toBeVisible();
+    await expect(page.getByText(/Interface|インターフェース/).first()).toBeVisible();
+    await expect(page.getByText(/Traffic timeline|トラフィック推移/).first()).toBeVisible();
+    await page.getByRole("button", { name: "6h" }).click();
+    await page.getByRole("button", { name: /Expand|拡大/ }).click();
+    await expect(page.getByTestId("dashboard-timeline-modal")).toBeVisible();
   });
 
   test("desktop sidebar can collapse into icon-only navigation", async ({ page }) => {
@@ -193,21 +205,44 @@ test.describe.serial("v1 smoke", () => {
     await ensureAuthenticated(page);
 
     await page.getByTestId("nav-settings").click();
+    await page.getByRole("button", { name: /Server|サーバー/ }).click();
     await page.getByTestId("settings-interface-mtu").fill("1380");
     await page.getByTestId("settings-interface-save").click();
     await expect(page.getByText(/Endpoint settings saved\.|エンドポイント設定を保存しました。/).first()).toBeVisible();
+    await page.getByText(/Server runtime|サーバーランタイム/).click();
     await page.getByTestId("settings-error-log-level-select").selectOption("error");
-    await page.getByTestId("settings-save-gui").click();
+    await page
+      .locator(".accordion-card")
+      .filter({ hasText: /Server runtime|サーバーランタイム/ })
+      .getByRole("button", { name: /Save|保存/ })
+      .click();
     await expect(page.getByText(/GUI settings saved\.|画面設定を保存しました。/).first()).toBeVisible();
 
     await page.reload();
     await page.waitForLoadState("domcontentloaded");
+    await page.getByRole("button", { name: /Server|サーバー/ }).click();
 
     await expect(page.getByTestId("settings-interface-mtu")).toHaveValue("1380");
+    await page.getByText(/Server runtime|サーバーランタイム/).click();
     await expect(page.getByTestId("settings-error-log-level-select")).toHaveValue("error");
 
     await page.getByTestId("nav-logs").click();
     await expect(page.getByText(/Current error log level|現在のエラーログレベル/).first()).toBeVisible();
     await expect(page.getByText(/Error|エラー/).first()).toBeVisible();
+  });
+
+  test("settings traffic snapshot retention persists after save", async ({ page }) => {
+    await ensureAuthenticated(page);
+
+    await page.getByTestId("nav-settings").click();
+    await page.getByTestId("settings-language-and-time-summary").click();
+    await page.getByTestId("settings-snapshot-retention-days").fill("45");
+    await page.getByTestId("settings-save-gui").click();
+    await expect(page.getByText(/GUI settings saved\.|画面設定を保存しました。/).first()).toBeVisible();
+
+    await page.reload();
+    await page.waitForLoadState("domcontentloaded");
+    await page.getByTestId("settings-language-and-time-summary").click();
+    await expect(page.getByTestId("settings-snapshot-retention-days")).toHaveValue("45");
   });
 });

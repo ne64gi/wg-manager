@@ -27,6 +27,10 @@ resolve_services() {
   esac
 }
 
+e2e_compose() {
+  docker compose -f docker-compose.e2e.yml -p wg-studio-e2e "$@"
+}
+
 wait_for_api_health() {
   attempts="${1:-30}"
   delay_seconds="${2:-2}"
@@ -50,6 +54,47 @@ wait_for_api_health() {
 
 check_web_reachable() {
   docker compose exec -T wg-studio-api python -c "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://wg-studio-web/wg-studio/', timeout=3).getcode() < 500 else 1)" >/dev/null 2>&1
+}
+
+wait_for_e2e_api_health() {
+  attempts="${1:-30}"
+  delay_seconds="${2:-2}"
+  i=1
+
+  while [ "$i" -le "$attempts" ]; do
+    if e2e_compose ps --status running wg-studio-api >/dev/null 2>&1; then
+      if e2e_compose exec -T wg-studio-api python -c "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).getcode() == 200 else 1)" >/dev/null 2>&1; then
+        return 0
+      fi
+    fi
+
+    echo "Waiting for isolated wg-studio-api health... (${i}/${attempts})"
+    sleep "$delay_seconds"
+    i=$((i + 1))
+  done
+
+  echo "Isolated wg-studio-api did not become healthy in time." >&2
+  return 1
+}
+
+check_e2e_web_reachable() {
+  e2e_compose exec -T wg-studio-api python -c "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://wg-studio-web/wg-studio/', timeout=3).getcode() < 500 else 1)" >/dev/null 2>&1
+}
+
+run_isolated_e2e() {
+  e2e_compose up -d --build
+  cleanup() {
+    e2e_compose down -v >/dev/null 2>&1 || true
+  }
+  trap cleanup EXIT INT TERM
+
+  wait_for_e2e_api_health "${WG_STACK_HEALTH_ATTEMPTS:-30}" "${WG_STACK_HEALTH_DELAY_SECONDS:-2}"
+  if ! check_e2e_web_reachable; then
+    echo "Isolated wg-studio-web is not reachable from the API container; aborting E2E run." >&2
+    exit 1
+  fi
+
+  e2e_compose run --rm wg-studio-e2e npm run test:e2e "$@"
 }
 
 case "$command_name" in
@@ -101,18 +146,13 @@ case "$command_name" in
     wait_for_api_health "${WG_STACK_HEALTH_ATTEMPTS:-30}" "${WG_STACK_HEALTH_DELAY_SECONDS:-2}"
     ;;
   smoke)
-    wait_for_api_health "${WG_STACK_HEALTH_ATTEMPTS:-30}" "${WG_STACK_HEALTH_DELAY_SECONDS:-2}"
-    if ! check_web_reachable; then
-      echo "wg-studio-web is not reachable from the API container; aborting smoke run." >&2
-      exit 1
-    fi
-    docker compose --profile test run --rm wg-studio-e2e "$@"
+    run_isolated_e2e "$@"
     ;;
   cli)
     docker compose --profile tools run --rm wg-studio-cli "$@"
     ;;
   e2e)
-    docker compose --profile test run --rm wg-studio-e2e "$@"
+    run_isolated_e2e "$@"
     ;;
   *)
     echo "Unsupported command '$command_name'. Use: up, build, restart, down, ps, logs, wait, health, smoke, cli, e2e." >&2

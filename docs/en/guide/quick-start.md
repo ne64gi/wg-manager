@@ -56,7 +56,7 @@ Default services:
 Profile-scoped services that do not start by default:
 
 - `wg-studio-cli` (`tools`)
-- `wg-studio-e2e` (`test`)
+- `wg-studio-e2e` (isolated compose)
 
 ## 3. Open The GUI
 

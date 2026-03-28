@@ -20,7 +20,7 @@ Runtime services in `docker-compose.yml`:
 Profile-scoped helper services:
 
 - `wg-studio-cli`: admin/dev container on the internal Docker network (`tools`)
-- `wg-studio-e2e`: Playwright smoke runner (`test`)
+- `wg-studio-e2e`: isolated Playwright smoke stack
 
 Security-oriented runtime choices:
 

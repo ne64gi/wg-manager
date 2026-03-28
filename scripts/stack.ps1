@@ -22,6 +22,15 @@ function Resolve-StackServices {
     }
 }
 
+function Invoke-E2ECompose {
+    param(
+        [Parameter(ValueFromRemainingArguments = $true)]
+        [string[]]$ComposeArgs
+    )
+
+    docker compose -f docker-compose.e2e.yml -p wg-studio-e2e @ComposeArgs
+}
+
 function Get-HealthAttempts {
     if ([string]::IsNullOrWhiteSpace($env:WG_STACK_HEALTH_ATTEMPTS)) {
         return 30
@@ -67,6 +76,51 @@ function Test-WebReachable {
     }
 }
 
+function Wait-E2EApiHealth {
+    param(
+        [int]$Attempts = 30,
+        [int]$DelaySeconds = 2
+    )
+
+    for ($attempt = 1; $attempt -le $Attempts; $attempt++) {
+        try {
+            Invoke-E2ECompose ps --status running wg-studio-api | Out-Null
+            Invoke-E2ECompose exec -T wg-studio-api python -c "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).getcode() == 200 else 1)" | Out-Null
+            return
+        } catch {
+            Write-Host "Waiting for isolated wg-studio-api health... ($attempt/$Attempts)"
+            Start-Sleep -Seconds $DelaySeconds
+        }
+    }
+
+    throw "Isolated wg-studio-api did not become healthy in time."
+}
+
+function Test-E2EWebReachable {
+    try {
+        Invoke-E2ECompose exec -T wg-studio-api python -c "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://wg-studio-web/wg-studio/', timeout=3).getcode() < 500 else 1)" | Out-Null
+        return $true
+    } catch {
+        return $false
+    }
+}
+
+function Invoke-IsolatedE2E {
+    try {
+        Invoke-E2ECompose up -d --build | Out-Host
+        Wait-E2EApiHealth -Attempts (Get-HealthAttempts) -DelaySeconds (Get-HealthDelaySeconds)
+        if (-not (Test-E2EWebReachable)) {
+            throw "Isolated wg-studio-web is not reachable from the API container; aborting E2E run."
+        }
+        Invoke-E2ECompose run --rm wg-studio-e2e npm run test:e2e @Args
+    } finally {
+        try {
+            Invoke-E2ECompose down -v | Out-Null
+        } catch {
+        }
+    }
+}
+
 switch ($Command) {
     "up" {
         $target = if ($Args.Count -gt 0) { $Args[0] } else { "core" }
@@ -109,17 +163,13 @@ switch ($Command) {
         Wait-ApiHealth -Attempts (Get-HealthAttempts) -DelaySeconds (Get-HealthDelaySeconds)
     }
     "smoke" {
-        Wait-ApiHealth -Attempts (Get-HealthAttempts) -DelaySeconds (Get-HealthDelaySeconds)
-        if (-not (Test-WebReachable)) {
-            throw "wg-studio-web is not reachable from the API container; aborting smoke run."
-        }
-        docker compose --profile test run --rm wg-studio-e2e @Args
+        Invoke-IsolatedE2E
     }
     "cli" {
         docker compose --profile tools run --rm wg-studio-cli @Args
     }
     "e2e" {
-        docker compose --profile test run --rm wg-studio-e2e @Args
+        Invoke-IsolatedE2E
     }
     default {
         throw "Unsupported command '$Command'. Use: up, build, restart, down, ps, logs, wait, health, smoke, cli, e2e."
