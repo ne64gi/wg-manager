@@ -1,3 +1,5 @@
+name: wg-studio-e2e
+
 services:
   postgres:
     image: postgres:17
