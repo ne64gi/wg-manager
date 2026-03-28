@@ -248,7 +248,7 @@ h2 {
   backdrop-filter: blur(16px);
   transition: padding 140ms ease;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: visible;
   position: relative;
   z-index: 60;
 }
