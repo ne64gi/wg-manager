@@ -247,6 +247,14 @@ h2 {
   border-right: 1px solid var(--sidebar-border);
   backdrop-filter: blur(16px);
   transition: padding 140ms ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar-main {
+  display: grid;
+  gap: 8px;
+  min-height: 0;
 }
 
 .sidebar-brand-row {
@@ -352,6 +360,7 @@ h2 {
 .nav-list {
   display: grid;
   gap: 8px;
+  min-height: 0;
 }
 
 .nav-item {

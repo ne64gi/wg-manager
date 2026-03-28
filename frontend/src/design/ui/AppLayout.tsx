@@ -106,7 +106,7 @@ export function AppLayout({
           isDesktopNavCollapsed ? " sidebar-desktop-collapsed" : ""
         }`}
       >
-        <div>
+        <div className="sidebar-main">
           <div className="sidebar-brand-row">
             <div className="brand">
               <span className="brand-badge brand-badge-logo">
