@@ -293,6 +293,7 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "peers.select_active_user": "有効なユーザーを選択",
   "peers.active_user_hint": "無効なユーザーには新しいピアを作成できません。",
   "peers.delete_confirm_named": "「{name}」を削除しますか？",
+  "peers.reissue_confirm_named": "「{name}」の鍵を再生成しますか？ Apply 後は既存のピア設定ファイルが使えなくなります。",
   "peers.revealed": "表示済み",
   "peers.not_revealed": "未表示",
   "reveal.title": "WireGuard 設定を表示",

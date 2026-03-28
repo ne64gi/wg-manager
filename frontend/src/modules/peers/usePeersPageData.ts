@@ -42,6 +42,13 @@ function formatDeleteConfirm(name: string) {
   return t("peers.delete_confirm_named", `Delete "${name}"?`).replace("{name}", name);
 }
 
+function formatReissueConfirm(name: string) {
+  return t(
+    "peers.reissue_confirm_named",
+    `Reissue keys for "${name}"? Existing peer files will stop working after apply.`,
+  ).replace("{name}", name);
+}
+
 function canManagePeerSecrets(peer: {
   is_active: boolean;
   user_id: number;
@@ -356,4 +363,5 @@ export {
   DEFAULT_CREATE_FORM,
   canManagePeerSecrets,
   formatDeleteConfirm,
+  formatReissueConfirm,
 };

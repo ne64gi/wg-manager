@@ -11,6 +11,7 @@ import { DataTable } from "../design/ui/Table";
 import {
   canManagePeerSecrets,
   formatDeleteConfirm,
+  formatReissueConfirm,
   usePeersPageData,
 } from "../modules/peers/usePeersPageData";
 
@@ -174,7 +175,11 @@ export function PeersPage() {
                             className="secondary-button"
                             data-testid="peer-reissue-button"
                             disabled={!canManageSecrets || reissueMutation.isPending}
-                            onClick={() => reissueMutation.mutate(peer.peer_id)}
+                            onClick={() => {
+                              if (confirmAction(formatReissueConfirm(peer.peer_name))) {
+                                reissueMutation.mutate(peer.peer_id);
+                              }
+                            }}
                           >
                             {t("peers.reissue", "Reissue")}
                           </button>
@@ -271,7 +276,11 @@ export function PeersPage() {
                     className="secondary-button"
                     data-testid="peer-reissue-button"
                     disabled={!canManageSecrets || reissueMutation.isPending}
-                    onClick={() => reissueMutation.mutate(peer.peer_id)}
+                    onClick={() => {
+                      if (confirmAction(formatReissueConfirm(peer.peer_name))) {
+                        reissueMutation.mutate(peer.peer_id);
+                      }
+                    }}
                   >
                     {t("peers.reissue", "Reissue")}
                   </button>
