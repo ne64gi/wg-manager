@@ -33,6 +33,9 @@ export function PeersPage() {
     groupMap,
     filteredPeers,
     onlineCount,
+    sortKey,
+    sortDirection,
+    toggleSort,
     createMutation,
     revealMutation,
     toggleMutation,
@@ -78,19 +81,44 @@ export function PeersPage() {
               data-testid="peers-search"
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
-              placeholder={t("peers.search_placeholder", "Peer, user, group, IP, route...")}
+              placeholder={t("peers.search_placeholder", "Peer, user, group, IP, endpoint, route...")}
             />
           </label>
         </div>
         <div className="desktop-table">
           <DataTable
             headers={[
-              t("common.status", "Status"),
+              {
+                label: t("common.status", "Status"),
+                sortable: true,
+                sortDirection: sortKey === "status" ? sortDirection : null,
+                onToggleSort: () => toggleSort("status"),
+              },
               t("common.toggle", "Toggle"),
-              t("peers.peer", "Peer"),
-              t("peers.ip", "IP"),
-              t("peers.routes", "Routes"),
-              t("table.traffic", "Traffic"),
+              {
+                label: t("peers.peer", "Peer"),
+                sortable: true,
+                sortDirection: sortKey === "peer" ? sortDirection : null,
+                onToggleSort: () => toggleSort("peer"),
+              },
+              {
+                label: t("peers.ip", "IP"),
+                sortable: true,
+                sortDirection: sortKey === "ip" ? sortDirection : null,
+                onToggleSort: () => toggleSort("ip"),
+              },
+              {
+                label: t("peers.routes", "Routes"),
+                sortable: true,
+                sortDirection: sortKey === "routes" ? sortDirection : null,
+                onToggleSort: () => toggleSort("routes"),
+              },
+              {
+                label: t("table.traffic", "Traffic"),
+                sortable: true,
+                sortDirection: sortKey === "traffic" ? sortDirection : null,
+                onToggleSort: () => toggleSort("traffic"),
+              },
               t("peers.reveal_reissue", "Reveal / Reissue"),
               t("common.delete", "Delete"),
             ]}

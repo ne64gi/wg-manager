@@ -170,6 +170,12 @@ function TimelineChartBody({
           {t("dashboard.timeline_online_series", "Online peers")}
         </span>
       </div>
+      <div className="muted-text">
+        {t(
+          "dashboard.timeline_hint",
+          "Left axis shows total transferred bytes. Right axis shows online peer count. Use Expand when you need a wider reading surface.",
+        )}
+      </div>
     </div>
   );
 }

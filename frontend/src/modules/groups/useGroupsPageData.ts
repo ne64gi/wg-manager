@@ -12,11 +12,13 @@ import {
 } from "../../lib/api";
 import { confirmAction, downloadBlob } from "../../core/browser/actions";
 import { formatApplyFailureMessage, t } from "../../core/i18n";
+import { applySortDirection, compareBoolean, compareText } from "../../lib/sort";
 import type { Group } from "../../types";
 import { useToast } from "../../design/ui/ToastProvider";
 import { useAuth } from "../../core/auth/AuthContext";
 import { useGuiSettingsQuery } from "../gui/useGuiSettingsQuery";
 import { queryKeys } from "../queryKeys";
+import { useSortableTable } from "../table/useSortableTable";
 
 export type GroupFormState = {
   name: string;
@@ -147,6 +149,10 @@ export function useGroupsPageData() {
   const [searchText, setSearchText] = useState("");
   const [createForm, setCreateForm] = useState<GroupFormState>(DEFAULT_CREATE_FORM);
   const [editForm, setEditForm] = useState<GroupFormState>(DEFAULT_CREATE_FORM);
+  const { sortKey, sortDirection, toggleSort } = useSortableTable<"status" | "name" | "scope" | "network" | "allowedIps" | "dns">({
+    key: "name",
+    direction: "asc",
+  });
   const guiSettingsQuery = useGuiSettingsQuery();
   const { pushToast } = useToast();
   const groupsQuery = useQuery({
@@ -161,11 +167,9 @@ export function useGroupsPageData() {
   );
   const filteredGroups = useMemo(() => {
     const needle = searchText.trim().toLowerCase();
-    if (!needle) {
-      return groups;
-    }
-
-    return groups.filter((group) =>
+    const searchMatched = !needle
+      ? groups
+      : groups.filter((group) =>
       [
         group.name,
         t(`groups.scope_${group.scope}`, group.scope),
@@ -178,7 +182,39 @@ export function useGroupsPageData() {
         .toLowerCase()
         .includes(needle),
     );
-  }, [groups, searchText]);
+
+    return [...searchMatched].sort((left, right) => {
+      let result = 0;
+      switch (sortKey) {
+        case "status":
+          result = compareBoolean(left.is_active, right.is_active) || compareText(left.name, right.name);
+          break;
+        case "scope":
+          result =
+            compareText(t(`groups.scope_${left.scope}`, left.scope), t(`groups.scope_${right.scope}`, right.scope)) ||
+            compareText(left.name, right.name);
+          break;
+        case "network":
+          result = compareText(left.network_cidr, right.network_cidr) || compareText(left.name, right.name);
+          break;
+        case "allowedIps":
+          result =
+            compareText(left.default_allowed_ips.join(", "), right.default_allowed_ips.join(", ")) ||
+            compareText(left.name, right.name);
+          break;
+        case "dns":
+          result =
+            compareText(left.dns_servers?.join(", ") ?? "", right.dns_servers?.join(", ") ?? "") ||
+            compareText(left.name, right.name);
+          break;
+        case "name":
+        default:
+          result = compareText(left.name, right.name);
+          break;
+      }
+      return applySortDirection(result, sortDirection);
+    });
+  }, [groups, searchText, sortDirection, sortKey]);
   const createScopeError = getScopeValidationMessage(createForm.scope, createForm.networkCidr);
 
   async function refreshGroupQueries() {
@@ -365,6 +401,9 @@ export function useGroupsPageData() {
     groups,
     filteredGroups,
     activeCount,
+    sortKey,
+    sortDirection,
+    toggleSort,
     searchText,
     setSearchText,
     isCreateOpen,

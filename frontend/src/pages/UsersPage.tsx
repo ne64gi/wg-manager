@@ -16,6 +16,9 @@ export function UsersPage() {
     activeCount,
     groupNames,
     filteredUsers,
+    sortKey,
+    sortDirection,
+    toggleSort,
     searchText,
     setSearchText,
     isCreateOpen,
@@ -67,7 +70,7 @@ export function UsersPage() {
             data-testid="users-search"
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
-            placeholder={t("users.search_placeholder", "User, group, route...")}
+            placeholder={t("users.search_placeholder", "User, group, override route, description...")}
           />
         </label>
       </div>
@@ -90,7 +93,35 @@ export function UsersPage() {
       </div>
       <Panel title={t("users.list", "User list")}>
         <div className="desktop-table">
-          <DataTable headers={[t("common.status", "Status"), t("users.name", "Name"), t("table.group", "Group"), t("users.override_routes", "Override routes"), t("common.actions", "Actions")]}>
+          <DataTable
+            headers={[
+              {
+                label: t("common.status", "Status"),
+                sortable: true,
+                sortDirection: sortKey === "status" ? sortDirection : null,
+                onToggleSort: () => toggleSort("status"),
+              },
+              {
+                label: t("users.name", "Name"),
+                sortable: true,
+                sortDirection: sortKey === "name" ? sortDirection : null,
+                onToggleSort: () => toggleSort("name"),
+              },
+              {
+                label: t("table.group", "Group"),
+                sortable: true,
+                sortDirection: sortKey === "group" ? sortDirection : null,
+                onToggleSort: () => toggleSort("group"),
+              },
+              {
+                label: t("users.override_routes", "Override routes"),
+                sortable: true,
+                sortDirection: sortKey === "routes" ? sortDirection : null,
+                onToggleSort: () => toggleSort("routes"),
+              },
+              t("common.actions", "Actions"),
+            ]}
+          >
             {filteredUsers.map((user) => (
               <tr key={user.id}>
                 <td>

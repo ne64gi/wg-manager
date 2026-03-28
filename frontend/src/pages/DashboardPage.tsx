@@ -75,6 +75,14 @@ export function DashboardPage() {
                 </div>
               ) : null}
               {hasRuntimeDrift ? (
+                <div className="muted-text">
+                  {t(
+                    "dashboard.apply_preview_hint",
+                    "Apply opens a diff preview first, so you can review the generated server config before pushing it to the runtime.",
+                  )}
+                </div>
+              ) : null}
+              {hasRuntimeDrift ? (
                 <div className="page-stack">
                   {syncState?.drift_reasons.map((reason) => (
                     <div className="warning-banner" key={reason}>

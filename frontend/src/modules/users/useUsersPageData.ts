@@ -13,11 +13,13 @@ import {
 } from "../../lib/api";
 import { confirmAction, downloadBlob } from "../../core/browser/actions";
 import { formatApplyFailureMessage, t } from "../../core/i18n";
+import { applySortDirection, compareBoolean, compareText } from "../../lib/sort";
 import type { User } from "../../types";
 import { useToast } from "../../design/ui/ToastProvider";
 import { useAuth } from "../../core/auth/AuthContext";
 import { useGuiSettingsQuery } from "../gui/useGuiSettingsQuery";
 import { queryKeys } from "../queryKeys";
+import { useSortableTable } from "../table/useSortableTable";
 
 export type UserFormState = {
   groupId: string;
@@ -55,6 +57,10 @@ export function useUsersPageData() {
   const [createForm, setCreateForm] = useState<UserFormState>(DEFAULT_CREATE_FORM);
   const [editForm, setEditForm] = useState<UserFormState>(DEFAULT_CREATE_FORM);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const { sortKey, sortDirection, toggleSort } = useSortableTable<"status" | "name" | "group" | "routes">({
+    key: "name",
+    direction: "asc",
+  });
   const guiSettingsQuery = useGuiSettingsQuery();
   const { pushToast } = useToast();
   const usersQuery = useQuery({
@@ -252,11 +258,9 @@ export function useUsersPageData() {
         ? users
         : users.filter((user) => String(user.group_id) === filterGroupId);
     const needle = searchText.trim().toLowerCase();
-    if (!needle) {
-      return filteredByGroup;
-    }
-
-    return filteredByGroup.filter((user) =>
+    const searchMatched = !needle
+      ? filteredByGroup
+      : filteredByGroup.filter((user) =>
       [
         user.name,
         groupNames.get(user.group_id) ?? `Group ${user.group_id}`,
@@ -267,7 +271,31 @@ export function useUsersPageData() {
         .toLowerCase()
         .includes(needle),
     );
-  }, [filterGroupId, groupNames, searchText, users]);
+
+    return [...searchMatched].sort((left, right) => {
+      let result = 0;
+      switch (sortKey) {
+        case "status":
+          result = compareBoolean(left.is_active, right.is_active) || compareText(left.name, right.name);
+          break;
+        case "group":
+          result =
+            compareText(groupNames.get(left.group_id) ?? "", groupNames.get(right.group_id) ?? "") ||
+            compareText(left.name, right.name);
+          break;
+        case "routes":
+          result =
+            compareText(left.allowed_ips_override?.join(", ") ?? "", right.allowed_ips_override?.join(", ") ?? "") ||
+            compareText(left.name, right.name);
+          break;
+        case "name":
+        default:
+          result = compareText(left.name, right.name);
+          break;
+      }
+      return applySortDirection(result, sortDirection);
+    });
+  }, [filterGroupId, groupNames, searchText, sortDirection, sortKey, users]);
 
   return {
     groups,
@@ -275,6 +303,9 @@ export function useUsersPageData() {
     activeCount,
     groupNames,
     filteredUsers,
+    sortKey,
+    sortDirection,
+    toggleSort,
     searchText,
     setSearchText,
     isCreateOpen,

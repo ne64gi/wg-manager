@@ -555,6 +555,13 @@ export function SettingsPage() {
               title={t("settings.transfer_heading", "State import / export")}
               defaultOpen={false}
             >
+              <div className="warning-banner">
+                {t(
+                  "settings.transfer_backup_rule",
+                  "Take a full DB backup before import. JSON state import is for logical transfer, not full recovery.",
+                )}
+              </div>
+
               <div className="muted-text">
                 {t(
                   "settings.transfer_hint",
@@ -574,7 +581,7 @@ export function SettingsPage() {
 
                 <button
                   type="button"
-                  className="primary-button"
+                  className="danger-button"
                   onClick={() => importInputRef.current?.click()}
                   disabled={importMutation.isPending}
                 >

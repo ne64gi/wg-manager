@@ -14,11 +14,13 @@ import {
 } from "../../lib/api";
 import { confirmAction } from "../../core/browser/actions";
 import { formatApplyFailureMessage, t } from "../../core/i18n";
+import { applySortDirection, compareBoolean, compareNumber, compareText } from "../../lib/sort";
 import type { Group, RevealedPeerArtifacts, User } from "../../types";
 import { useToast } from "../../design/ui/ToastProvider";
 import { useAuth } from "../../core/auth/AuthContext";
 import { useGuiSettingsQuery } from "../gui/useGuiSettingsQuery";
 import { queryKeys } from "../queryKeys";
+import { useSortableTable } from "../table/useSortableTable";
 
 export type PeerFormState = {
   userId: string;
@@ -60,6 +62,10 @@ export function usePeersPageData() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [createForm, setCreateForm] = useState<PeerFormState>(DEFAULT_CREATE_FORM);
+  const { sortKey, sortDirection, toggleSort } = useSortableTable<"status" | "peer" | "ip" | "routes" | "traffic">({
+    key: "peer",
+    direction: "asc",
+  });
   const peersRefreshMs = (guiSettingsQuery.data?.peers_refresh_seconds ?? 10) * 1000;
 
   const peerStatusesQuery = useQuery({
@@ -90,11 +96,9 @@ export function usePeersPageData() {
   );
   const filteredPeers = useMemo(() => {
     const needle = searchText.trim().toLowerCase();
-    if (!needle) {
-      return peers;
-    }
-
-    return peers.filter((peer) => {
+    const searchMatched = !needle
+      ? peers
+      : peers.filter((peer) => {
       const peerUser = userMap.get(peer.user_id);
       const groupName = peerUser ? groupMap.get(peerUser.group_id) ?? "" : "";
 
@@ -110,7 +114,38 @@ export function usePeersPageData() {
         .toLowerCase()
         .includes(needle);
     });
-  }, [groupMap, peers, searchText, userMap]);
+    return [...searchMatched].sort((left, right) => {
+      const leftUser = userMap.get(left.user_id);
+      const rightUser = userMap.get(right.user_id);
+      const leftGroup = leftUser ? groupMap.get(leftUser.group_id) ?? "" : "";
+      const rightGroup = rightUser ? groupMap.get(rightUser.group_id) ?? "" : "";
+      let result = 0;
+      switch (sortKey) {
+        case "status":
+          result = compareBoolean(left.is_online, right.is_online) || compareText(left.peer_name, right.peer_name);
+          break;
+        case "ip":
+          result = compareText(left.assigned_ip, right.assigned_ip) || compareText(left.peer_name, right.peer_name);
+          break;
+        case "routes":
+          result =
+            compareText(left.effective_allowed_ips.join(", "), right.effective_allowed_ips.join(", ")) ||
+            compareText(left.peer_name, right.peer_name);
+          break;
+        case "traffic":
+          result = compareNumber(left.total_bytes, right.total_bytes) || compareText(left.peer_name, right.peer_name);
+          break;
+        case "peer":
+        default:
+          result =
+            compareText(left.peer_name, right.peer_name) ||
+            compareText(left.user_name, right.user_name) ||
+            compareText(leftGroup, rightGroup);
+          break;
+      }
+      return applySortDirection(result, sortDirection);
+    });
+  }, [groupMap, peers, searchText, sortDirection, sortKey, userMap]);
   const onlineCount = useMemo(
     () => peers.filter((peer) => peer.is_online).length,
     [peers],
@@ -304,6 +339,9 @@ export function usePeersPageData() {
     groupMap,
     filteredPeers,
     onlineCount,
+    sortKey,
+    sortDirection,
+    toggleSort,
     createMutation,
     revealMutation,
     toggleMutation,

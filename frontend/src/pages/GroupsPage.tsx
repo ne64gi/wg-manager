@@ -17,6 +17,9 @@ export function GroupsPage() {
     groups,
     filteredGroups,
     activeCount,
+    sortKey,
+    sortDirection,
+    toggleSort,
     searchText,
     setSearchText,
     isCreateOpen,
@@ -69,19 +72,49 @@ export function GroupsPage() {
               data-testid="groups-search"
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
-              placeholder={t("groups.search_placeholder", "Name, scope, network, route, DNS...")}
+              placeholder={t("groups.search_placeholder", "Name, scope, network, allowed IP, DNS, description...")}
             />
           </label>
         </div>
         <div className="desktop-table">
           <DataTable
             headers={[
-              t("common.status", "Status"),
-              t("groups.name", "Name"),
-              t("table.scope", "Scope"),
-              t("groups.network", "Network"),
-              t("groups.allowed_ips", "Allowed IPs"),
-              t("groups.dns", "DNS"),
+              {
+                label: t("common.status", "Status"),
+                sortable: true,
+                sortDirection: sortKey === "status" ? sortDirection : null,
+                onToggleSort: () => toggleSort("status"),
+              },
+              {
+                label: t("groups.name", "Name"),
+                sortable: true,
+                sortDirection: sortKey === "name" ? sortDirection : null,
+                onToggleSort: () => toggleSort("name"),
+              },
+              {
+                label: t("table.scope", "Scope"),
+                sortable: true,
+                sortDirection: sortKey === "scope" ? sortDirection : null,
+                onToggleSort: () => toggleSort("scope"),
+              },
+              {
+                label: t("groups.network", "Network"),
+                sortable: true,
+                sortDirection: sortKey === "network" ? sortDirection : null,
+                onToggleSort: () => toggleSort("network"),
+              },
+              {
+                label: t("groups.allowed_ips", "Allowed IPs"),
+                sortable: true,
+                sortDirection: sortKey === "allowedIps" ? sortDirection : null,
+                onToggleSort: () => toggleSort("allowedIps"),
+              },
+              {
+                label: t("groups.dns", "DNS"),
+                sortable: true,
+                sortDirection: sortKey === "dns" ? sortDirection : null,
+                onToggleSort: () => toggleSort("dns"),
+              },
               t("common.actions", "Actions"),
             ]}
           >
