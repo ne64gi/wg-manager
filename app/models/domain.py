@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from enum import StrEnum
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, JSON, String, Text
+from sqlalchemy import BigInteger, Boolean, DateTime, Enum, ForeignKey, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.main import Base
@@ -231,9 +231,9 @@ class PeerTrafficSnapshot(Base):
         default=lambda: datetime.now(timezone.utc),
         index=True,
     )
-    received_bytes: Mapped[int] = mapped_column(default=0)
-    sent_bytes: Mapped[int] = mapped_column(default=0)
-    total_bytes: Mapped[int] = mapped_column(default=0)
+    received_bytes: Mapped[int] = mapped_column(BigInteger, default=0)
+    sent_bytes: Mapped[int] = mapped_column(BigInteger, default=0)
+    total_bytes: Mapped[int] = mapped_column(BigInteger, default=0)
     is_online: Mapped[bool] = mapped_column(Boolean, default=False)
     latest_handshake_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),

@@ -167,12 +167,30 @@ def _migrate_initial_settings_table() -> None:
             )
 
 
+def _migrate_peer_traffic_snapshots_table() -> None:
+    with engine.begin() as connection:
+        inspector = inspect(connection)
+        if "peer_traffic_snapshots" not in inspector.get_table_names():
+            return
+
+        if engine.dialect.name == "postgresql":
+            connection.execute(
+                text(
+                    "ALTER TABLE peer_traffic_snapshots "
+                    "ALTER COLUMN received_bytes TYPE BIGINT, "
+                    "ALTER COLUMN sent_bytes TYPE BIGINT, "
+                    "ALTER COLUMN total_bytes TYPE BIGINT"
+                )
+            )
+
+
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
     _migrate_groups_table()
     _migrate_peers_table()
     _migrate_gui_settings_table()
     _migrate_initial_settings_table()
+    _migrate_peer_traffic_snapshots_table()
     init_log_db()
 
 

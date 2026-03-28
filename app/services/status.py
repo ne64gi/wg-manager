@@ -56,7 +56,10 @@ def _capture_peer_snapshots(
                 latest_handshake_at=status.latest_handshake_at,
             )
         )
-    session.commit()
+    try:
+        session.commit()
+    except Exception:
+        session.rollback()
 
 
 def get_wireguard_peer_statuses(session: Session) -> list[PeerStatusRead]:
