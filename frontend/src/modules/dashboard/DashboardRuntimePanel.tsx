@@ -19,7 +19,7 @@ export function DashboardRuntimePanel({
 
   return (
     <Panel title={t("dashboard.runtime_overview", "Runtime and system")}>
-      <div className="runtime-overview-list">
+      <div className="runtime-overview-list" data-testid="dashboard-runtime-panel">
         <div className="runtime-overview-row">
           <span>{t("dashboard.runtime_interface", "Interface")}</span>
           <strong>
@@ -41,7 +41,9 @@ export function DashboardRuntimePanel({
         </div>
         <div className="runtime-overview-row">
           <span>{t("dashboard.runtime_uptime", "Runtime uptime")}</span>
-          <strong>{formatDurationCompact(systemVersion?.runtime_uptime_seconds ?? null)}</strong>
+          <strong data-testid="dashboard-runtime-uptime">
+            {formatDurationCompact(systemVersion?.runtime_uptime_seconds ?? null)}
+          </strong>
         </div>
         <div className="runtime-overview-row">
           <span>{t("dashboard.runtime_container", "Runtime container")}</span>

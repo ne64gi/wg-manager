@@ -47,12 +47,18 @@ export function DashboardTimelinePanel({
             className={`chart-range-button ${historyWindowHours === hours ? "chart-range-button-active" : ""}`}
             onClick={() => onHistoryWindowHoursChange(hours)}
             type="button"
+            data-testid={`dashboard-timeline-range-${hours}`}
           >
             {hours}h
           </button>
         ))}
       </div>
-      <button className="ghost-button" onClick={() => setIsExpanded(true)} type="button">
+      <button
+        className="ghost-button"
+        onClick={() => setIsExpanded(true)}
+        type="button"
+        data-testid="dashboard-timeline-expand"
+      >
         {t("dashboard.timeline_expand", "Expand")}
       </button>
     </div>
@@ -65,7 +71,11 @@ export function DashboardTimelinePanel({
       </Panel>
       {isExpanded ? (
         <div className="modal-backdrop" onClick={() => setIsExpanded(false)}>
-          <div className="modal-card timeline-modal-card" onClick={(event) => event.stopPropagation()}>
+          <div
+            className="modal-card timeline-modal-card"
+            data-testid="dashboard-timeline-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="panel-header">
               <h2>{t("dashboard.timeline", "Traffic timeline")}</h2>
               <button className="ghost-button" onClick={() => setIsExpanded(false)} type="button">
@@ -105,7 +115,7 @@ function TimelineChartBody({
 
   return (
     <div className={`chart-panel-stack ${expanded ? "chart-panel-stack-expanded" : ""}`}>
-      <div className="chart-summary-grid">
+      <div className="chart-summary-grid" data-testid="dashboard-timeline-chart">
         <div className="chart-summary-card">
           <span>{t("dashboard.timeline_recorded_short", "Snapshots")}</span>
           <strong>{historyPoints.length}</strong>

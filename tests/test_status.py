@@ -8,12 +8,14 @@ from app.services import (
     create_peer,
     create_user,
     get_group_traffic_summaries,
+    get_wireguard_topology,
     get_user_traffic_summaries,
     get_wireguard_overview,
     get_wireguard_overview_history,
     get_wireguard_peer_statuses,
 )
 from app.services.gui import get_gui_settings
+from app.models import PeerTrafficSnapshot
 from app.runtime import ExecResult
 
 
@@ -233,3 +235,118 @@ def test_status_endpoints_degrade_gracefully_when_runtime_is_unavailable(monkeyp
     assert user_summaries[0].total_usage_bytes == 0
     assert group_summaries[0].group_name == "corp-runtime-down"
     assert group_summaries[0].total_usage_bytes == 0
+
+
+def test_wireguard_topology_returns_group_user_peer_tree(monkeypatch) -> None:
+    reset_db()
+
+    now = int(datetime.now(timezone.utc).timestamp())
+    dump_output = (
+        "private\tpublic\t51820\tfwmark\n"
+        f"pub-topology\t(psk)\t198.51.100.12:51820\t10.50.1.3/32\t{now}\t700\t900\t25\n"
+    )
+
+    class FakeRuntime:
+        adapter_name = "fake_runtime"
+        interface_name = "wg0"
+
+    class FakeRuntimeService:
+        def describe(self):
+            return FakeRuntime()
+
+        def read_peers(self):
+            from app.runtime.service import RuntimePeerRead
+            from app.runtime.dump import parse_wg_dump
+
+            return RuntimePeerRead(runtime=FakeRuntime(), peers=parse_wg_dump(dump_output))
+
+    monkeypatch.setattr("app.services.status.get_runtime_service", lambda: FakeRuntimeService())
+
+    with SessionLocal() as session:
+        group = create_group(
+            session,
+            GroupCreate(
+                name="corp-topology",
+                scope=GroupScope.SINGLE_SITE,
+                network_cidr="10.50.1.0/24",
+                default_allowed_ips=["10.50.1.0/24"],
+            ),
+        )
+        user = create_user(session, UserCreate(group_id=group.id, name="delta"))
+        peer = create_peer(session, PeerCreate(user_id=user.id, name="delta-pc", assigned_ip="10.50.1.3"))
+        peer.public_key = "pub-topology"
+        session.commit()
+
+        topology = get_wireguard_topology(session)
+
+    assert len(topology) == 1
+    assert topology[0].group_name == "corp-topology"
+    assert topology[0].users[0].user_name == "delta"
+    assert topology[0].users[0].peers[0].peer_name == "delta-pc"
+    assert topology[0].users[0].peers[0].is_online is True
+    assert topology[0].users[0].peers[0].total_bytes == 1600
+
+
+def test_old_traffic_snapshots_are_purged_by_retention(monkeypatch) -> None:
+    reset_db()
+
+    now = int(datetime.now(timezone.utc).timestamp())
+    dump_output = (
+        "private\tpublic\t51820\tfwmark\n"
+        f"pub-retention\t(psk)\t198.51.100.13:51820\t10.60.1.4/32\t{now}\t1200\t1300\t25\n"
+    )
+
+    class FakeRuntime:
+        adapter_name = "fake_runtime"
+        interface_name = "wg0"
+
+    class FakeRuntimeService:
+        def describe(self):
+            return FakeRuntime()
+
+        def read_peers(self):
+            from app.runtime.service import RuntimePeerRead
+            from app.runtime.dump import parse_wg_dump
+
+            return RuntimePeerRead(runtime=FakeRuntime(), peers=parse_wg_dump(dump_output))
+
+    monkeypatch.setattr("app.services.status.get_runtime_service", lambda: FakeRuntimeService())
+
+    with SessionLocal() as session:
+        gui_settings = get_gui_settings(session)
+        gui_settings.traffic_snapshot_interval_seconds = 10
+        gui_settings.traffic_snapshot_retention_days = 1
+        session.commit()
+
+        group = create_group(
+            session,
+            GroupCreate(
+                name="corp-retention",
+                scope=GroupScope.SINGLE_SITE,
+                network_cidr="10.60.1.0/24",
+                default_allowed_ips=["10.60.1.0/24"],
+            ),
+        )
+        user = create_user(session, UserCreate(group_id=group.id, name="echo"))
+        peer = create_peer(session, PeerCreate(user_id=user.id, name="echo-pc", assigned_ip="10.60.1.4"))
+        peer.public_key = "pub-retention"
+        session.commit()
+
+        session.add(
+            PeerTrafficSnapshot(
+                peer_id=peer.id,
+                captured_at=datetime.now(timezone.utc) - timedelta(days=5),
+                received_bytes=1,
+                sent_bytes=1,
+                total_bytes=2,
+                is_online=False,
+            )
+        )
+        session.commit()
+
+        get_wireguard_peer_statuses(session)
+
+        rows = session.query(PeerTrafficSnapshot).order_by(PeerTrafficSnapshot.captured_at.asc()).all()
+
+    assert len(rows) == 1
+    assert rows[0].total_bytes == 2500

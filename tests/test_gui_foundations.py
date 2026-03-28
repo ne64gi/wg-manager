@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from pathlib import Path
 
 from sqlalchemy import inspect
@@ -274,9 +275,32 @@ def test_init_db_registers_login_user_tables() -> None:
 def test_gui_version_payload_includes_runtime_adapter(monkeypatch) -> None:
     monkeypatch.setattr("app.api.routes.gui.get_system_version", lambda: "1.1.5-test")
     monkeypatch.setattr(settings, "runtime_adapter", "docker_container")
+    class RuntimeDescriptor:
+        interface_name = "wg0"
+        container_name = "wg-studio-wireguard"
+        image_name = "wg-studio-wireguard"
+        status = "running"
+        is_running = True
+        started_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        uptime_seconds = 3600
+        restart_count = 0
 
-    payload = get_system_version_endpoint(current_user=None)  # type: ignore[arg-type]
+    class FakeRuntimeService:
+        def describe(self):
+            return RuntimeDescriptor()
+
+    class ServerState:
+        updated_at = datetime(2026, 1, 2, tzinfo=timezone.utc)
+
+    monkeypatch.setattr("app.api.routes.gui.get_runtime_service", lambda: FakeRuntimeService())
+    monkeypatch.setattr("app.api.routes.gui.get_server_state", lambda session: ServerState())
+
+    payload = get_system_version_endpoint(current_user=None, session=None)  # type: ignore[arg-type]
 
     assert payload.version == "1.1.5-test"
     assert payload.frontend_version == "1.1.5-test"
     assert payload.runtime_adapter == "docker_container"
+    assert payload.interface_name == "wg0"
+    assert payload.runtime_container_name == "wg-studio-wireguard"
+    assert payload.runtime_status == "running"
+    assert payload.runtime_uptime_seconds == 3600
