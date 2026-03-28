@@ -5,7 +5,6 @@ import { t } from "../core/i18n";
 import { formatBytes } from "../lib/format";
 import {
   NetworkGraph,
-  type NetworkGraphLayout,
   type NetworkGraphSelection,
 } from "../modules/network/NetworkGraph";
 import { useNetworkPageData } from "../modules/network/useNetworkPageData";
@@ -13,7 +12,6 @@ import { useNetworkPageData } from "../modules/network/useNetworkPageData";
 export function NetworkPage() {
   const { topologyGroups, metrics, isLoading } = useNetworkPageData();
   const [selectedGroupId, setSelectedGroupId] = useState<number | "all">("all");
-  const [layoutMode, setLayoutMode] = useState<NetworkGraphLayout>("organic");
   const [selection, setSelection] = useState<NetworkGraphSelection>(null);
 
   const visibleGroups = useMemo(
@@ -73,20 +71,6 @@ export function NetworkPage() {
                 </select>
                 <button
                   type="button"
-                  className={`secondary-button ${layoutMode === "organic" ? "secondary-button-active" : ""}`}
-                  onClick={() => setLayoutMode("organic")}
-                >
-                  {t("network.layout_organic", "Organic")}
-                </button>
-                <button
-                  type="button"
-                  className={`secondary-button ${layoutMode === "hierarchy" ? "secondary-button-active" : ""}`}
-                  onClick={() => setLayoutMode("hierarchy")}
-                >
-                  {t("network.layout_hierarchy", "Hierarchy")}
-                </button>
-                <button
-                  type="button"
                   className="secondary-button"
                   onClick={() => setSelection(null)}
                 >
@@ -99,7 +83,6 @@ export function NetworkPage() {
               <div className="network-graph-shell">
                 <NetworkGraph
                   groups={visibleGroups}
-                  layoutMode={layoutMode}
                   onSelectionChange={setSelection}
                 />
               </div>

@@ -139,8 +139,6 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "network.online_peers": "オンラインピア",
   "network.hidden_peers": "未表示 / 非公開ピア",
   "network.all_groups": "すべてのグループ",
-  "network.layout_organic": "有機レイアウト",
-  "network.layout_hierarchy": "階層レイアウト",
   "network.clear_selection": "選択をクリア",
   "network.no_data": "表示できるネットワークノードがまだありません。",
   "network.no_data_hint": "グループ、ユーザー、ピアを作成すると、このマップに反映されます。",

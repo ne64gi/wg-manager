@@ -9,8 +9,6 @@ import type { TopologyGroup } from "../../types";
 
 cytoscape.use(coseBilkent);
 
-export type NetworkGraphLayout = "organic" | "hierarchy";
-
 export type NetworkGraphSelection = {
   kind: "server" | "group" | "user" | "peer";
   title: string;
@@ -20,16 +18,14 @@ export type NetworkGraphSelection = {
 
 export function NetworkGraph({
   groups,
-  layoutMode,
   onSelectionChange,
 }: {
   groups: TopologyGroup[];
-  layoutMode: NetworkGraphLayout;
   onSelectionChange: (selection: NetworkGraphSelection) => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const elements = useMemo(() => buildGraphElements(groups, layoutMode), [groups, layoutMode]);
+  const elements = useMemo(() => buildGraphElements(groups), [groups]);
   const hierarchyPositions = useMemo(() => buildHierarchyPositions(groups), [groups]);
 
   useEffect(() => {
@@ -205,19 +201,12 @@ export function NetworkGraph({
       ] as any,
     });
     graph.layout(
-      (layoutMode === "hierarchy"
-        ? {
-            name: "preset",
-            fit: true,
-            padding: 36,
-            positions: (node: cytoscape.NodeSingular) => hierarchyPositions[node.id()] ?? node.position(),
-          }
-        : {
-            name: "preset",
-            fit: true,
-            padding: 36,
-            positions: (node: cytoscape.NodeSingular) => buildOrganicPositions(groups)[node.id()] ?? node.position(),
-          }) as any,
+      ({
+        name: "preset",
+        fit: true,
+        padding: 36,
+        positions: (node: cytoscape.NodeSingular) => hierarchyPositions[node.id()] ?? node.position(),
+      }) as any,
     ).run();
 
     const emitSelection = () => {
@@ -261,12 +250,12 @@ export function NetworkGraph({
       resizeObserver.disconnect();
       graph.destroy();
     };
-  }, [elements, hierarchyPositions, layoutMode, onSelectionChange]);
+  }, [elements, hierarchyPositions, onSelectionChange]);
 
   return <div className="network-graph-canvas" data-testid="network-3d-scene" ref={containerRef} />;
 }
 
-function buildGraphElements(groups: TopologyGroup[], layoutMode: NetworkGraphLayout): ElementDefinition[] {
+function buildGraphElements(groups: TopologyGroup[]): ElementDefinition[] {
   const elements: ElementDefinition[] = [];
   const totals = groups.reduce(
     (accumulator, group) => ({
@@ -441,52 +430,6 @@ function buildHierarchyPositions(groups: TopologyGroup[]): Record<string, { x: n
         positions[peerId] = {
           x: groupOffsetX + userOffsetX + centeredColumn * peerGapX,
           y: peerStartY + row * peerGapY,
-        };
-      });
-    });
-  });
-
-  return positions;
-}
-
-function buildOrganicPositions(groups: TopologyGroup[]): Record<string, { x: number; y: number }> {
-  const positions: Record<string, { x: number; y: number }> = {
-    "server:root": { x: 0, y: 0 },
-  };
-
-  const columns = Math.max(1, Math.min(3, groups.length));
-  const groupGapX = 420;
-  const groupGapY = 360;
-  const groupBaseY = 260;
-
-  groups.forEach((group, groupIndex) => {
-    const column = groupIndex % columns;
-    const row = Math.floor(groupIndex / columns);
-    const centeredColumn = column - (columns - 1) / 2;
-    const groupCenterX = centeredColumn * groupGapX;
-    const groupCenterY = groupBaseY + row * groupGapY;
-
-    group.users.forEach((user, userIndex) => {
-      const userId = `user:${user.user_id}`;
-      const userCount = Math.max(group.users.length, 1);
-      const userAngle = (Math.PI * 2 * userIndex) / userCount;
-      const userRadiusX = userCount === 1 ? 0 : 92;
-      const userRadiusY = userCount === 1 ? 0 : 58;
-      const userX = groupCenterX + Math.cos(userAngle) * userRadiusX;
-      const userY = groupCenterY - 8 + Math.sin(userAngle) * userRadiusY;
-
-      positions[userId] = { x: userX, y: userY };
-
-      user.peers.forEach((peer, peerIndex) => {
-        const peerId = `peer:${peer.peer_id}`;
-        const peersInRow = Math.max(1, Math.min(3, user.peers.length));
-        const rowIndex = Math.floor(peerIndex / peersInRow);
-        const columnIndex = peerIndex % peersInRow;
-        const centeredPeerColumn = columnIndex - (Math.min(peersInRow, user.peers.length) - 1) / 2;
-
-        positions[peerId] = {
-          x: userX + centeredPeerColumn * 86,
-          y: userY + 110 + rowIndex * 80,
         };
       });
     });

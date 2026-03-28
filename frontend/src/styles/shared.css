@@ -249,6 +249,8 @@ h2 {
   transition: padding 140ms ease;
   overflow-y: auto;
   overflow-x: hidden;
+  position: relative;
+  z-index: 60;
 }
 
 .sidebar-main {
@@ -395,6 +397,8 @@ h2 {
 .sidebar-footer {
   display: grid;
   gap: 12px;
+  position: relative;
+  z-index: 65;
 }
 
 .sidebar-user {
