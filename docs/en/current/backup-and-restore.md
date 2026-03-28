@@ -12,6 +12,12 @@
   - good for groups, users, peers, and server/gui settings
   - not a full replacement for auth/session or audit recovery
 
+## Operator Rule
+
+- always take a full DB backup with `scripts/backup-db.sh` before any destructive DB work
+- destructive DB work includes restore, state import, manual SQL, migration verification, and any test run pointed at a real DB
+- `state export` is not a substitute for recovery-grade backup, so prefer `DB backup` first whenever the database may change
+
 ## Host Scripts
 
 - `scripts/backup-db.sh`

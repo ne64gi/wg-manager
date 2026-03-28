@@ -12,6 +12,12 @@
   - グループ、ユーザー、peer、server/gui settings の持ち運びに向きます
   - GUI login session や監査ログの完全復旧には向きません
 
+## 運用ルール
+
+- DB に対して破壊的変更を行う前は、必ず `scripts/backup-db.sh` で full backup を取得してください
+- ここでいう破壊的変更には、restore、state import、手動 SQL、migration 検証、本番 DB に触れる test 実行を含みます
+- `state export` だけでは事故復旧の代わりにならないので、DB を触る前の保険としては必ず `DB backup` を優先してください
+
 ## Host Scripts
 
 - `scripts/backup-db.sh`

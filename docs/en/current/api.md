@@ -2,7 +2,7 @@
 
 This page is the endpoint index.
 
-For operator backup flows, also read [`backup-and-restore.md`](backup-and-restore.md).
+For operator backup flows, also read [`backup-and-restore.md`](backup-and-restore.md). Always take a full DB backup before destructive DB work.
 
 For behavior rules that are not obvious from the route list, also read:
 

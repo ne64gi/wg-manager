@@ -2,7 +2,7 @@
 
 これはルート一覧です。挙動ルールは [`auth-and-api-rules.md`](auth-and-api-rules.md) も合わせて読んでください。
 
-バックアップ運用は [`backup-and-restore.md`](backup-and-restore.md) を参照してください。
+バックアップ運用は [`backup-and-restore.md`](backup-and-restore.md) を参照してください。DB を触る前は必ず full backup を取得します。
 
 ## 基本エンドポイント
 
