@@ -2,6 +2,7 @@ export const queryKeys = {
   authMe: ["auth", "me"] as const,
   guiSettings: ["gui", "settings"] as const,
   systemVersion: ["gui", "version"] as const,
+  serverConfigPreview: ["config", "server-preview"] as const,
   overview: ["status", "overview"] as const,
   syncState: ["status", "sync-state"] as const,
   overviewHistory: (hours: number) => ["status", "overview-history", hours] as const,

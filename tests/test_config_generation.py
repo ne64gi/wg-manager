@@ -12,6 +12,7 @@ from app.services import (
     generate_server_config,
     get_or_generate_peer_config_text,
     get_or_generate_peer_qr_svg,
+    preview_server_config,
     update_initial_settings,
 )
 from app.schemas import InitialSettingsUpdate
@@ -221,6 +222,48 @@ def test_generate_server_config_includes_interface_mtu_when_configured(tmp_path:
 
         config_text = Path(artifacts.server_config_path).read_text(encoding="utf-8")
         assert "MTU = 1420" in config_text
+    finally:
+        settings.artifact_root = previous_root
+        settings.server_address = previous_address
+
+
+def test_preview_server_config_returns_diff_without_overwriting_current_file(tmp_path: Path) -> None:
+    reset_db()
+    previous_root = settings.artifact_root
+    previous_address = settings.server_address
+    settings.artifact_root = str(tmp_path)
+    settings.server_address = "10.99.0.1/24"
+
+    current_config_path = tmp_path / "wg_confs" / "wg0.conf"
+    current_config_path.parent.mkdir(parents=True, exist_ok=True)
+    current_config_path.write_text(
+        "[Interface]\nAddress = 10.99.0.1/24\n\n[Peer]\n# Name = stale-peer\nAllowedIPs = 10.63.1.99/32\n",
+        encoding="utf-8",
+    )
+
+    try:
+        with SessionLocal() as session:
+            group = create_group(
+                session,
+                GroupCreate(
+                    name="corp-preview",
+                    scope=GroupScope.SINGLE_SITE,
+                    network_cidr="10.64.1.0/24",
+                    default_allowed_ips=["10.64.1.0/24"],
+                ),
+            )
+            user = create_user(session, UserCreate(group_id=group.id, name="preview-user"))
+            create_peer(session, PeerCreate(user_id=user.id, name="preview-peer"))
+
+            preview = preview_server_config(session)
+
+        assert preview.has_changes is True
+        assert preview.peer_count == 1
+        assert "Name = preview-peer" in preview.candidate_config_text
+        assert "Name = stale-peer" in preview.current_config_text
+        assert "--- current/wg0.conf" in preview.unified_diff
+        assert "+++ candidate/wg0.conf" in preview.unified_diff
+        assert current_config_path.read_text(encoding="utf-8").startswith("[Interface]\nAddress = 10.99.0.1/24")
     finally:
         settings.artifact_root = previous_root
         settings.server_address = previous_address

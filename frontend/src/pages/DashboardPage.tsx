@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { formatBytes, formatDateTime } from "../lib/format";
 import { t } from "../core/i18n";
@@ -8,8 +8,10 @@ import { DashboardTimelinePanel } from "../modules/dashboard/DashboardTimelinePa
 import { DashboardTopologyPanel } from "../modules/dashboard/DashboardTopologyPanel";
 import { translateDriftReason, useDashboardData } from "../modules/dashboard/useDashboardData";
 import { StatCard, Panel } from "../design/ui/Cards";
+import { ApplyPreviewModal } from "../ui/ApplyPreviewModal";
 
 export function DashboardPage() {
+  const [isApplyPreviewOpen, setIsApplyPreviewOpen] = useState(false);
   const {
     overview,
     historyPoints,
@@ -42,7 +44,7 @@ export function DashboardPage() {
                 {hasRuntimeDrift ? (
                   <button
                     className="secondary-button"
-                    onClick={() => applyMutation.mutate()}
+                    onClick={() => setIsApplyPreviewOpen(true)}
                     disabled={applyMutation.isPending}
                     data-testid="dashboard-apply-button"
                   >
@@ -180,6 +182,13 @@ export function DashboardPage() {
           </div>
         ))}
       </div>
+      {isApplyPreviewOpen ? (
+        <ApplyPreviewModal
+          isApplying={applyMutation.isPending}
+          onApply={() => applyMutation.mutateAsync()}
+          onClose={() => setIsApplyPreviewOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

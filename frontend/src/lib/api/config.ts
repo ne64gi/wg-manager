@@ -1,4 +1,4 @@
-import type { ApplyResult, GeneratedServerArtifacts } from "../../types";
+import type { ApplyResult, GeneratedServerArtifacts, ServerConfigPreview } from "../../types";
 import { request } from "./client";
 
 export function generateServerConfig(accessToken: string): Promise<GeneratedServerArtifacts> {
@@ -11,6 +11,12 @@ export function generateServerConfig(accessToken: string): Promise<GeneratedServ
 export function applyServerConfig(accessToken: string): Promise<ApplyResult> {
   return request<ApplyResult>("/config/server/apply", {
     method: "POST",
+    accessToken,
+  });
+}
+
+export function getServerConfigPreview(accessToken: string): Promise<ServerConfigPreview> {
+  return request<ServerConfigPreview>("/config/server/preview", {
     accessToken,
   });
 }

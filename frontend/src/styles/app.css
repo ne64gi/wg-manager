@@ -226,6 +226,14 @@
   width: min(1100px, calc(100vw - 48px));
 }
 
+.apply-preview-modal {
+  width: min(1100px, calc(100vw - 48px));
+}
+
+.apply-preview-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .bar-list {
   display: grid;
   gap: 16px;
@@ -751,6 +759,44 @@
   color: #d7e0f8;
   overflow: auto;
   max-height: 60vh;
+}
+
+.diff-block {
+  display: grid;
+  gap: 0;
+  max-height: min(60vh, 720px);
+  overflow: auto;
+  border-radius: 18px;
+  border: 1px solid var(--card-border);
+  background: rgba(5, 10, 20, 0.92);
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.diff-line {
+  padding: 0.18rem 0.9rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.diff-line-added {
+  background: rgba(49, 143, 89, 0.18);
+  color: #d6ffe1;
+}
+
+.diff-line-removed {
+  background: rgba(183, 77, 77, 0.18);
+  color: #ffd7d7;
+}
+
+.diff-line-hunk {
+  background: rgba(73, 98, 155, 0.2);
+  color: #dbe7ff;
+}
+
+.diff-line-neutral {
+  color: #d4deef;
 }
 
 /* =========================================================

@@ -14,6 +14,7 @@ from app.schemas.config import (
     GeneratedPeerArtifacts,
     GeneratedServerArtifacts,
     RevealedPeerArtifacts,
+    ServerConfigPreview,
     ServerStateRead,
 )
 from app.schemas.domain import (
@@ -87,6 +88,7 @@ __all__ = [
     "PeerUpdate",
     "PeerStatusRead",
     "RevealedPeerArtifacts",
+    "ServerConfigPreview",
     "ServerStateRead",
     "StateExportRead",
     "StateImportRequest",

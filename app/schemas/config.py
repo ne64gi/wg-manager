@@ -32,6 +32,17 @@ class GeneratedServerArtifacts(BaseModel):
     peer_count: int
 
 
+class ServerConfigPreview(BaseModel):
+    current_config_text: str
+    candidate_config_text: str
+    unified_diff: str
+    has_changes: bool
+    peer_count: int
+    current_line_count: int
+    candidate_line_count: int
+    changed_line_count: int
+
+
 class ApplyResult(BaseModel):
     server_config_path: str
     peer_count: int

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from difflib import unified_diff
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
@@ -15,6 +16,7 @@ from app.schemas.config import (
     GeneratedPeerArtifacts,
     GeneratedServerArtifacts,
     RevealedPeerArtifacts,
+    ServerConfigPreview,
 )
 from app.services.audit import log_gui_event, log_operation
 from app.services.domain import ensure_peer_keys
@@ -128,8 +130,44 @@ def _render_server_config(
                 f"AllowedIPs = {peer.assigned_ip}/32",
                 "",
             ]
-        )
+    )
     return "\n".join(lines)
+
+
+def _load_active_peers(session: Session) -> list[Peer]:
+    return list(
+        session.scalars(
+            select(Peer)
+            .options(joinedload(Peer.user).joinedload(User.group))
+            .join(Peer.user)
+            .join(User.group)
+            .where(
+                Peer.is_active.is_(True),
+                User.is_active.is_(True),
+                Group.is_active.is_(True),
+            )
+            .order_by(Peer.name)
+        )
+    )
+
+
+def render_server_config_text(session: Session) -> tuple[str, list[Peer]]:
+    server = get_server_state(session)
+    initial_settings = get_initial_settings(session)
+    peers = _load_active_peers(session)
+    for peer in peers:
+        ensure_peer_keys(session, peer)
+
+    return (
+        _render_server_config(
+            server.server_address,
+            server.listen_port,
+            server.private_key,
+            peers,
+            initial_settings.interface_mtu,
+        ),
+        peers,
+    )
 
 
 def _write_qr_svg(runtime_service: RuntimeService, peer_name: str, contents: str) -> Path:
@@ -194,34 +232,9 @@ def generate_server_config(
     runtime_service: RuntimeService | None = None,
 ) -> GeneratedServerArtifacts:
     server = get_server_state(session)
-    initial_settings = get_initial_settings(session)
-    peers = list(
-        session.scalars(
-            select(Peer)
-            .options(joinedload(Peer.user).joinedload(User.group))
-            .join(Peer.user)
-            .join(User.group)
-            .where(
-                Peer.is_active.is_(True),
-                User.is_active.is_(True),
-                Group.is_active.is_(True),
-            )
-            .order_by(Peer.name)
-        )
-    )
-    for peer in peers:
-        ensure_peer_keys(session, peer)
-
+    config_text, peers = render_server_config_text(session)
     runtime_service = runtime_service or get_runtime_service()
-    config_path = runtime_service.write_server_config(
-        _render_server_config(
-            server.server_address,
-            server.listen_port,
-            server.private_key,
-            peers,
-            initial_settings.interface_mtu,
-        ),
-    )
+    config_path = runtime_service.write_server_config(config_text)
 
     log_operation(
         "server.generate_config",
@@ -237,6 +250,45 @@ def generate_server_config(
     return GeneratedServerArtifacts(
         server_config_path=str(config_path),
         peer_count=len(peers),
+    )
+
+
+def preview_server_config(
+    session: Session,
+    runtime_service: RuntimeService | None = None,
+) -> ServerConfigPreview:
+    runtime_service = runtime_service or get_runtime_service()
+    candidate_config_text, peers = render_server_config_text(session)
+    current_config_text = runtime_service.read_server_config_text() or ""
+
+    current_lines = current_config_text.splitlines()
+    candidate_lines = candidate_config_text.splitlines()
+    diff_lines = list(
+        unified_diff(
+            current_lines,
+            candidate_lines,
+            fromfile="current/wg0.conf",
+            tofile="candidate/wg0.conf",
+            lineterm="",
+        )
+    )
+    changed_line_count = sum(
+        1
+        for line in diff_lines
+        if (line.startswith("+") or line.startswith("-"))
+        and not line.startswith("+++")
+        and not line.startswith("---")
+    )
+
+    return ServerConfigPreview(
+        current_config_text=current_config_text,
+        candidate_config_text=candidate_config_text,
+        unified_diff="\n".join(diff_lines),
+        has_changes=current_config_text != candidate_config_text,
+        peer_count=len(peers),
+        current_line_count=len(current_lines),
+        candidate_line_count=len(candidate_lines),
+        changed_line_count=changed_line_count,
     )
 
 

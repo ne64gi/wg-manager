@@ -32,6 +32,7 @@ export function useDashboardData() {
         queryKey: queryKeys.overviewHistory(historyWindowHours),
       });
       await queryClient.invalidateQueries({ queryKey: queryKeys.peerStatuses });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.serverConfigPreview });
       await queryClient.invalidateQueries({ queryKey: queryKeys.syncState });
       await queryClient.invalidateQueries({ queryKey: queryKeys.topology });
     },

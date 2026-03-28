@@ -13,12 +13,14 @@ from app.schemas.config import (
     GeneratedPeerArtifacts,
     GeneratedServerArtifacts,
     RevealedPeerArtifacts,
+    ServerConfigPreview,
 )
 from app.services import (
     apply_server_config,
     build_group_peer_bundle,
     build_user_peer_bundle,
     generate_peer_artifacts,
+    preview_server_config,
     generate_server_config,
     get_group_bundle_warning,
     get_or_generate_peer_config_text,
@@ -157,6 +159,15 @@ def generate_server_config_endpoint(
     session: Session = Depends(get_session),
 ) -> GeneratedServerArtifacts:
     return generate_server_config(session)
+
+
+@router.get("/config/server/preview", response_model=ServerConfigPreview)
+@authorize(action="config.generate_server", resource_type="server_config")
+def preview_server_config_endpoint(
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> ServerConfigPreview:
+    return preview_server_config(session)
 
 
 @router.post("/config/server/apply", response_model=ApplyResult)

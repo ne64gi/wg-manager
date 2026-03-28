@@ -16,7 +16,11 @@ from app.services.audit import (
     log_gui_event,
     log_operation,
 )
-from app.services.config_generation import generate_peer_artifacts, generate_server_config
+from app.services.config_generation import (
+    generate_peer_artifacts,
+    generate_server_config,
+    preview_server_config,
+)
 from app.services.config_generation import (
     get_or_generate_peer_config_text,
     get_or_generate_peer_qr_svg,
@@ -98,6 +102,7 @@ __all__ = [
     "generate_keypair",
     "generate_peer_artifacts",
     "generate_server_config",
+    "preview_server_config",
     "decode_jwt",
     "export_domain_state",
     "get_gui_settings",

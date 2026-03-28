@@ -434,6 +434,17 @@ export type GeneratedServerArtifacts = {
   peer_count: number;
 };
 
+export type ServerConfigPreview = {
+  current_config_text: string;
+  candidate_config_text: string;
+  unified_diff: string;
+  has_changes: boolean;
+  peer_count: number;
+  current_line_count: number;
+  candidate_line_count: number;
+  changed_line_count: number;
+};
+
 export type ApplyResult = {
   server_config_path: string;
   peer_count: number;

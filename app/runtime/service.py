@@ -46,7 +46,7 @@ class RuntimeService:
     def describe(self) -> RuntimeDescriptor:
         try:
             metadata = self._runtime.describe_runtime()
-        except ValueError:
+        except (ValueError, AttributeError):
             metadata = RuntimeMetadata(
                 runtime_adapter=self._runtime.adapter_name,
                 interface_name=self._runtime.interface_name,
@@ -77,6 +77,12 @@ class RuntimeService:
         path = self.server_config_path()
         self._artifact_store.write_text(path, contents)
         return path
+
+    def read_server_config_text(self) -> str | None:
+        path = self.server_config_path()
+        if not path.exists():
+            return None
+        return path.read_text(encoding="utf-8")
 
     def write_peer_config(self, peer_name: str, contents: str) -> Path:
         path = self.peer_artifact_paths(peer_name).config_path

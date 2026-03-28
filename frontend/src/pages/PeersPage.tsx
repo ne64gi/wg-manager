@@ -1,8 +1,11 @@
+import { useState } from "react";
+
 import { confirmAction } from "../core/browser/actions";
 import { formatBytes } from "../lib/format";
 import { t } from "../core/i18n";
 import { Panel, StatCard } from "../design/ui/Cards";
 import { MobileInfoPopover } from "../ui/MobileInfoPopover";
+import { ApplyPreviewModal } from "../ui/ApplyPreviewModal";
 import { RevealModal } from "../ui/RevealModal";
 import { DataTable } from "../design/ui/Table";
 import {
@@ -12,6 +15,7 @@ import {
 } from "../modules/peers/usePeersPageData";
 
 export function PeersPage() {
+  const [isApplyPreviewOpen, setIsApplyPreviewOpen] = useState(false);
   const {
     guiSettingsQuery,
     revealed,
@@ -58,7 +62,11 @@ export function PeersPage() {
         <button className="success-button" data-testid="peers-add-button" onClick={() => setIsCreateOpen(true)}>
           {t("peers.add", "+ Add peer")}
         </button>
-        <button className="secondary-button" data-testid="peers-apply-button" onClick={() => applyMutation.mutate()}>
+        <button
+          className="secondary-button"
+          data-testid="peers-apply-button"
+          onClick={() => setIsApplyPreviewOpen(true)}
+        >
           {applyMutation.isPending ? t("peers.applying", "Applying...") : t("peers.apply", "Apply config")}
         </button>
       </div>
@@ -258,6 +266,13 @@ export function PeersPage() {
 
       {revealed ? (
         <RevealModal artifacts={revealed} onClose={() => setRevealed(null)} />
+      ) : null}
+      {isApplyPreviewOpen ? (
+        <ApplyPreviewModal
+          isApplying={applyMutation.isPending}
+          onApply={() => applyMutation.mutateAsync()}
+          onClose={() => setIsApplyPreviewOpen(false)}
+        />
       ) : null}
       {isCreateOpen ? (
         <div className="modal-backdrop" onClick={closeCreateModal}>
