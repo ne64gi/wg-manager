@@ -1190,7 +1190,9 @@
   }
 
   .network-toolbar {
-    justify-content: stretch;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
   }
 
   .network-toolbar select,
@@ -1198,12 +1200,47 @@
     width: 100%;
   }
 
+  .network-chip-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .network-chip-row .toggle-chip,
+  .network-chip-row .tab-button {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
   .network-graph-shell {
-    min-height: 500px;
+    min-height: 420px;
+    border-radius: 20px;
   }
 
   .network-graph-canvas {
-    height: 500px;
+    height: 420px;
+  }
+
+  .network-group-summary-header,
+  .network-detail-actions,
+  .network-hotspot-meta,
+  .network-detail-row,
+  .network-hotspot-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+
+  .network-detail-row strong,
+  .network-hotspot-meta {
+    text-align: left;
+    justify-items: start;
+  }
+
+  .network-group-summary,
+  .network-hotspot-card {
+    padding: 12px 14px;
   }
 }
 
