@@ -1,14 +1,17 @@
+import { useMemo } from "react";
+
 import { formatBytes, formatDateTime } from "../lib/format";
 import { t } from "../core/i18n";
+import { getDashboardPanelsForSlot, type DashboardPanelEntry } from "../modules/dashboard/panelRegistry";
 import { translateDriftReason, useDashboardData } from "../modules/dashboard/useDashboardData";
 import { StatCard, Panel } from "../design/ui/Cards";
 
 export function DashboardPage() {
   const {
     overview,
-    groups,
     historyPoints,
     syncState,
+    systemVersion,
     hasRuntimeDrift,
     hasPendingGeneration,
     timelinePath,
@@ -16,34 +19,13 @@ export function DashboardPage() {
     topologyGroups,
     applyMutation,
   } = useDashboardData();
-
-  return (
-    <div className="page-stack">
-      <div className="page-header">
-        <div>
-          <div className="eyebrow">{t("nav.dashboard", "Dashboard")}</div>
-          <h1>{t("dashboard.title", "System overview")}</h1>
-        </div>
-      </div>
-
-      <div className="stats-grid dashboard-stats-grid">
-        <StatCard title={t("dashboard.total_peers", "Total peers")} value={`${overview?.peer_count ?? 0}`} />
-        <StatCard
-          title={t("dashboard.online_peers", "Online peers")}
-          value={`${overview?.online_peer_count ?? 0}`}
-          accent="#79d483"
-        />
-        <StatCard
-          title={t("dashboard.traffic", "Traffic")}
-          value={`${formatBytes(overview?.total_received_bytes ?? 0)} / ${formatBytes(
-            overview?.total_sent_bytes ?? 0,
-          )}`}
-        />
-        <StatCard title={t("dashboard.total_usage", "Total usage")} value={formatBytes(overview?.total_usage_bytes ?? 0)} />
-      </div>
-
-      <div className="two-column-grid dashboard-top-grid">
-        <div className="dashboard-panel-span-5">
+  const dashboardPanels = useMemo<DashboardPanelEntry[]>(
+    () => [
+      {
+        id: "sync-state",
+        slot: "dashboard-top-sync",
+        spanClassName: "dashboard-panel-span-5",
+        content: (
           <Panel title={t("dashboard.sync_state", "Apply and drift status")}>
             <div className="page-stack" data-testid="dashboard-sync-state">
               <div className="action-row">
@@ -107,8 +89,13 @@ export function DashboardPage() {
               )}
             </div>
           </Panel>
-        </div>
-        <div className="dashboard-panel-span-4">
+        ),
+      },
+      {
+        id: "timeline",
+        slot: "dashboard-top-timeline",
+        spanClassName: "dashboard-panel-span-4",
+        content: (
           <Panel title={t("dashboard.timeline", "Traffic timeline (24h)")}>
             <div className="chart-placeholder">
               <div className="chart-grid" />
@@ -143,36 +130,54 @@ export function DashboardPage() {
               </div>
             </div>
           </Panel>
-        </div>
-        <div className="dashboard-panel-span-3 dashboard-side-stack">
-          <Panel title={t("dashboard.group_online", "Online peers by group")}>
-            <div className="bar-list">
-              {groups.map((item) => {
-                const width =
-                  item.peer_count > 0
-                    ? Math.max(8, Math.round((item.online_peer_count / item.peer_count) * 100))
-                    : 0;
-                return (
-                  <div className="bar-row" key={item.group_id}>
-                    <div className="bar-row-header">
-                      <span>{item.group_name}</span>
-                      <span>
-                        {item.online_peer_count}/{item.peer_count}
-                      </span>
-                    </div>
-                    <div className="bar-track">
-                      <div className="bar-fill" style={{ width: `${width}%` }} />
-                    </div>
-                  </div>
-                );
-              })}
-              {groups.length ? null : (
-                <div className="muted-text">{t("dashboard.no_group_data", "No group summary data yet.")}</div>
+        ),
+      },
+      {
+        id: "runtime-overview",
+        slot: "dashboard-top-side",
+        spanClassName: "dashboard-panel-span-3 dashboard-side-stack",
+        content: (
+          <Panel title={t("dashboard.runtime_overview", "Runtime and system")}>
+            <div className="runtime-overview-list">
+              <div className="runtime-overview-row">
+                <span>{t("dashboard.runtime_interface", "Interface")}</span>
+                <strong>{overview?.interface_name ?? syncState?.interface_name ?? "wg0"}</strong>
+              </div>
+              <div className="runtime-overview-row">
+                <span>{t("dashboard.runtime_adapter", "Runtime adapter")}</span>
+                <strong>{systemVersion?.runtime_adapter ?? "-"}</strong>
+              </div>
+              <div className="runtime-overview-row">
+                <span>{t("dashboard.runtime_online", "Online / total")}</span>
+                <strong>{overview?.online_peer_count ?? 0}/{overview?.peer_count ?? 0}</strong>
+              </div>
+              <div className="runtime-overview-row">
+                <span>{t("dashboard.runtime_last_sync", "Last runtime sync")}</span>
+                <strong>{formatDateTime(syncState?.last_runtime_sync_at ?? null)}</strong>
+              </div>
+              <div className="runtime-overview-row">
+                <span>{t("dashboard.runtime_last_generated", "Last generated")}</span>
+                <strong>{formatDateTime(syncState?.last_generated_at ?? null)}</strong>
+              </div>
+              <div className="runtime-overview-row">
+                <span>{t("dashboard.runtime_version", "System version")}</span>
+                <strong>{systemVersion?.version ?? "-"}</strong>
+              </div>
+            </div>
+            <div className="muted-text">
+              {t(
+                "dashboard.runtime_panel_hint",
+                "This side slot is intentionally replaceable so future dashboard panels can swap in here.",
               )}
             </div>
           </Panel>
-        </div>
-        <div className="dashboard-panel-span-12">
+        ),
+      },
+      {
+        id: "topology",
+        slot: "dashboard-bottom-topology",
+        spanClassName: "dashboard-panel-span-12",
+        content: (
           <Panel title={t("dashboard.topology_preview", "Network topology preview")}>
             <div className="topology-preview" data-testid="dashboard-topology-preview">
               {topologyGroups.length ? (
@@ -214,7 +219,69 @@ export function DashboardPage() {
               )}
             </div>
           </Panel>
+        ),
+      },
+    ],
+    [
+      applyMutation,
+      hasPendingGeneration,
+      hasRuntimeDrift,
+      historyPoints,
+      onlinePath,
+      overview,
+      syncState,
+      systemVersion,
+      timelinePath,
+      topologyGroups,
+    ],
+  );
+
+  return (
+    <div className="page-stack">
+      <div className="page-header">
+        <div>
+          <div className="eyebrow">{t("nav.dashboard", "Dashboard")}</div>
+          <h1>{t("dashboard.title", "System overview")}</h1>
         </div>
+      </div>
+
+      <div className="stats-grid dashboard-stats-grid">
+        <StatCard title={t("dashboard.total_peers", "Total peers")} value={`${overview?.peer_count ?? 0}`} />
+        <StatCard
+          title={t("dashboard.online_peers", "Online peers")}
+          value={`${overview?.online_peer_count ?? 0}`}
+          accent="#79d483"
+        />
+        <StatCard
+          title={t("dashboard.traffic", "Traffic")}
+          value={`${formatBytes(overview?.total_received_bytes ?? 0)} / ${formatBytes(
+            overview?.total_sent_bytes ?? 0,
+          )}`}
+        />
+        <StatCard title={t("dashboard.total_usage", "Total usage")} value={formatBytes(overview?.total_usage_bytes ?? 0)} />
+      </div>
+
+      <div className="two-column-grid dashboard-top-grid">
+        {getDashboardPanelsForSlot("dashboard-top-sync", dashboardPanels).map((panel) => (
+          <div className={panel.spanClassName} key={panel.id}>
+            {panel.content}
+          </div>
+        ))}
+        {getDashboardPanelsForSlot("dashboard-top-timeline", dashboardPanels).map((panel) => (
+          <div className={panel.spanClassName} key={panel.id}>
+            {panel.content}
+          </div>
+        ))}
+        {getDashboardPanelsForSlot("dashboard-top-side", dashboardPanels).map((panel) => (
+          <div className={panel.spanClassName} key={panel.id}>
+            {panel.content}
+          </div>
+        ))}
+        {getDashboardPanelsForSlot("dashboard-bottom-topology", dashboardPanels).map((panel) => (
+          <div className={panel.spanClassName} key={panel.id}>
+            {panel.content}
+          </div>
+        ))}
       </div>
     </div>
   );

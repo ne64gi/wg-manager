@@ -3,6 +3,7 @@ import { useMemo } from "react";
 
 import {
   applyServerConfig,
+  getSystemVersion,
   getGroupSummaries,
   getOverview,
   getOverviewHistory,
@@ -67,12 +68,18 @@ export function useDashboardData() {
     queryFn: async () => getSyncState((await auth.getValidAccessToken()) ?? ""),
     refetchInterval: overviewRefreshMs,
   });
+  const systemVersionQuery = useQuery({
+    queryKey: queryKeys.systemVersion,
+    queryFn: async () => getSystemVersion((await auth.getValidAccessToken()) ?? ""),
+    enabled: auth.isAuthenticated,
+  });
 
   const overview = overviewQuery.data;
   const groups = groupsQuery.data ?? [];
   const users = usersQuery.data ?? [];
   const historyPoints = historyQuery.data ?? [];
   const syncState = syncStateQuery.data;
+  const systemVersion = systemVersionQuery.data;
   const hasRuntimeDrift = (syncState?.drift_reasons?.length ?? 0) > 0;
   const hasPendingGeneration = (syncState?.pending_generation_count ?? 0) > 0;
   const timelinePath = buildTimelinePath(historyPoints.map((point) => point.total_usage_bytes));
@@ -104,6 +111,7 @@ export function useDashboardData() {
     groups,
     historyPoints,
     syncState,
+    systemVersion,
     hasRuntimeDrift,
     hasPendingGeneration,
     timelinePath,
