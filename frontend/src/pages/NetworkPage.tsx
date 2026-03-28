@@ -19,6 +19,26 @@ export function NetworkPage() {
   const [graphMode, setGraphMode] = useState<"status" | "traffic">("traffic");
   const [clearSelectionToken, setClearSelectionToken] = useState(0);
 
+  function toggleOnlineOnly() {
+    setShowOnlineOnly((current) => {
+      const next = !current;
+      if (next) {
+        setShowHiddenOnly(false);
+      }
+      return next;
+    });
+  }
+
+  function toggleHiddenOnly() {
+    setShowHiddenOnly((current) => {
+      const next = !current;
+      if (next) {
+        setShowOnlineOnly(false);
+      }
+      return next;
+    });
+  }
+
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
@@ -173,7 +193,7 @@ export function NetworkPage() {
                   <button
                     type="button"
                     className={`toggle-chip ${showOnlineOnly ? "toggle-chip-active" : ""}`}
-                    onClick={() => setShowOnlineOnly((current) => !current)}
+                    onClick={toggleOnlineOnly}
                   >
                     {t("network.filter_online", "Online only")}
                   </button>
@@ -187,7 +207,7 @@ export function NetworkPage() {
                   <button
                     type="button"
                     className={`toggle-chip ${showHiddenOnly ? "toggle-chip-active" : ""}`}
-                    onClick={() => setShowHiddenOnly((current) => !current)}
+                    onClick={toggleHiddenOnly}
                   >
                     {t("network.filter_hidden", "Hidden only")}
                   </button>
