@@ -73,41 +73,45 @@ export function NetworkGraph({
         {
           selector: ".graph-node-server",
           style: {
-            shape: "diamond",
+            shape: "round-rectangle",
             "background-color": "#162033",
             "border-color": "#f0d06b",
             color: "#fff7d8",
-            width: 188,
-            height: 188,
+            width: 196,
+            height: 128,
             "font-size": "14px",
             "font-weight": 700,
             "text-max-width": "130px",
-            padding: "0px",
+            padding: "8px",
           },
         },
         {
           selector: ".graph-node-group",
           style: {
             shape: "round-rectangle",
-            "background-color": "#324057",
+            "background-color": "rgba(50, 64, 87, 0.22)",
             "border-color": "#8f9db3",
-            width: 168,
-            height: 104,
+            width: 220,
+            height: 180,
             "font-size": "12px",
             "font-weight": 700,
             "text-max-width": "132px",
+            "text-valign": "top",
+            "text-halign": "center",
+            padding: "28px",
+            "border-style": "solid",
           },
         },
         {
           selector: ".graph-node-user",
           style: {
-            shape: "hexagon",
+            shape: "ellipse",
             "background-color": "#33455c",
             "border-color": "#91a0b8",
-            width: 132,
-            height: 92,
+            width: 110,
+            height: 110,
             "font-size": "11px",
-            "text-max-width": "108px",
+            "text-max-width": "90px",
           },
         },
         {
@@ -116,10 +120,10 @@ export function NetworkGraph({
             shape: "ellipse",
             "background-color": "#364150",
             "border-color": "#8b96a8",
-            width: 86,
-            height: 86,
+            width: 74,
+            height: 74,
             "font-size": "10px",
-            "text-max-width": "74px",
+            "text-max-width": "64px",
           },
         },
         {
@@ -150,6 +154,13 @@ export function NetworkGraph({
           selector: ".graph-node-inactive",
           style: {
             opacity: 0.42,
+          },
+        },
+        {
+          selector: ":parent",
+          style: {
+            "background-opacity": 1,
+            "text-margin-y": -8,
           },
         },
         {
@@ -319,6 +330,7 @@ function buildGraphElements(groups: TopologyGroup[]): ElementDefinition[] {
       elements.push({
         data: {
           id: userId,
+          parent: groupId,
           label: `${user.user_name}\n${user.online_peer_count}/${user.peer_count} online`,
           kind: "user",
           title: user.user_name,
@@ -346,6 +358,7 @@ function buildGraphElements(groups: TopologyGroup[]): ElementDefinition[] {
         elements.push({
           data: {
             id: peerId,
+            parent: groupId,
             label: `${peer.peer_name}\n${peer.assigned_ip}`,
             kind: "peer",
             title: peer.peer_name,
