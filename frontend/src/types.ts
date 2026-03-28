@@ -249,6 +249,7 @@ export type GuiSettings = {
   overview_refresh_seconds: number;
   peers_refresh_seconds: number;
   traffic_snapshot_interval_seconds: number;
+  traffic_snapshot_retention_days: number;
   refresh_after_apply: boolean;
   online_threshold_seconds: number;
 };
@@ -264,6 +265,7 @@ export type GuiSettingsUpdate = Partial<
     | "overview_refresh_seconds"
     | "peers_refresh_seconds"
     | "traffic_snapshot_interval_seconds"
+    | "traffic_snapshot_retention_days"
     | "refresh_after_apply"
     | "online_threshold_seconds"
   >
@@ -395,6 +397,7 @@ export type StateExportGuiSettings = {
   overview_refresh_seconds: number;
   peers_refresh_seconds: number;
   traffic_snapshot_interval_seconds: number;
+  traffic_snapshot_retention_days: number;
   refresh_after_apply: boolean;
   online_threshold_seconds: number;
   error_log_level: string;

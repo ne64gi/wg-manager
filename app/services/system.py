@@ -141,6 +141,12 @@ def _migrate_gui_settings_table() -> None:
                     "ALTER TABLE gui_settings ADD COLUMN traffic_snapshot_interval_seconds INTEGER NOT NULL DEFAULT 300"
                 )
             )
+        if "traffic_snapshot_retention_days" not in columns:
+            connection.execute(
+                text(
+                    "ALTER TABLE gui_settings ADD COLUMN traffic_snapshot_retention_days INTEGER NOT NULL DEFAULT 30"
+                )
+            )
         if "refresh_after_apply" not in columns:
             connection.execute(
                 text(

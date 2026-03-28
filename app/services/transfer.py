@@ -230,6 +230,7 @@ def export_domain_state(session: Session) -> StateExportRead:
             overview_refresh_seconds=gui_settings.overview_refresh_seconds,
             peers_refresh_seconds=gui_settings.peers_refresh_seconds,
             traffic_snapshot_interval_seconds=gui_settings.traffic_snapshot_interval_seconds,
+            traffic_snapshot_retention_days=gui_settings.traffic_snapshot_retention_days,
             refresh_after_apply=gui_settings.refresh_after_apply,
             online_threshold_seconds=gui_settings.online_threshold_seconds,
             error_log_level=gui_settings.error_log_level,

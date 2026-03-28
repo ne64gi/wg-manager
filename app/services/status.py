@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import Integer, cast, func, select
+from sqlalchemy import Integer, cast, delete, func, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.runtime import get_runtime_service
@@ -41,9 +41,23 @@ def _should_capture_snapshot(session: Session, interval_seconds: int) -> bool:
 
 
 def _capture_peer_snapshots(
-    session: Session, statuses: list[PeerStatusRead], interval_seconds: int
+    session: Session,
+    statuses: list[PeerStatusRead],
+    interval_seconds: int,
+    retention_days: int,
 ) -> None:
+    cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
+    deleted_result = session.execute(
+        delete(PeerTrafficSnapshot).where(PeerTrafficSnapshot.captured_at < cutoff)
+    )
+    deleted_any = bool(deleted_result.rowcount)
+
     if not statuses or not _should_capture_snapshot(session, interval_seconds):
+        if deleted_any:
+            try:
+                session.commit()
+            except Exception:
+                session.rollback()
         return
 
     captured_at = datetime.now(timezone.utc)
@@ -58,7 +72,7 @@ def _capture_peer_snapshots(
                 is_online=status.is_online,
                 latest_handshake_at=status.latest_handshake_at,
             )
-        )
+    )
     try:
         session.commit()
     except Exception:
@@ -114,7 +128,10 @@ def get_wireguard_peer_statuses(session: Session) -> list[PeerStatusRead]:
             )
         )
     _capture_peer_snapshots(
-        session, statuses, gui_settings.traffic_snapshot_interval_seconds
+        session,
+        statuses,
+        gui_settings.traffic_snapshot_interval_seconds,
+        gui_settings.traffic_snapshot_retention_days,
     )
     return statuses
 

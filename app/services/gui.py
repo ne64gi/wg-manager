@@ -60,6 +60,10 @@ def update_gui_settings(session: Session, payload: GuiSettingsUpdate) -> GuiSett
         gui_settings.traffic_snapshot_interval_seconds = (
             payload.traffic_snapshot_interval_seconds
         )
+    if payload.traffic_snapshot_retention_days is not None:
+        gui_settings.traffic_snapshot_retention_days = (
+            payload.traffic_snapshot_retention_days
+        )
     if payload.refresh_after_apply is not None:
         gui_settings.refresh_after_apply = payload.refresh_after_apply
     if payload.online_threshold_seconds is not None:
@@ -84,6 +88,7 @@ def update_gui_settings(session: Session, payload: GuiSettingsUpdate) -> GuiSett
             "overview_refresh_seconds": gui_settings.overview_refresh_seconds,
             "peers_refresh_seconds": gui_settings.peers_refresh_seconds,
             "traffic_snapshot_interval_seconds": gui_settings.traffic_snapshot_interval_seconds,
+            "traffic_snapshot_retention_days": gui_settings.traffic_snapshot_retention_days,
             "refresh_after_apply": gui_settings.refresh_after_apply,
             "online_threshold_seconds": gui_settings.online_threshold_seconds,
             "error_log_level": gui_settings.error_log_level,
@@ -101,6 +106,7 @@ def update_gui_settings(session: Session, payload: GuiSettingsUpdate) -> GuiSett
             "overview_refresh_seconds": gui_settings.overview_refresh_seconds,
             "peers_refresh_seconds": gui_settings.peers_refresh_seconds,
             "traffic_snapshot_interval_seconds": gui_settings.traffic_snapshot_interval_seconds,
+            "traffic_snapshot_retention_days": gui_settings.traffic_snapshot_retention_days,
             "refresh_after_apply": gui_settings.refresh_after_apply,
             "online_threshold_seconds": gui_settings.online_threshold_seconds,
             "error_log_level": gui_settings.error_log_level,

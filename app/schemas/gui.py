@@ -35,6 +35,7 @@ class GuiSettingsUpdate(BaseModel):
     overview_refresh_seconds: int = 5
     peers_refresh_seconds: int = 10
     traffic_snapshot_interval_seconds: int = 300
+    traffic_snapshot_retention_days: int = 30
     refresh_after_apply: bool = True
     online_threshold_seconds: int = 120
     error_log_level: str = "warning"
@@ -64,6 +65,15 @@ class GuiSettingsUpdate(BaseModel):
         if value < 10 or value > 86400:
             raise ValueError(
                 "traffic_snapshot_interval_seconds must be between 10 and 86400"
+            )
+        return value
+
+    @field_validator("traffic_snapshot_retention_days")
+    @classmethod
+    def validate_snapshot_retention_days(cls, value: int) -> int:
+        if value < 1 or value > 3650:
+            raise ValueError(
+                "traffic_snapshot_retention_days must be between 1 and 3650"
             )
         return value
 
@@ -97,6 +107,7 @@ class GuiSettingsRead(BaseModel):
     overview_refresh_seconds: int
     peers_refresh_seconds: int
     traffic_snapshot_interval_seconds: int
+    traffic_snapshot_retention_days: int
     refresh_after_apply: bool
     online_threshold_seconds: int
     error_log_level: str

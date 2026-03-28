@@ -302,6 +302,8 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "settings.overview_refresh": "ダッシュボード更新間隔 (秒)",
   "settings.peers_refresh": "ピア一覧更新間隔 (秒)",
   "settings.snapshot_interval": "トラフィックスナップショット取得間隔 (秒)",
+  "settings.snapshot_retention_days": "トラフィック履歴保持日数",
+  "settings.snapshot_retention_days_hint": "この日数を超えた snapshot は自動削除されます。",
   "settings.online_threshold": "オンライン判定までの秒数",
   "settings.access_log_path": "アクセスログ保存先",
   "settings.error_log_path": "エラーログ保存先",

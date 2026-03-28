@@ -240,6 +240,31 @@ export function SettingsPage() {
 
                 <label className="field">
                   <span>
+                    {t(
+                      "settings.snapshot_retention_days",
+                      "Traffic history retention (days)",
+                    )}
+                  </span>
+                  <input
+                    type="number"
+                    value={formState.traffic_snapshot_retention_days ?? 30}
+                    onChange={(event) =>
+                      setFormState((current) => ({
+                        ...current,
+                        traffic_snapshot_retention_days: Number(event.target.value),
+                      }))
+                    }
+                  />
+                  <div className="muted-text">
+                    {t(
+                      "settings.snapshot_retention_days_hint",
+                      "Snapshots older than this retention window are deleted automatically.",
+                    )}
+                  </div>
+                </label>
+
+                <label className="field">
+                  <span>
                     {t("settings.online_threshold", "Online threshold (sec)")}
                   </span>
                   <input

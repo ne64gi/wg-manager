@@ -60,6 +60,7 @@ class StateExportGuiSettings(BaseModel):
     overview_refresh_seconds: int
     peers_refresh_seconds: int
     traffic_snapshot_interval_seconds: int
+    traffic_snapshot_retention_days: int
     refresh_after_apply: bool
     online_threshold_seconds: int
     error_log_level: str

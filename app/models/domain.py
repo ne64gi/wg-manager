@@ -70,6 +70,7 @@ class GuiSettings(Base):
     overview_refresh_seconds: Mapped[int] = mapped_column(default=5)
     peers_refresh_seconds: Mapped[int] = mapped_column(default=10)
     traffic_snapshot_interval_seconds: Mapped[int] = mapped_column(default=300)
+    traffic_snapshot_retention_days: Mapped[int] = mapped_column(default=30)
     refresh_after_apply: Mapped[bool] = mapped_column(Boolean, default=True)
     online_threshold_seconds: Mapped[int] = mapped_column(default=120)
     error_log_level: Mapped[str] = mapped_column(String(32), default="warning")
