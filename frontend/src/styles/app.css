@@ -949,6 +949,12 @@
   background: #79d483;
 }
 
+.network-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .network-legend-note {
   padding-top: 6px;
   border-top: 1px solid var(--table-border);

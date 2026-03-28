@@ -13,13 +13,68 @@ export function NetworkPage() {
   const { topologyGroups, metrics, isLoading, toggleSelectionMutation } = useNetworkPageData();
   const [selectedGroupId, setSelectedGroupId] = useState<number | "all">("all");
   const [selection, setSelection] = useState<NetworkGraphSelection>(null);
+  const [showOnlineOnly, setShowOnlineOnly] = useState(false);
+  const [showActiveOnly, setShowActiveOnly] = useState(false);
+  const [showHiddenOnly, setShowHiddenOnly] = useState(false);
+  const [graphMode, setGraphMode] = useState<"status" | "traffic">("traffic");
+  const [clearSelectionToken, setClearSelectionToken] = useState(0);
 
   const visibleGroups = useMemo(
-    () =>
-      selectedGroupId === "all"
-        ? topologyGroups
-        : topologyGroups.filter((group) => group.group_id === selectedGroupId),
-    [selectedGroupId, topologyGroups],
+    () => {
+      const groupScoped =
+        selectedGroupId === "all"
+          ? topologyGroups
+          : topologyGroups.filter((group) => group.group_id === selectedGroupId);
+
+      return groupScoped
+        .map((group) => {
+          const users = group.users
+            .map((user) => {
+              const peers = user.peers.filter((peer) => {
+                if (showOnlineOnly && !peer.is_online) {
+                  return false;
+                }
+                if (showActiveOnly && !peer.is_active) {
+                  return false;
+                }
+                if (showHiddenOnly && peer.is_revealed) {
+                  return false;
+                }
+                return true;
+              });
+
+              return {
+                ...user,
+                peer_count: peers.length,
+                active_peer_count: peers.filter((peer) => peer.is_active).length,
+                online_peer_count: peers.filter((peer) => peer.is_online).length,
+                peers,
+              };
+            })
+            .filter((user) => {
+              if (showActiveOnly && !user.is_active && user.peers.length === 0) {
+                return false;
+              }
+              return user.peers.length > 0 || (!showOnlineOnly && !showHiddenOnly);
+            });
+
+          return {
+            ...group,
+            user_count: users.length,
+            peer_count: users.reduce((sum, user) => sum + user.peer_count, 0),
+            active_peer_count: users.reduce((sum, user) => sum + user.active_peer_count, 0),
+            online_peer_count: users.reduce((sum, user) => sum + user.online_peer_count, 0),
+            users,
+          };
+        })
+        .filter((group) => {
+          if (showActiveOnly && !group.is_active && group.users.length === 0) {
+            return false;
+          }
+          return group.users.length > 0 || (!showOnlineOnly && !showHiddenOnly);
+        });
+    },
+    [selectedGroupId, showActiveOnly, showHiddenOnly, showOnlineOnly, topologyGroups],
   );
 
   return (
@@ -69,10 +124,52 @@ export function NetworkPage() {
                     </option>
                   ))}
                 </select>
+                <div className="network-chip-row">
+                  <button
+                    type="button"
+                    className={`toggle-chip ${showOnlineOnly ? "toggle-chip-active" : ""}`}
+                    onClick={() => setShowOnlineOnly((current) => !current)}
+                  >
+                    {t("network.filter_online", "Online only")}
+                  </button>
+                  <button
+                    type="button"
+                    className={`toggle-chip ${showActiveOnly ? "toggle-chip-active" : ""}`}
+                    onClick={() => setShowActiveOnly((current) => !current)}
+                  >
+                    {t("network.filter_active", "Active only")}
+                  </button>
+                  <button
+                    type="button"
+                    className={`toggle-chip ${showHiddenOnly ? "toggle-chip-active" : ""}`}
+                    onClick={() => setShowHiddenOnly((current) => !current)}
+                  >
+                    {t("network.filter_hidden", "Hidden only")}
+                  </button>
+                </div>
+                <div className="network-chip-row">
+                  <button
+                    type="button"
+                    className={`tab-button ${graphMode === "status" ? "active" : ""}`}
+                    onClick={() => setGraphMode("status")}
+                  >
+                    {t("network.mode_status", "Status mode")}
+                  </button>
+                  <button
+                    type="button"
+                    className={`tab-button ${graphMode === "traffic" ? "active" : ""}`}
+                    onClick={() => setGraphMode("traffic")}
+                  >
+                    {t("network.mode_traffic", "Traffic mode")}
+                  </button>
+                </div>
                 <button
                   type="button"
                   className="secondary-button"
-                  onClick={() => setSelection(null)}
+                  onClick={() => {
+                    setSelection(null);
+                    setClearSelectionToken((current) => current + 1);
+                  }}
                 >
                   {t("network.clear_selection", "Clear selection")}
                 </button>
@@ -83,6 +180,8 @@ export function NetworkPage() {
               <div className="network-graph-shell">
                 <NetworkGraph
                   groups={visibleGroups}
+                  mode={graphMode}
+                  clearSelectionToken={clearSelectionToken}
                   onSelectionChange={setSelection}
                 />
               </div>

@@ -20,14 +20,19 @@ export type NetworkGraphSelection = {
 
 export function NetworkGraph({
   groups,
+  mode,
+  clearSelectionToken,
   onSelectionChange,
 }: {
   groups: TopologyGroup[];
+  mode: "status" | "traffic";
+  clearSelectionToken: number;
   onSelectionChange: (selection: NetworkGraphSelection) => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const graphRef = useRef<cytoscape.Core | null>(null);
 
-  const elements = useMemo(() => buildGraphElements(groups), [groups]);
+  const elements = useMemo(() => buildGraphElements(groups, mode), [groups, mode]);
   const hierarchyPositions = useMemo(() => buildHierarchyPositions(groups), [groups]);
 
   useEffect(() => {
@@ -156,6 +161,18 @@ export function NetworkGraph({
           },
         },
         {
+          selector: ".graph-dimmed",
+          style: {
+            opacity: 0.14,
+          },
+        },
+        {
+          selector: ".graph-emphasized",
+          style: {
+            opacity: 1,
+          },
+        },
+        {
           selector: ":parent",
           style: {
             "background-opacity": 1,
@@ -202,6 +219,7 @@ export function NetworkGraph({
         },
       ] as any,
     });
+    graphRef.current = graph;
     graph.layout(
       ({
         name: "preset",
@@ -212,11 +230,21 @@ export function NetworkGraph({
     ).run();
 
     const emitSelection = () => {
-      const selectedNode = graph.$("node:selected").first();
+      const selectedNode = graph.$("node:selected").first() as cytoscape.NodeSingular;
       if (!selectedNode.nonempty()) {
+        graph.elements().removeClass("graph-dimmed graph-emphasized");
         onSelectionChange(null);
         return;
       }
+
+      const focusElements = selectedNode
+        .closedNeighborhood()
+        .union(selectedNode.predecessors())
+        .union(selectedNode.successors())
+        .union(selectedNode.ancestors())
+        .union(selectedNode.descendants());
+      graph.elements().addClass("graph-dimmed").removeClass("graph-emphasized");
+      focusElements.removeClass("graph-dimmed").addClass("graph-emphasized");
 
       const data = selectedNode.data() as {
         kind: "server" | "group" | "user" | "peer";
@@ -254,14 +282,26 @@ export function NetworkGraph({
 
     return () => {
       resizeObserver.disconnect();
+      graphRef.current = null;
       graph.destroy();
     };
   }, [elements, hierarchyPositions, onSelectionChange]);
 
+  useEffect(() => {
+    if (!graphRef.current) {
+      return;
+    }
+    const graph = graphRef.current;
+
+    graph.elements().unselect();
+    graph.elements().removeClass("graph-dimmed graph-emphasized");
+    onSelectionChange(null);
+  }, [clearSelectionToken, onSelectionChange]);
+
   return <div className="network-graph-canvas" data-testid="network-3d-scene" ref={containerRef} />;
 }
 
-function buildGraphElements(groups: TopologyGroup[]): ElementDefinition[] {
+function buildGraphElements(groups: TopologyGroup[], mode: "status" | "traffic"): ElementDefinition[] {
   const elements: ElementDefinition[] = [];
   const totals = groups.reduce(
     (accumulator, group) => ({
@@ -303,7 +343,10 @@ function buildGraphElements(groups: TopologyGroup[]): ElementDefinition[] {
     elements.push({
       data: {
         id: groupId,
-        label: `${group.group_name}\n${group.user_count} users · ${formatCompactBytes(groupTrafficBytes)}`,
+        label:
+          mode === "traffic"
+            ? `${group.group_name}\n${group.user_count} users · ${formatCompactBytes(groupTrafficBytes)}`
+            : `${group.group_name}\n${group.online_peer_count}/${group.peer_count} online`,
         kind: "group",
         entityId: group.group_id,
         title: group.group_name,
@@ -335,14 +378,17 @@ function buildGraphElements(groups: TopologyGroup[]): ElementDefinition[] {
         data: {
           id: userId,
           parent: groupId,
-          label: `${user.user_name}\n${user.online_peer_count}/${user.peer_count} · ${formatCompactBytes(userTrafficBytes)}`,
+          label:
+            mode === "traffic"
+              ? `${user.user_name}\n${user.online_peer_count}/${user.peer_count} · ${formatCompactBytes(userTrafficBytes)}`
+              : `${user.user_name}\n${user.online_peer_count}/${user.peer_count} online`,
           kind: "user",
           entityId: user.user_id,
           title: user.user_name,
           subtitle: `${t("table.user", "User")} · ${group.group_name}`,
           isActive: user.is_active,
-          nodeWidth: scaleTrafficSize(userTrafficBytes, groups, "user"),
-          nodeHeight: scaleTrafficSize(userTrafficBytes, groups, "user", true),
+          nodeWidth: mode === "traffic" ? scaleTrafficSize(userTrafficBytes, groups, "user") : 132,
+          nodeHeight: mode === "traffic" ? scaleTrafficSize(userTrafficBytes, groups, "user", true) : 88,
           fontSize: 11,
           weight: 2,
           metrics: [
@@ -369,14 +415,17 @@ function buildGraphElements(groups: TopologyGroup[]): ElementDefinition[] {
           data: {
             id: peerId,
             parent: groupId,
-            label: `${peer.peer_name}\n${formatCompactBytes(peer.total_bytes)}`,
+            label:
+              mode === "traffic"
+                ? `${peer.peer_name}\n${formatCompactBytes(peer.total_bytes)}`
+                : `${peer.peer_name}\n${peer.is_online ? t("common.online", "Online") : t("common.offline", "Offline")}`,
             kind: "peer",
             entityId: peer.peer_id,
             title: peer.peer_name,
             subtitle: `${t("table.peers", "Peers")} · ${user.user_name}`,
             isActive: peer.is_active,
-            nodeWidth: scaleTrafficSize(peer.total_bytes, groups, "peer"),
-            nodeHeight: scaleTrafficSize(peer.total_bytes, groups, "peer", true),
+            nodeWidth: mode === "traffic" ? scaleTrafficSize(peer.total_bytes, groups, "peer") : 74,
+            nodeHeight: mode === "traffic" ? scaleTrafficSize(peer.total_bytes, groups, "peer", true) : 74,
             fontSize: 10,
             weight: 1,
             metrics: [
