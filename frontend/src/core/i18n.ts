@@ -146,6 +146,8 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "network.no_data_hint": "グループ、ユーザー、ピアを作成すると、このマップに反映されます。",
   "network.loading": "構成を読み込み中...",
   "network.legend": "凡例",
+  "network.server": "サーバー",
+  "network.server_subtitle": "WireGuard 制御の起点",
   "network.legend_group": "割当境界とポリシースコープです。",
   "network.legend_user": "グループとピアをつなぐ利用者ハブです。",
   "network.legend_peer": "状態とトラフィックを持つ端末ノードです。",

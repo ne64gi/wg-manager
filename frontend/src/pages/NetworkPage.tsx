@@ -120,6 +120,13 @@ export function NetworkPage() {
           <Panel title={t("network.legend", "Legend")}>
             <div className="network-legend-list">
               <div className="network-legend-item">
+                <span className="network-dot network-dot-server" />
+                <div>
+                  <strong>{t("network.server", "Server")}</strong>
+                  <div className="muted-text">{t("network.server_subtitle", "WireGuard control plane root")}</div>
+                </div>
+              </div>
+              <div className="network-legend-item">
                 <span className="network-dot network-dot-group" />
                 <div>
                   <strong>{t("table.group", "Group")}</strong>
@@ -139,6 +146,12 @@ export function NetworkPage() {
                   <strong>{t("table.peers", "Peers")}</strong>
                   <div className="muted-text">{t("network.legend_peer", "Client endpoints with status and traffic context.")}</div>
                 </div>
+              </div>
+              <div className="muted-text network-legend-note">
+                {t(
+                  "network.legend_status_note",
+                  "Green border means online, gray means offline, dashed means not revealed, and faded means inactive.",
+                )}
               </div>
             </div>
           </Panel>

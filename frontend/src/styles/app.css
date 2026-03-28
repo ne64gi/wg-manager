@@ -884,15 +884,24 @@
 }
 
 .network-dot-group {
-  background: linear-gradient(135deg, #de8d62, #be3e29);
+  background: #7e8da5;
+}
+
+.network-dot-server {
+  background: #f0d06b;
 }
 
 .network-dot-user {
-  background: linear-gradient(135deg, #7db2ff, #5676d7);
+  background: #a8b3c6;
 }
 
 .network-dot-peer {
-  background: linear-gradient(135deg, #9fe0aa, #79d483);
+  background: #79d483;
+}
+
+.network-legend-note {
+  padding-top: 6px;
+  border-top: 1px solid var(--table-border);
 }
 
 .network-group-summary {
