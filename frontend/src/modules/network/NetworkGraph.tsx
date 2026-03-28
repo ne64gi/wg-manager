@@ -30,6 +30,7 @@ export function NetworkGraph({
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const elements = useMemo(() => buildGraphElements(groups, layoutMode), [groups, layoutMode]);
+  const hierarchyPositions = useMemo(() => buildHierarchyPositions(groups), [groups]);
 
   useEffect(() => {
     if (!containerRef.current) {
@@ -206,11 +207,10 @@ export function NetworkGraph({
     graph.layout(
       (layoutMode === "hierarchy"
         ? {
-            name: "breadthfirst",
-            directed: true,
-            roots: "[id = 'server:root']",
-            spacingFactor: 1.1,
+            name: "preset",
+            fit: true,
             padding: 36,
+            positions: (node: cytoscape.NodeSingular) => hierarchyPositions[node.id()] ?? node.position(),
           }
         : {
             name: "concentric",
@@ -266,7 +266,7 @@ export function NetworkGraph({
       resizeObserver.disconnect();
       graph.destroy();
     };
-  }, [elements, layoutMode, onSelectionChange]);
+  }, [elements, hierarchyPositions, layoutMode, onSelectionChange]);
 
   return <div className="network-graph-canvas" data-testid="network-3d-scene" ref={containerRef} />;
 }
@@ -330,7 +330,7 @@ function buildGraphElements(groups: TopologyGroup[], layoutMode: NetworkGraphLay
       elements.push({
         data: {
           id: userId,
-          ...(layoutMode === "organic" ? { parent: groupId } : {}),
+          parent: groupId,
           label: `${user.user_name}\n${user.online_peer_count}/${user.peer_count} online`,
           kind: "user",
           title: user.user_name,
@@ -358,7 +358,7 @@ function buildGraphElements(groups: TopologyGroup[], layoutMode: NetworkGraphLay
         elements.push({
           data: {
             id: peerId,
-            ...(layoutMode === "organic" ? { parent: groupId } : {}),
+            parent: groupId,
             label: `${peer.peer_name}\n${peer.assigned_ip}`,
             kind: "peer",
             title: peer.peer_name,
@@ -410,4 +410,45 @@ function buildClasses(baseClass: string, isActive: boolean, isOnline: boolean, i
   ]
     .filter(Boolean)
     .join(" ");
+}
+
+function buildHierarchyPositions(groups: TopologyGroup[]): Record<string, { x: number; y: number }> {
+  const positions: Record<string, { x: number; y: number }> = {
+    "server:root": { x: 0, y: 0 },
+  };
+
+  const groupGapX = 360;
+  const groupBaseY = 240;
+  const userGapX = 150;
+  const userBaseY = 120;
+  const peerGapX = 92;
+  const peerGapY = 88;
+
+  groups.forEach((group, groupIndex) => {
+    const groupOffsetX = (groupIndex - (groups.length - 1) / 2) * groupGapX;
+
+    group.users.forEach((user, userIndex) => {
+      const userId = `user:${user.user_id}`;
+      const userOffsetX = (userIndex - (group.users.length - 1) / 2) * userGapX;
+      positions[userId] = {
+        x: groupOffsetX + userOffsetX,
+        y: groupBaseY + userBaseY,
+      };
+
+      user.peers.forEach((peer, peerIndex) => {
+        const peerId = `peer:${peer.peer_id}`;
+        const peersInRow = Math.max(1, Math.min(3, user.peers.length));
+        const row = Math.floor(peerIndex / peersInRow);
+        const column = peerIndex % peersInRow;
+        const centeredColumn = column - (Math.min(peersInRow, user.peers.length) - 1) / 2;
+
+        positions[peerId] = {
+          x: groupOffsetX + userOffsetX + centeredColumn * peerGapX,
+          y: groupBaseY + userBaseY + 108 + row * peerGapY,
+        };
+      });
+    });
+  });
+
+  return positions;
 }
