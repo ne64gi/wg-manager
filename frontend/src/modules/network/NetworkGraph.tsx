@@ -11,8 +11,10 @@ cytoscape.use(coseBilkent);
 
 export type NetworkGraphSelection = {
   kind: "server" | "group" | "user" | "peer";
+  entityId: number | null;
   title: string;
   subtitle: string;
+  isActive: boolean;
   metrics: Array<{ label: string; value: string }>;
 } | null;
 
@@ -105,9 +107,9 @@ export function NetworkGraph({
             shape: "round-rectangle",
             "background-color": "#33455c",
             "border-color": "#91a0b8",
-            width: 132,
-            height: 88,
-            "font-size": "11px",
+            width: "data(nodeWidth)",
+            height: "data(nodeHeight)",
+            "font-size": "data(fontSize)",
             "text-max-width": "104px",
           },
         },
@@ -117,9 +119,9 @@ export function NetworkGraph({
             shape: "ellipse",
             "background-color": "#364150",
             "border-color": "#8b96a8",
-            width: 74,
-            height: 74,
-            "font-size": "10px",
+            width: "data(nodeWidth)",
+            height: "data(nodeHeight)",
+            "font-size": "data(fontSize)",
             "text-max-width": "64px",
           },
         },
@@ -218,15 +220,19 @@ export function NetworkGraph({
 
       const data = selectedNode.data() as {
         kind: "server" | "group" | "user" | "peer";
+        entityId: number | null;
         title: string;
         subtitle: string;
+        isActive: boolean;
         metrics: Array<{ label: string; value: string }>;
       };
 
       onSelectionChange({
         kind: data.kind,
+        entityId: data.entityId,
         title: data.title,
         subtitle: data.subtitle,
+        isActive: data.isActive,
         metrics: data.metrics,
       });
     };
@@ -272,8 +278,10 @@ function buildGraphElements(groups: TopologyGroup[]): ElementDefinition[] {
       id: serverId,
       label: `${t("network.server", "Server")}\n${groups.length} groups · ${totals.peers} peers`,
       kind: "server",
+      entityId: null,
       title: t("network.server", "Server"),
       subtitle: t("network.server_subtitle", "WireGuard control plane root"),
+      isActive: true,
       weight: 4,
       metrics: [
         { label: t("network.groups", "Groups"), value: String(groups.length) },
@@ -287,19 +295,27 @@ function buildGraphElements(groups: TopologyGroup[]): ElementDefinition[] {
 
   for (const group of groups) {
     const groupId = `group:${group.group_id}`;
+    const groupTrafficBytes = group.users.reduce(
+      (sum, user) =>
+        sum + user.peers.reduce((peerSum, peer) => peerSum + peer.total_bytes, 0),
+      0,
+    );
     elements.push({
       data: {
         id: groupId,
-        label: `${group.group_name}\n${group.user_count} users · ${group.peer_count} peers`,
+        label: `${group.group_name}\n${group.user_count} users · ${formatCompactBytes(groupTrafficBytes)}`,
         kind: "group",
+        entityId: group.group_id,
         title: group.group_name,
         subtitle: t("table.group", "Group"),
+        isActive: group.is_active,
         weight: 3,
         metrics: [
           { label: t("table.scope", "Scope"), value: group.group_scope },
           { label: t("network.users", "Users"), value: String(group.user_count) },
           { label: t("table.peers", "Peers"), value: String(group.peer_count) },
           { label: t("network.online_peers", "Online peers"), value: String(group.online_peer_count) },
+          { label: t("table.traffic", "Traffic"), value: formatBytes(groupTrafficBytes) },
         ],
       },
       classes: buildClasses("graph-node-group", group.is_active, group.online_peer_count > 0, true),
@@ -311,19 +327,29 @@ function buildGraphElements(groups: TopologyGroup[]): ElementDefinition[] {
 
     for (const user of group.users) {
       const userId = `user:${user.user_id}`;
+      const userTrafficBytes = user.peers.reduce(
+        (sum, peer) => sum + peer.total_bytes,
+        0,
+      );
       elements.push({
         data: {
           id: userId,
           parent: groupId,
-          label: `${user.user_name}\n${user.online_peer_count}/${user.peer_count} online`,
+          label: `${user.user_name}\n${user.online_peer_count}/${user.peer_count} · ${formatCompactBytes(userTrafficBytes)}`,
           kind: "user",
+          entityId: user.user_id,
           title: user.user_name,
           subtitle: `${t("table.user", "User")} · ${group.group_name}`,
+          isActive: user.is_active,
+          nodeWidth: scaleTrafficSize(userTrafficBytes, groups, "user"),
+          nodeHeight: scaleTrafficSize(userTrafficBytes, groups, "user", true),
+          fontSize: 11,
           weight: 2,
           metrics: [
             { label: t("table.group", "Group"), value: group.group_name },
             { label: t("table.peers", "Peers"), value: String(user.peer_count) },
             { label: t("network.online_peers", "Online peers"), value: String(user.online_peer_count) },
+            { label: t("table.traffic", "Traffic"), value: formatBytes(userTrafficBytes) },
             {
               label: t("common.status", "Status"),
               value: user.is_active ? t("common.active", "Active") : t("common.inactive", "Inactive"),
@@ -343,10 +369,15 @@ function buildGraphElements(groups: TopologyGroup[]): ElementDefinition[] {
           data: {
             id: peerId,
             parent: groupId,
-            label: `${peer.peer_name}\n${peer.assigned_ip}`,
+            label: `${peer.peer_name}\n${formatCompactBytes(peer.total_bytes)}`,
             kind: "peer",
+            entityId: peer.peer_id,
             title: peer.peer_name,
             subtitle: `${t("table.peers", "Peers")} · ${user.user_name}`,
+            isActive: peer.is_active,
+            nodeWidth: scaleTrafficSize(peer.total_bytes, groups, "peer"),
+            nodeHeight: scaleTrafficSize(peer.total_bytes, groups, "peer", true),
+            fontSize: 10,
             weight: 1,
             metrics: [
               { label: t("table.user", "User"), value: user.user_name },
@@ -394,6 +425,43 @@ function buildClasses(baseClass: string, isActive: boolean, isOnline: boolean, i
   ]
     .filter(Boolean)
     .join(" ");
+}
+
+function scaleTrafficSize(
+  trafficBytes: number,
+  groups: TopologyGroup[],
+  kind: "user" | "peer",
+  forHeight = false,
+) {
+  const values =
+    kind === "user"
+      ? groups.flatMap((group) =>
+          group.users.map((user) =>
+            user.peers.reduce((sum, peer) => sum + peer.total_bytes, 0),
+          ),
+        )
+      : groups.flatMap((group) =>
+          group.users.flatMap((user) => user.peers.map((peer) => peer.total_bytes)),
+        );
+  const maxValue = Math.max(...values, 1);
+  const minSize = kind === "user" ? (forHeight ? 88 : 132) : 74;
+  const maxSize = kind === "user" ? (forHeight ? 116 : 168) : 116;
+  const normalized = Math.max(0, Math.min(1, trafficBytes / maxValue));
+
+  return Math.round(minSize + (maxSize - minSize) * normalized);
+}
+
+function formatCompactBytes(value: number): string {
+  if (value >= 1024 ** 3) {
+    return `${(value / 1024 ** 3).toFixed(1)} GB`;
+  }
+  if (value >= 1024 ** 2) {
+    return `${(value / 1024 ** 2).toFixed(1)} MB`;
+  }
+  if (value >= 1024) {
+    return `${Math.round(value / 1024)} KB`;
+  }
+  return `${value} B`;
 }
 
 function buildHierarchyPositions(groups: TopologyGroup[]): Record<string, { x: number; y: number }> {

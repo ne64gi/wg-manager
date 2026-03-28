@@ -998,6 +998,13 @@
   gap: 14px;
 }
 
+.network-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
 .network-detail-list {
   display: grid;
   gap: 10px;
@@ -1029,6 +1036,44 @@
   text-align: center;
 }
 
+.network-summary-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.network-hotspot-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--table-border);
+  background: color-mix(in srgb, var(--surface-soft) 92%, transparent);
+}
+
+.network-hotspot-list {
+  display: grid;
+  gap: 10px;
+}
+
+.network-hotspot-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--table-border);
+}
+
+.network-hotspot-row:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.network-hotspot-meta {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
 /* =========================================================
    06. RESPONSIVE
    ========================================================= */
@@ -1057,6 +1102,11 @@
 
   .dashboard-panel-span-12 {
     grid-column: 1 / -1;
+  }
+
+  .network-summary-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+    align-items: start;
   }
 }
 

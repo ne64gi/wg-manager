@@ -10,7 +10,7 @@ import {
 import { useNetworkPageData } from "../modules/network/useNetworkPageData";
 
 export function NetworkPage() {
-  const { topologyGroups, metrics, isLoading } = useNetworkPageData();
+  const { topologyGroups, metrics, isLoading, toggleSelectionMutation } = useNetworkPageData();
   const [selectedGroupId, setSelectedGroupId] = useState<number | "all">("all");
   const [selection, setSelection] = useState<NetworkGraphSelection>(null);
 
@@ -138,6 +138,12 @@ export function NetworkPage() {
                   "Green border means online, gray means offline, dashed means not revealed, and faded means inactive.",
                 )}
               </div>
+              <div className="muted-text network-legend-note">
+                {t(
+                  "network.legend_size_note",
+                  "Larger user and peer nodes indicate heavier traffic usage.",
+                )}
+              </div>
             </div>
           </Panel>
         </div>
@@ -150,6 +156,27 @@ export function NetworkPage() {
                   <strong>{selection.title}</strong>
                   <div className="muted-text">{selection.subtitle}</div>
                 </div>
+                {selection.kind !== "server" ? (
+                  <div className="network-detail-actions">
+                    <div className={`status-pill ${selection.isActive ? "status-pill-online" : ""}`}>
+                      {selection.isActive
+                        ? t("common.enabled", "Enabled")
+                        : t("common.disabled", "Disabled")}
+                    </div>
+                    <button
+                      type="button"
+                      className={selection.isActive ? "danger-button" : "secondary-button"}
+                      disabled={toggleSelectionMutation.isPending}
+                      onClick={() => toggleSelectionMutation.mutate(selection)}
+                    >
+                      {toggleSelectionMutation.isPending
+                        ? t("network.updating", "Updating...")
+                        : selection.isActive
+                          ? t("network.disable_selected", "Disable from graph")
+                          : t("network.enable_selected", "Enable from graph")}
+                    </button>
+                  </div>
+                ) : null}
                 <div className="network-detail-list">
                   {selection.metrics.map((metric) => (
                     <div className="network-detail-row" key={metric.label}>
@@ -175,38 +202,63 @@ export function NetworkPage() {
       </div>
 
       <Panel title={t("network.focus_summary", "Focus summary")}>
-        <div className="network-group-summary-list">
-          {visibleGroups.map((group) => (
-            <section className="network-group-summary" key={group.group_id}>
-              <div className="network-group-summary-header">
-                <strong>{group.group_name}</strong>
-                <span className={`status-pill ${group.online_peer_count ? "status-pill-online" : ""}`}>
-                  {group.online_peer_count} / {group.peer_count}
-                </span>
-              </div>
-              <div className="muted-text">
-                {group.group_scope} · {group.user_count} {t("network.users", "Users")}
-              </div>
-              <div className="network-summary-traffic">
-                {formatBytes(
-                  group.users.reduce(
-                    (sum, user) => sum + user.peers.reduce((peerSum, peer) => peerSum + peer.total_bytes, 0),
-                    0,
-                  ),
-                )}
-              </div>
-              <div className="network-mini-user-list">
-                {group.users.map((user) => (
-                  <div className="network-mini-user" key={user.user_id}>
-                    <span>{user.user_name}</span>
-                    <span>
-                      {user.online_peer_count}/{user.peer_count}
-                    </span>
+        <div className="network-summary-grid">
+          <div className="network-group-summary-list">
+            {visibleGroups.map((group) => (
+              <section className="network-group-summary" key={group.group_id}>
+                <div className="network-group-summary-header">
+                  <strong>{group.group_name}</strong>
+                  <span className={`status-pill ${group.online_peer_count ? "status-pill-online" : ""}`}>
+                    {group.online_peer_count} / {group.peer_count}
+                  </span>
+                </div>
+                <div className="muted-text">
+                  {group.group_scope} · {group.user_count} {t("network.users", "Users")}
+                </div>
+                <div className="network-summary-traffic">
+                  {formatBytes(
+                    group.users.reduce(
+                      (sum, user) => sum + user.peers.reduce((peerSum, peer) => peerSum + peer.total_bytes, 0),
+                      0,
+                    ),
+                  )}
+                </div>
+                <div className="network-mini-user-list">
+                  {group.users.map((user) => (
+                    <div className="network-mini-user" key={user.user_id}>
+                      <span>{user.user_name}</span>
+                      <span>
+                        {user.online_peer_count}/{user.peer_count}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+          <div className="network-hotspot-card">
+            <div className="panel-header">
+              <h2>{t("network.hotspots", "Traffic hotspots")}</h2>
+            </div>
+            <div className="network-hotspot-list">
+              {metrics.topTalkers.map((peer) => (
+                <div className="network-hotspot-row" key={peer.peerId}>
+                  <div>
+                    <strong>{peer.peerName}</strong>
+                    <div className="muted-text">
+                      {peer.userName} / {peer.groupName}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </section>
-          ))}
+                  <div className="network-hotspot-meta">
+                    <span className={`status-pill ${peer.isOnline ? "status-pill-online" : ""}`}>
+                      {peer.isOnline ? t("common.online", "Online") : t("common.offline", "Offline")}
+                    </span>
+                    <strong>{formatBytes(peer.totalBytes)}</strong>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </Panel>
     </div>
