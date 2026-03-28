@@ -4,6 +4,7 @@ import { DashboardPage } from "../pages/DashboardPage";
 import { GroupsPage } from "../pages/GroupsPage";
 import { LoginPage } from "../pages/LoginPage";
 import { LogsPage } from "../pages/LogsPage";
+import { NetworkPage } from "../pages/NetworkPage";
 import { PeersPage } from "../pages/PeersPage";
 import { SettingsPage } from "../pages/SettingsPage";
 import { UsersPage } from "../pages/UsersPage";
@@ -46,6 +47,7 @@ export function AppRoutes() {
       <Route element={<ProtectedLayout />}>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/peers" element={<PeersPage />} />
+        <Route path="/network" element={<NetworkPage />} />
         <Route path="/groups" element={<GroupsPage />} />
         <Route path="/users" element={<UsersPage />} />
         <Route path="/settings" element={<SettingsPage />} />

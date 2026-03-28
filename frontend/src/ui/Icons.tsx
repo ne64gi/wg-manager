@@ -106,6 +106,21 @@ export function PeerIcon(props: IconProps) {
   );
 }
 
+export function NetworkIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <circle cx="6.5" cy="12" r="2.5" />
+      <circle cx="12" cy="6.5" r="2.5" />
+      <circle cx="17.5" cy="12" r="2.5" />
+      <circle cx="12" cy="17.5" r="2.5" />
+      <path d="M8.7 10.5 10.3 8.7" />
+      <path d="M13.7 8.7 15.3 10.5" />
+      <path d="M15.3 13.5 13.7 15.3" />
+      <path d="M10.3 15.3 8.7 13.5" />
+    </BaseIcon>
+  );
+}
+
 export function SettingsIcon(props: IconProps) {
   return (
     <BaseIcon {...props}>

@@ -6,6 +6,7 @@ import {
   DashboardIcon,
   GroupIcon,
   LogsIcon,
+  NetworkIcon,
   PeerIcon,
   SettingsIcon,
   UserIcon,
@@ -16,6 +17,7 @@ const appNavItems: Array<Omit<AppNavItem, "isActive" | "onSelect">> = [
   { to: "/groups", labelKey: "nav.groups", label: "Groups", icon: GroupIcon },
   { to: "/users", labelKey: "nav.users", label: "Users", icon: UserIcon },
   { to: "/peers", labelKey: "nav.peers", label: "Peers", icon: PeerIcon },
+  { to: "/network", labelKey: "nav.network", label: "Network", icon: NetworkIcon },
   { to: "/settings", labelKey: "nav.settings", label: "Settings", icon: SettingsIcon },
   { to: "/logs", labelKey: "nav.logs", label: "Logs", icon: LogsIcon },
 ];

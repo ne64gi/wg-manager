@@ -172,6 +172,14 @@ test.describe.serial("v1 smoke", () => {
     await expect(page.getByTestId("dashboard-timeline-modal")).toBeVisible();
   });
 
+  test("network page renders the topology scene", async ({ page }) => {
+    await ensureAuthenticated(page);
+
+    await page.getByTestId("nav-network").click();
+    await expect(page.getByTestId("network-page-heading")).toBeVisible();
+    await expect(page.getByTestId("network-3d-scene")).toBeVisible();
+  });
+
   test("desktop sidebar can collapse into icon-only navigation", async ({ page }) => {
     await ensureAuthenticated(page);
 
