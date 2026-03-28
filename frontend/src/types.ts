@@ -135,6 +135,9 @@ export type TopologyPeer = {
   is_revealed: boolean;
   latest_handshake_at: string | null;
   total_bytes: number;
+  received_bytes?: number;
+  sent_bytes?: number;
+  endpoint?: string | null;
 };
 
 export type TopologyUser = {

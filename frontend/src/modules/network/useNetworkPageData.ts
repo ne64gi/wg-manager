@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useAuth } from "../../core/auth/AuthContext";
-import { getTopology, updateGroup, updatePeer, updateUser } from "../../lib/api";
+import { getPeerStatuses, getTopology, updateGroup, updatePeer, updateUser } from "../../lib/api";
 import { t } from "../../core/i18n";
 import { useToast } from "../../design/ui/ToastProvider";
 import type { NetworkGraphSelection } from "./NetworkGraph";
@@ -23,8 +23,37 @@ export function useNetworkPageData() {
     enabled: auth.isAuthenticated,
     refetchInterval: overviewRefreshMs,
   });
+  const peerStatusesQuery = useQuery({
+    queryKey: queryKeys.peerStatuses,
+    queryFn: async () => getPeerStatuses((await auth.getValidAccessToken()) ?? ""),
+    enabled: auth.isAuthenticated,
+    refetchInterval: overviewRefreshMs,
+  });
 
-  const topologyGroups = topologyQuery.data ?? [];
+  const topologyGroups = useMemo(() => {
+    const statusMap = new Map(
+      (peerStatusesQuery.data ?? []).map((peer) => [peer.peer_id, peer] as const),
+    );
+
+    return (topologyQuery.data ?? []).map((group) => ({
+      ...group,
+      users: group.users.map((user) => ({
+        ...user,
+        peers: user.peers.map((peer) => {
+          const status = statusMap.get(peer.peer_id);
+          return status
+            ? {
+                ...peer,
+                received_bytes: status.received_bytes,
+                sent_bytes: status.sent_bytes,
+                endpoint: status.endpoint,
+                total_bytes: status.total_bytes,
+              }
+            : peer;
+        }),
+      })),
+    }));
+  }, [peerStatusesQuery.data, topologyQuery.data]);
   const metrics = useMemo(() => {
     const totalUsers = topologyGroups.reduce((sum, group) => sum + group.user_count, 0);
     const totalPeers = topologyGroups.reduce((sum, group) => sum + group.peer_count, 0);
@@ -47,6 +76,9 @@ export function useNetworkPageData() {
             userName: user.user_name,
             groupName: group.group_name,
             totalBytes: peer.total_bytes,
+            receivedBytes: peer.received_bytes ?? 0,
+            sentBytes: peer.sent_bytes ?? 0,
+            endpoint: peer.endpoint ?? null,
             isOnline: peer.is_online,
           })),
         ),
@@ -123,7 +155,7 @@ export function useNetworkPageData() {
   return {
     topologyGroups,
     metrics,
-    isLoading: topologyQuery.isLoading,
+    isLoading: topologyQuery.isLoading || peerStatusesQuery.isLoading,
     toggleSelectionMutation,
   };
 }

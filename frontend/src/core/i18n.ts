@@ -171,6 +171,8 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "network.toggle_failed": "選択中ノードの更新に失敗しました。",
   "network.no_handshake": "まだハンドシェイクなし",
   "network.detail_address": "アドレス",
+  "network.detail_endpoint": "エンドポイント",
+  "network.detail_rx_tx": "受信 / 送信",
   "network.detail_last_seen": "最終確認",
   "network.detail_revealed": "表示済み",
   "table.user": "ユーザー",

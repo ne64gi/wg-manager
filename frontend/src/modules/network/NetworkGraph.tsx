@@ -208,6 +208,13 @@ export function NetworkGraph({
           },
         },
         {
+          selector: "edge.graph-emphasized",
+          style: {
+            width: 4,
+            opacity: 1,
+          },
+        },
+        {
           selector: ":selected",
           style: {
             "border-color": "#f0d06b",
@@ -439,6 +446,14 @@ function buildGraphElements(groups: TopologyGroup[], mode: "status" | "traffic")
               {
                 label: t("table.traffic", "Traffic"),
                 value: formatBytes(peer.total_bytes),
+              },
+              {
+                label: t("network.detail_rx_tx", "Rx / Tx"),
+                value: `${formatBytes(peer.received_bytes ?? 0)} / ${formatBytes(peer.sent_bytes ?? 0)}`,
+              },
+              {
+                label: t("network.detail_endpoint", "Endpoint"),
+                value: peer.endpoint ?? "—",
               },
               {
                 label: t("network.detail_last_seen", "Last seen"),

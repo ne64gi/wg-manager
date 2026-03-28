@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Panel, StatCard } from "../design/ui/Cards";
 import { t } from "../core/i18n";
@@ -18,6 +18,51 @@ export function NetworkPage() {
   const [showHiddenOnly, setShowHiddenOnly] = useState(false);
   const [graphMode, setGraphMode] = useState<"status" | "traffic">("traffic");
   const [clearSelectionToken, setClearSelectionToken] = useState(0);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const raw = window.localStorage.getItem("wg-studio:network-view");
+    if (!raw) {
+      return;
+    }
+
+    try {
+      const saved = JSON.parse(raw) as {
+        selectedGroupId?: number | "all";
+        showOnlineOnly?: boolean;
+        showActiveOnly?: boolean;
+        showHiddenOnly?: boolean;
+        graphMode?: "status" | "traffic";
+      };
+      setSelectedGroupId(saved.selectedGroupId ?? "all");
+      setShowOnlineOnly(saved.showOnlineOnly ?? false);
+      setShowActiveOnly(saved.showActiveOnly ?? false);
+      setShowHiddenOnly(saved.showHiddenOnly ?? false);
+      setGraphMode(saved.graphMode ?? "traffic");
+    } catch {
+      // Ignore invalid persisted filter state.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(
+      "wg-studio:network-view",
+      JSON.stringify({
+        selectedGroupId,
+        showOnlineOnly,
+        showActiveOnly,
+        showHiddenOnly,
+        graphMode,
+      }),
+    );
+  }, [graphMode, selectedGroupId, showActiveOnly, showHiddenOnly, showOnlineOnly]);
 
   const visibleGroups = useMemo(
     () => {
@@ -351,6 +396,9 @@ export function NetworkPage() {
                   <div className="network-hotspot-meta">
                     <span className={`status-pill ${peer.isOnline ? "status-pill-online" : ""}`}>
                       {peer.isOnline ? t("common.online", "Online") : t("common.offline", "Offline")}
+                    </span>
+                    <span className="muted-text">
+                      Rx {formatBytes(peer.receivedBytes)} / Tx {formatBytes(peer.sentBytes)}
                     </span>
                     <strong>{formatBytes(peer.totalBytes)}</strong>
                   </div>
