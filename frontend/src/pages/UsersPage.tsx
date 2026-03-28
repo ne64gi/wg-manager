@@ -214,6 +214,11 @@ export function UsersPage() {
             </article>
           ))}
         </div>
+        {!filteredUsers.length ? (
+          <div className="muted-text">
+            {t("common.no_results", "No items match the current filters.")}
+          </div>
+        ) : null}
       </Panel>
       {isCreateOpen ? (
         <div className="modal-backdrop" onClick={closeCreateModal}>

@@ -299,6 +299,11 @@ export function PeersPage() {
             );
           })}
         </div>
+        {!filteredPeers.length ? (
+          <div className="muted-text">
+            {t("common.no_results", "No items match the current filters.")}
+          </div>
+        ) : null}
       </Panel>
 
       {revealed ? (

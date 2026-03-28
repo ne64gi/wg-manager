@@ -19,7 +19,21 @@ export function DataTable({
         <thead>
           <tr>
             {headers.map((header, index) => (
-              <th key={index}>
+              <th
+                key={index}
+                aria-sort={
+                  typeof header === "object" &&
+                  header !== null &&
+                  "label" in header &&
+                  header.sortable
+                    ? header.sortDirection === "asc"
+                      ? "ascending"
+                      : header.sortDirection === "desc"
+                        ? "descending"
+                        : "none"
+                    : undefined
+                }
+              >
                 {typeof header === "object" &&
                 header !== null &&
                 "label" in header ? (

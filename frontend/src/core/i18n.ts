@@ -55,6 +55,7 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "common.edit": "編集",
   "common.description": "説明",
   "common.delete_confirm": "削除しますか",
+  "common.no_results": "条件に一致する項目はありません。",
   "common.config_applied": "設定を適用しました。",
   "common.change_saved": "変更を保存しました。",
   "common.apply_failed": "適用に失敗しました。",
