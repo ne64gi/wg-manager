@@ -168,10 +168,25 @@ switch ($Command) {
     "cli" {
         docker compose --profile tools run --rm wg-studio-cli @Args
     }
+    "backup-db" {
+        bash ./scripts/backup-db.sh @Args
+    }
+    "restore-db" {
+        bash ./scripts/restore-db.sh @Args
+    }
+    "export-state" {
+        bash ./scripts/export-state.sh @Args
+    }
+    "import-state" {
+        bash ./scripts/import-state.sh @Args
+    }
+    "pytest" {
+        bash ./scripts/pytest-safe.sh @Args
+    }
     "e2e" {
         Invoke-IsolatedE2E
     }
     default {
-        throw "Unsupported command '$Command'. Use: up, build, restart, down, ps, logs, wait, health, smoke, cli, e2e."
+        throw "Unsupported command '$Command'. Use: up, build, restart, down, ps, logs, wait, health, smoke, cli, e2e, backup-db, restore-db, export-state, import-state, pytest."
     }
 }

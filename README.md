@@ -19,6 +19,7 @@ Current product state:
 - WireGuard apply flow
 - live WireGuard status and GUI audit logs
 - release documentation for `v1.0.0`, `1.1.x`, and `1.2.x`
+- host-side DB backup/restore scripts and logical state export/import scripts
 
 ## Docs
 
@@ -30,6 +31,7 @@ Recommended starting points:
 - [`docs/en/guide/quick-start.md`](docs/en/guide/quick-start.md)
 - [`docs/en/current/overview.md`](docs/en/current/overview.md)
 - [`docs/en/current/api.md`](docs/en/current/api.md)
+- [`docs/en/current/backup-and-restore.md`](docs/en/current/backup-and-restore.md)
 - [`docs/en/current/auth-and-api-rules.md`](docs/en/current/auth-and-api-rules.md)
 - [`docs/en/release-notes/README.md`](docs/en/release-notes/README.md)
 - [`docs/en/planning/roadmap.md`](docs/en/planning/roadmap.md)
@@ -88,6 +90,12 @@ Start the stack:
 docker compose up -d --build
 ```
 
+Before any destructive DB work, always create a full DB backup first:
+
+```bash
+./scripts/backup-db.sh
+```
+
 This starts only the normal runtime services:
 
 - `postgres`
@@ -128,6 +136,15 @@ Run a CLI command:
 
 ```bash
 docker compose --profile tools run --rm wg-studio-cli group list
+```
+
+Safe operator flows:
+
+```bash
+./scripts/export-state.sh
+./scripts/backup-db.sh
+./scripts/restore-db.sh --main backups/db/wg-studio-YYYYMMDD-HHMMSS.dump --audit backups/db/wg-studio-audit-YYYYMMDD-HHMMSS.dump --dry-run --yes
+./scripts/pytest-safe.sh tests/test_apply.py
 ```
 
 Login-user related CLI examples:

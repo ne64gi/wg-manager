@@ -16,6 +16,8 @@ docker compose --profile tools run --rm -T \
   "pg_dump -h postgres -U \"${POSTGRES_USER}\" -d \"${POSTGRES_DB}\" -Fc -f \"/backups/db/${main_dump}\" && \
    pg_dump -h postgres -U \"${POSTGRES_USER}\" -d \"${POSTGRES_AUDIT_DB}\" -Fc -f \"/backups/db/${audit_dump}\""
 
+chown "$(id -u):$(id -g)" "${backup_dir}/${main_dump}" "${backup_dir}/${audit_dump}" 2>/dev/null || true
+
 echo "Created:"
 echo "  ${backup_dir}/${main_dump}"
 echo "  ${backup_dir}/${audit_dump}"

@@ -30,12 +30,16 @@
 - `scripts/import-state.sh --input <json> --yes`
   - JSON state を取り込みます
   - 破壊的なので `--yes` 必須です
+- `scripts/pytest-safe.sh [pytest args...]`
+  - 専用の `*_test` DB を使って pytest を実行します
+  - 本番 DB を向いたまま pytest を走らせないための正式ルートです
 
 ## 例
 
 ```sh
 ./scripts/backup-db.sh
 ./scripts/export-state.sh
+./scripts/pytest-safe.sh tests/test_apply.py
 ./scripts/restore-db.sh --main backups/db/wg-studio-20260328-220000.dump --audit backups/db/wg-studio-audit-20260328-220000.dump --yes
 ./scripts/import-state.sh --input backups/state/wg-studio-state-20260328-220000.json --yes
 ```
@@ -43,5 +47,6 @@
 ## 補足
 
 - どの機能も GUI には出していません
+- `restore-db.sh --dry-run --yes` で、実際に戻す前に dump 内容と対象 DB を確認できます
 - `restore-db.sh` は restore 前に `wg-studio-api` と `wg-studio-web` を停止し、完了後に再起動します
 - `pgtools` と `wg-studio-cli` は Compose の `tools` profile で動きます

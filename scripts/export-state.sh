@@ -14,4 +14,6 @@ docker compose --profile tools run --rm -T \
   wg-studio-cli \
   state export --output "/backups/state/$(basename "${output_path}")"
 
+chown "$(id -u):$(id -g)" "${output_path}" 2>/dev/null || true
+
 echo "Created: ${output_path}"

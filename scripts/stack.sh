@@ -166,8 +166,11 @@ case "$command_name" in
   import-state)
     ./scripts/import-state.sh "$@"
     ;;
+  pytest)
+    ./scripts/pytest-safe.sh "$@"
+    ;;
   *)
-    echo "Unsupported command '$command_name'. Use: up, build, restart, down, ps, logs, wait, health, smoke, cli, e2e, backup-db, restore-db, export-state, import-state." >&2
+    echo "Unsupported command '$command_name'. Use: up, build, restart, down, ps, logs, wait, health, smoke, cli, e2e, backup-db, restore-db, export-state, import-state, pytest." >&2
     exit 1
     ;;
 esac

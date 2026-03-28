@@ -30,12 +30,16 @@
 - `scripts/import-state.sh --input <json> --yes`
   - imports JSON state
   - destructive, so `--yes` is required
+- `scripts/pytest-safe.sh [pytest args...]`
+  - runs pytest against dedicated `*_test` databases
+  - this is the supported path for tests that must never touch the operator DB
 
 ## Example
 
 ```sh
 ./scripts/backup-db.sh
 ./scripts/export-state.sh
+./scripts/pytest-safe.sh tests/test_apply.py
 ./scripts/restore-db.sh --main backups/db/wg-studio-20260328-220000.dump --audit backups/db/wg-studio-audit-20260328-220000.dump --yes
 ./scripts/import-state.sh --input backups/state/wg-studio-state-20260328-220000.json --yes
 ```
@@ -43,5 +47,6 @@
 ## Notes
 
 - none of these flows are exposed in the GUI
+- `restore-db.sh --dry-run --yes` lets you inspect the dump target before any destructive restore runs
 - `restore-db.sh` stops `wg-studio-api` and `wg-studio-web` before restore, then starts them again
 - `pgtools` and `wg-studio-cli` run through the Compose `tools` profile
