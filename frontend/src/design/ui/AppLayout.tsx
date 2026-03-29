@@ -181,7 +181,7 @@ export function AppLayout({
               </span>
               <div className={isDesktopNavCollapsed ? "sidebar-collapsed-hidden" : ""}>
                 <div className="brand-title">wg-studio</div>
-                <div className="brand-subtitle">WireGuard control plane</div>
+                <div className="brand-subtitle">Management console</div>
               </div>
             </div>
 
