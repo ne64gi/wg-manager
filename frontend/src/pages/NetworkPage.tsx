@@ -168,8 +168,8 @@ export function NetworkPage() {
         <StatCard title={t("network.hidden_peers", "Hidden / unrevealed")} value={`${metrics.hiddenPeers}`} />
       </div>
 
-      <div className="dashboard-top-grid network-layout-grid">
-        <div className="dashboard-panel-span-12">
+      <div className="network-main-grid">
+        <div className="network-main-primary">
           <Panel
             title={t("network.scene", "Relationship graph")}
             actions={
@@ -262,57 +262,8 @@ export function NetworkPage() {
             )}
           </Panel>
         </div>
-      </div>
 
-      <div className="dashboard-bottom-grid network-inspector-grid">
-        <div className="dashboard-panel-span-6 network-side-stack">
-          <Panel title={t("network.legend", "Legend")}>
-            <div className="network-legend-list">
-              <div className="network-legend-item">
-                <span className="network-dot network-dot-server" />
-                <div>
-                  <strong>{t("network.server", "Server")}</strong>
-                  <div className="muted-text">{t("network.server_subtitle", "WireGuard control plane root")}</div>
-                </div>
-              </div>
-              <div className="network-legend-item">
-                <span className="network-dot network-dot-group" />
-                <div>
-                  <strong>{t("table.group", "Group")}</strong>
-                  <div className="muted-text">{t("network.legend_group", "Allocation boundary and policy scope.")}</div>
-                </div>
-              </div>
-              <div className="network-legend-item">
-                <span className="network-dot network-dot-user" />
-                <div>
-                  <strong>{t("table.user", "User")}</strong>
-                  <div className="muted-text">{t("network.legend_user", "Identity hub between groups and client peers.")}</div>
-                </div>
-              </div>
-              <div className="network-legend-item">
-                <span className="network-dot network-dot-peer" />
-                <div>
-                  <strong>{t("table.peers", "Peers")}</strong>
-                  <div className="muted-text">{t("network.legend_peer", "Client endpoints with status and traffic context.")}</div>
-                </div>
-              </div>
-              <div className="muted-text network-legend-note">
-                {t(
-                  "network.legend_status_note",
-                  "Green border means online, gray means offline, dashed means not revealed, and faded means inactive.",
-                )}
-              </div>
-              <div className="muted-text network-legend-note">
-                {t(
-                  "network.legend_size_note",
-                  "Larger user and peer nodes indicate heavier traffic usage.",
-                )}
-              </div>
-            </div>
-          </Panel>
-        </div>
-
-        <div className="dashboard-panel-span-6 network-side-stack">
+        <div className="network-main-sidebar network-side-stack">
           <Panel title={t("network.focus_details", "Node details")}>
             {selection ? (
               <div className="network-detail-card">
@@ -361,6 +312,51 @@ export function NetworkPage() {
                 </span>
               </div>
             )}
+          </Panel>
+
+          <Panel title={t("network.legend", "Legend")}>
+            <div className="network-legend-list">
+              <div className="network-legend-item">
+                <span className="network-dot network-dot-server" />
+                <div>
+                  <strong>{t("network.server", "Server")}</strong>
+                  <div className="muted-text">{t("network.server_subtitle", "WireGuard control plane root")}</div>
+                </div>
+              </div>
+              <div className="network-legend-item">
+                <span className="network-dot network-dot-group" />
+                <div>
+                  <strong>{t("table.group", "Group")}</strong>
+                  <div className="muted-text">{t("network.legend_group", "Allocation boundary and policy scope.")}</div>
+                </div>
+              </div>
+              <div className="network-legend-item">
+                <span className="network-dot network-dot-user" />
+                <div>
+                  <strong>{t("table.user", "User")}</strong>
+                  <div className="muted-text">{t("network.legend_user", "Identity hub between groups and client peers.")}</div>
+                </div>
+              </div>
+              <div className="network-legend-item">
+                <span className="network-dot network-dot-peer" />
+                <div>
+                  <strong>{t("table.peers", "Peers")}</strong>
+                  <div className="muted-text">{t("network.legend_peer", "Client endpoints with status and traffic context.")}</div>
+                </div>
+              </div>
+              <div className="muted-text network-legend-note">
+                {t(
+                  "network.legend_status_note",
+                  "Green border means online, gray means offline, dashed means not revealed, and faded means inactive.",
+                )}
+              </div>
+              <div className="muted-text network-legend-note">
+                {t(
+                  "network.legend_size_note",
+                  "Larger user and peer nodes indicate heavier traffic usage.",
+                )}
+              </div>
+            </div>
           </Panel>
         </div>
       </div>
