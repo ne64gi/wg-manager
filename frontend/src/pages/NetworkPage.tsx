@@ -151,7 +151,7 @@ export function NetworkPage() {
           <p className="page-subtitle">
             {t(
               "network.subtitle",
-              "Read the current Group -> User -> Peer relationships as an operator-friendly graph instead of a decorative 3D scene.",
+              "Review the current Group -> User -> Peer relationships.",
             )}
           </p>
         </div>
@@ -273,6 +273,15 @@ export function NetworkPage() {
                 </div>
                 {selection.kind !== "server" ? (
                   <div className="network-detail-actions">
+                    <div className="network-action-copy">
+                      <strong>{t("network.action_heading", "Availability")}</strong>
+                      <div className="muted-text">
+                        {t(
+                          "network.action_hint",
+                          "Enable or disable the selected node from here.",
+                        )}
+                      </div>
+                    </div>
                     <div className={`status-pill ${selection.isActive ? "status-pill-online" : ""}`}>
                       {selection.isActive
                         ? t("common.enabled", "Enabled")

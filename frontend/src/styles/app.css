@@ -1021,6 +1021,12 @@
   gap: 10px;
 }
 
+.network-action-copy {
+  display: grid;
+  gap: 4px;
+  min-width: min(240px, 100%);
+}
+
 .network-detail-list {
   display: grid;
   gap: 10px;
