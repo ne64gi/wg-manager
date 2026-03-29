@@ -157,6 +157,8 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "network.legend_group": "割当境界とポリシースコープです。",
   "network.legend_user": "グループとピアをつなぐ利用者ハブです。",
   "network.legend_peer": "状態とトラフィックを持つ端末ノードです。",
+  "network.legend_selection_note": "選択中は関連ノードだけ強調し、それ以外は暗く表示します。",
+  "network.legend_inactive_note": "無効なノードは常に色を落として表示します。",
   "network.legend_size_note": "ユーザーとピアのノードが大きいほど、トラフィック量が多いことを示します。",
   "network.focus_details": "ノード詳細",
   "network.action_heading": "利用設定",

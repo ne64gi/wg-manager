@@ -361,6 +361,18 @@ export function NetworkPage() {
               </div>
               <div className="muted-text network-legend-note">
                 {t(
+                  "network.legend_selection_note",
+                  "Selected nodes keep their color while unrelated nodes are dimmed.",
+                )}
+              </div>
+              <div className="muted-text network-legend-note">
+                {t(
+                  "network.legend_inactive_note",
+                  "Inactive nodes stay muted even when they are part of the current focus.",
+                )}
+              </div>
+              <div className="muted-text network-legend-note">
+                {t(
                   "network.legend_size_note",
                   "Larger user and peer nodes indicate heavier traffic usage.",
                 )}

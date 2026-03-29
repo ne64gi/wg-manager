@@ -47,9 +47,9 @@ export function NetworkGraph({
         {
           selector: "node",
           style: {
-            "background-color": "#283244",
+            "background-color": "#243043",
             label: "data(label)",
-            color: "#f7f4f3",
+            color: "#eef3ff",
             "text-wrap": "wrap",
             "text-max-width": "120px",
             "font-size": "11px",
@@ -57,11 +57,13 @@ export function NetworkGraph({
             "text-valign": "center",
             "text-halign": "center",
             "border-width": 3,
-            "border-color": "#95a0b3",
+            "border-color": "#8b99af",
             width: 110,
             height: 72,
             padding: "10px",
             "overlay-opacity": 0,
+            opacity: 0.96,
+            "text-opacity": 0.96,
           },
         },
         {
@@ -71,14 +73,14 @@ export function NetworkGraph({
             "curve-style": "bezier",
             "line-color": "#65738c",
             "target-arrow-shape": "none",
-            opacity: 0.78,
+            opacity: 0.72,
           },
         },
         {
           selector: ".graph-node-server",
           style: {
             shape: "round-rectangle",
-            "background-color": "#162033",
+            "background-color": "#182436",
             "border-color": "#f0d06b",
             color: "#fff7d8",
             width: 196,
@@ -93,8 +95,8 @@ export function NetworkGraph({
           selector: ".graph-node-group",
           style: {
             shape: "round-rectangle",
-            "background-color": "rgba(50, 64, 87, 0.22)",
-            "border-color": "#8f9db3",
+            "background-color": "rgba(70, 85, 110, 0.2)",
+            "border-color": "#7f8ca1",
             "font-size": "12px",
             "font-weight": 700,
             "text-max-width": "132px",
@@ -110,8 +112,8 @@ export function NetworkGraph({
           selector: ".graph-node-user",
           style: {
             shape: "round-rectangle",
-            "background-color": "#33455c",
-            "border-color": "#91a0b8",
+            "background-color": "#32435b",
+            "border-color": "#90a0ba",
             width: "data(nodeWidth)",
             height: "data(nodeHeight)",
             "font-size": "data(fontSize)",
@@ -122,8 +124,8 @@ export function NetworkGraph({
           selector: ".graph-node-peer",
           style: {
             shape: "ellipse",
-            "background-color": "#364150",
-            "border-color": "#8b96a8",
+            "background-color": "#313b49",
+            "border-color": "#8794a6",
             width: "data(nodeWidth)",
             height: "data(nodeHeight)",
             "font-size": "data(fontSize)",
@@ -135,15 +137,15 @@ export function NetworkGraph({
           style: {
             "border-color": "#79d483",
             "border-width": 3,
-            "shadow-blur": 16,
+            "shadow-blur": 14,
             "shadow-color": "#79d483",
-            "shadow-opacity": 0.22,
+            "shadow-opacity": 0.18,
           },
         },
         {
           selector: ".graph-node-offline",
           style: {
-            "border-color": "#8d96a5",
+            "border-color": "#788397",
             "shadow-opacity": 0,
           },
         },
@@ -151,25 +153,34 @@ export function NetworkGraph({
           selector: ".graph-node-hidden",
           style: {
             "border-style": "dashed",
-            opacity: 0.68,
+            opacity: 0.7,
+            "text-opacity": 0.78,
           },
         },
         {
           selector: ".graph-node-inactive",
           style: {
-            opacity: 0.42,
+            opacity: 0.34,
+            "text-opacity": 0.5,
+            color: "#a4afc1",
+            "background-color": "#222a36",
+            "border-color": "#5f697a",
+            "shadow-opacity": 0,
           },
         },
         {
           selector: ".graph-dimmed",
           style: {
-            opacity: 0.14,
+            opacity: 0.18,
+            "text-opacity": 0.24,
+            "shadow-opacity": 0,
           },
         },
         {
           selector: ".graph-emphasized",
           style: {
             opacity: 1,
+            "text-opacity": 1,
           },
         },
         {
@@ -208,6 +219,12 @@ export function NetworkGraph({
           },
         },
         {
+          selector: "edge.graph-dimmed",
+          style: {
+            opacity: 0.1,
+          },
+        },
+        {
           selector: "edge.graph-emphasized",
           style: {
             width: 4,
@@ -221,7 +238,10 @@ export function NetworkGraph({
             "border-width": 4,
             "shadow-blur": 20,
             "shadow-color": "#f0d06b",
-            "shadow-opacity": 0.28,
+            "shadow-opacity": 0.3,
+            "underlay-color": "rgba(240, 208, 107, 0.18)",
+            "underlay-padding": 10,
+            "underlay-opacity": 1,
           },
         },
       ] as any,
