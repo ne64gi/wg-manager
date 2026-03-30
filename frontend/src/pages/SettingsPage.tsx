@@ -1,9 +1,8 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { formatDateTime } from "../lib/format";
 import { t } from "../core/i18n";
 import { useSettingsPageData } from "../modules/gui/useSettingsPageData";
-import type { GuiSettingsUpdate } from "../types";
 import { DataTable } from "../design/ui/Table";
 import { GlobeIcon, LockIcon, SettingsIcon } from "../ui/Icons";
 
@@ -34,14 +33,11 @@ function Accordion({
 export function SettingsPage() {
   const {
     auth,
+    groupsQuery,
     loginUsersQuery,
     versionQuery,
     formState,
     setFormState,
-    effectiveThemeMode,
-    effectiveLocale,
-    setThemeMode,
-    setDefaultLocale,
     endpointAddress,
     setEndpointAddress,
     endpointPort,
@@ -56,27 +52,54 @@ export function SettingsPage() {
     setNewUsername,
     newPassword,
     setNewPassword,
-    passwordModalOpen,
-    setPasswordModalOpen,
-    currentPassword,
-    setCurrentPassword,
-    nextPassword,
-    setNextPassword,
-    confirmPassword,
-    setConfirmPassword,
+    newRole,
+    setNewRole,
+    newGroupId,
+    setNewGroupId,
+    newIsActive,
+    setNewIsActive,
     settingsMutation,
     endpointMutation,
     createLoginUserMutation,
     deleteLoginUserMutation,
-    changePasswordMutation,
+    updateLoginUserMutation,
     exportMutation,
     importMutation,
     handleImportFile,
-    submitPasswordChange,
   } = useSettingsPageData();
 
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const [tab, setTab] = useState<TabKey>("general");
+  const [passwordResetTarget, setPasswordResetTarget] = useState<{
+    id: number;
+    username: string;
+  } | null>(null);
+  const [editTarget, setEditTarget] = useState<{
+    id: number;
+    username: string;
+  } | null>(null);
+  const [editEmail, setEditEmail] = useState("");
+  const [editRole, setEditRole] = useState<"admin" | "group_admin">("admin");
+  const [editGroupId, setEditGroupId] = useState("");
+  const [adminResetPassword, setAdminResetPassword] = useState("");
+  const [adminResetConfirm, setAdminResetConfirm] = useState("");
+  const canManageLoginUsers = auth.currentUser?.role === "admin";
+  const canManageServerSettings = auth.currentUser?.role === "admin";
+  const groupNameById = new Map(
+    (groupsQuery.data ?? []).map((group) => [group.id, group.name]),
+  );
+
+  useEffect(() => {
+    if (tab === "security" && !canManageLoginUsers) {
+      setTab("general");
+    }
+  }, [canManageLoginUsers, tab]);
+
+  useEffect(() => {
+    if (tab === "server" && !canManageServerSettings) {
+      setTab("general");
+    }
+  }, [canManageServerSettings, tab]);
 
   return (
     <div className="page-stack">
@@ -99,94 +122,79 @@ export function SettingsPage() {
           <span>{t("settings.general_tab", "General")}</span>
         </button>
 
-        <button
-          type="button"
-          className={`tab-button ${tab === "server" ? "active" : ""}`}
-          onClick={() => setTab("server")}
-        >
-          <GlobeIcon />
-          <span>{t("settings.server_tab", "Server")}</span>
-        </button>
+        {canManageServerSettings ? (
+          <button
+            type="button"
+            className={`tab-button ${tab === "server" ? "active" : ""}`}
+            onClick={() => setTab("server")}
+          >
+            <GlobeIcon />
+            <span>{t("settings.server_tab", "Server")}</span>
+          </button>
+        ) : null}
 
-        <button
-          type="button"
-          className={`tab-button ${tab === "security" ? "active" : ""}`}
-          onClick={() => setTab("security")}
-        >
-          <LockIcon />
-          <span>{t("settings.security_tab", "Security")}</span>
-        </button>
+        {canManageLoginUsers ? (
+          <button
+            type="button"
+            className={`tab-button ${tab === "security" ? "active" : ""}`}
+            onClick={() => setTab("security")}
+          >
+            <LockIcon />
+            <span>{t("settings.security_tab", "Security")}</span>
+          </button>
+        ) : null}
       </div>
 
       <div className="tab-content">
         {tab === "general" ? (
           <div className="page-stack">
             <Accordion
-              title={t("settings.gui_heading", "GUI settings")}
+              title={t("settings.version_heading", "Build information")}
               defaultOpen
             >
               <div className="form-grid">
-                <label className="field">
-                  <span>{t("settings.theme_mode", "Theme mode")}</span>
-                  <select
-                    data-testid="settings-theme-mode-select"
-                    value={effectiveThemeMode}
-                    onChange={(event) =>
-                      setThemeMode(
-                        event.target.value as GuiSettingsUpdate["theme_mode"],
-                      )
-                    }
-                  >
-                    <option value="system">
-                      {t("settings.system_label", "System")}
-                    </option>
-                    <option value="dark">{t("common.dark", "dark")}</option>
-                    <option value="light">{t("common.light", "light")}</option>
-                  </select>
-                  <div className="muted-text">
-                    {t("settings.theme_hint", "Switch the GUI theme.")}
-                  </div>
-                </label>
+                <div className="field">
+                  <span>{t("settings.system_version", "System version")}</span>
+                  <input
+                    value={versionQuery.data?.version ?? ""}
+                    readOnly
+                    placeholder="0.0.0"
+                  />
+                </div>
 
-                <label className="field">
-                  <span>{t("settings.default_locale", "Default locale")}</span>
-                  <select
-                    data-testid="settings-default-locale-select"
-                    value={effectiveLocale}
-                    onChange={(event) =>
-                      setDefaultLocale(
-                        event.target.value as GuiSettingsUpdate["default_locale"],
-                      )
+                <div className="field">
+                  <span>
+                    {t("settings.frontend_version", "Frontend version")}
+                  </span>
+                  <input
+                    value={
+                      versionQuery.data?.frontend_version ??
+                      __WG_STUDIO_VERSION__
                     }
-                  >
-                    <option value="en">{t("locale.en", "English")}</option>
-                    <option value="ja">{t("locale.ja", "Japanese")}</option>
-                  </select>
-                  <div className="muted-text">
-                    {t(
-                      "settings.locale_hint",
-                      "Default language for newly opened screens.",
-                    )}
-                  </div>
-                </label>
-              </div>
+                    readOnly
+                    placeholder="0.0.0"
+                  />
+                </div>
 
-              <div className="action-row settings-section-actions">
-                <button
-                  type="button"
-                  className="primary-button"
-                  data-testid="settings-save-gui"
-                  onClick={() => settingsMutation.mutate()}
-                  disabled={settingsMutation.isPending}
-                >
-                  {t("common.save", "Save")}
-                </button>
+                <div className="field">
+                  <span>{t("settings.runtime_adapter", "Runtime adapter")}</span>
+                  <input
+                    data-testid="settings-runtime-adapter"
+                    value={versionQuery.data?.runtime_adapter ?? ""}
+                    readOnly
+                    placeholder="docker_container"
+                  />
+                </div>
               </div>
             </Accordion>
+          </div>
+        ) : null}
 
+        {tab === "server" && canManageServerSettings ? (
+          <div className="page-stack">
             <Accordion
-              title={t("settings.language_and_time", "Language and time")}
-              defaultOpen={false}
+              title={t("settings.refresh_heading", "Refresh and retention")}
+              defaultOpen
               summaryTestId="settings-language-and-time-summary"
             >
               <div className="form-grid">
@@ -315,6 +323,7 @@ export function SettingsPage() {
                 <button
                   type="button"
                   className="primary-button"
+                  data-testid="settings-save-gui"
                   onClick={() => settingsMutation.mutate()}
                   disabled={settingsMutation.isPending}
                 >
@@ -323,50 +332,6 @@ export function SettingsPage() {
               </div>
             </Accordion>
 
-            <Accordion
-              title={t("settings.version_heading", "Build information")}
-              defaultOpen={false}
-            >
-              <div className="form-grid">
-                <div className="field">
-                  <span>{t("settings.system_version", "System version")}</span>
-                  <input
-                    value={versionQuery.data?.version ?? ""}
-                    readOnly
-                    placeholder="0.0.0"
-                  />
-                </div>
-
-                <div className="field">
-                  <span>
-                    {t("settings.frontend_version", "Frontend version")}
-                  </span>
-                  <input
-                    value={
-                      versionQuery.data?.frontend_version ??
-                      __WG_STUDIO_VERSION__
-                    }
-                    readOnly
-                    placeholder="0.0.0"
-                  />
-                </div>
-
-                <div className="field">
-                  <span>{t("settings.runtime_adapter", "Runtime adapter")}</span>
-                  <input
-                    data-testid="settings-runtime-adapter"
-                    value={versionQuery.data?.runtime_adapter ?? ""}
-                    readOnly
-                    placeholder="docker_container"
-                  />
-                </div>
-              </div>
-            </Accordion>
-          </div>
-        ) : null}
-
-        {tab === "server" ? (
-          <div className="page-stack">
             <Accordion
               title={t("settings.endpoint_heading", "Endpoint settings")}
               defaultOpen
@@ -603,7 +568,7 @@ export function SettingsPage() {
           </div>
         ) : null}
 
-        {tab === "security" ? (
+        {tab === "security" && canManageLoginUsers ? (
           <div className="page-stack">
             <Accordion
               title={t("settings.login_users_heading", "Login users")}
@@ -627,19 +592,66 @@ export function SettingsPage() {
                   value={newPassword}
                   onChange={(event) => setNewPassword(event.target.value)}
                 />
+                <select
+                  value={newRole}
+                  onChange={(event) =>
+                    setNewRole(event.target.value as typeof newRole)
+                  }
+                >
+                  <option value="admin">
+                    {t("settings.login_user_role_admin", "Admin")}
+                  </option>
+                  <option value="group_admin">
+                    {t("settings.login_user_role_group_admin", "Group admin")}
+                  </option>
+                </select>
+                {newRole === "group_admin" ? (
+                  <select
+                    value={newGroupId}
+                    onChange={(event) => setNewGroupId(event.target.value)}
+                  >
+                    <option value="">
+                      {t("settings.login_user_group_placeholder", "Select group")}
+                    </option>
+                    {(groupsQuery.data ?? []).map((group) => (
+                      <option key={group.id} value={String(group.id)}>
+                        {group.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
+                <label className="field-checkbox settings-checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={newIsActive}
+                    onChange={(event) => setNewIsActive(event.target.checked)}
+                  />
+                  <div className="settings-checkbox-copy">
+                    <span className="settings-checkbox-title">
+                      {t("common.enabled", "Enabled")}
+                    </span>
+                  </div>
+                </label>
                 <button
                   type="button"
                   className="primary-button"
                   onClick={() => createLoginUserMutation.mutate()}
-                  disabled={createLoginUserMutation.isPending}
+                  disabled={
+                    createLoginUserMutation.isPending ||
+                    !newUsername.trim() ||
+                    !newPassword.trim() ||
+                    (newRole === "group_admin" && !newGroupId)
+                  }
                 >
-                  {t("settings.add_user", "Add user")}
+                  {t("common.add", "Add")}
                 </button>
               </div>
 
               <DataTable
                 headers={[
                   t("common.username", "Username"),
+                  t("settings.login_user_role", "Role"),
+                  t("table.group", "Group"),
                   t("common.status", "Status"),
                   t("common.last_login", "Last login"),
                   t("common.actions", "Actions"),
@@ -649,6 +661,18 @@ export function SettingsPage() {
                   <tr key={loginUser.id}>
                     <td>{loginUser.username}</td>
                     <td>
+                      {loginUser.role === "group_admin"
+                        ? t("settings.login_user_role_group_admin", "Group admin")
+                        : t("settings.login_user_role_admin", "Admin")}
+                    </td>
+                    <td>
+                      {loginUser.role === "group_admin"
+                        ? (loginUser.group_id
+                            ? groupNameById.get(loginUser.group_id)
+                            : null) ?? t("common.none", "None")
+                        : "—"}
+                    </td>
+                    <td>
                       {loginUser.is_active
                         ? t("common.enabled", "Enabled")
                         : t("common.disabled", "Disabled")}
@@ -656,15 +680,56 @@ export function SettingsPage() {
                     <td>{formatDateTime(loginUser.last_login_at)}</td>
                     <td>
                       <div className="action-row action-row-compact">
-                        {auth.currentUser?.id === loginUser.id ? (
-                          <button
-                            type="button"
-                            className="ghost-button"
-                            onClick={() => setPasswordModalOpen(true)}
-                          >
-                            {t("settings.change_password", "Change password")}
-                          </button>
-                        ) : null}
+                        <button
+                          type="button"
+                          className="ghost-button"
+                          onClick={() => {
+                            setEditTarget({
+                              id: loginUser.id,
+                              username: loginUser.username,
+                            });
+                            setEditEmail(loginUser.email ?? "");
+                            setEditRole(loginUser.role);
+                            setEditGroupId(
+                              loginUser.group_id ? String(loginUser.group_id) : "",
+                            );
+                          }}
+                        >
+                          {t("common.edit", "Edit")}
+                        </button>
+
+                        <button
+                          type="button"
+                          className={
+                            loginUser.is_active ? "danger-button" : "primary-button"
+                          }
+                          onClick={() =>
+                            updateLoginUserMutation.mutate({
+                              loginUserId: loginUser.id,
+                              payload: { is_active: !loginUser.is_active },
+                            })
+                          }
+                          disabled={updateLoginUserMutation.isPending}
+                        >
+                          {loginUser.is_active
+                            ? t("common.disable", "Disable")
+                            : t("common.enable", "Enable")}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="ghost-button"
+                          onClick={() => {
+                            setPasswordResetTarget({
+                              id: loginUser.id,
+                              username: loginUser.username,
+                            });
+                            setAdminResetPassword("");
+                            setAdminResetConfirm("");
+                          }}
+                        >
+                          {t("settings.reset_password", "Reset password")}
+                        </button>
 
                         <button
                           type="button"
@@ -686,18 +751,125 @@ export function SettingsPage() {
         ) : null}
       </div>
 
-      {passwordModalOpen ? (
-        <div className="modal-backdrop" onClick={() => setPasswordModalOpen(false)}>
+      {editTarget ? (
+        <div className="modal-backdrop" onClick={() => setEditTarget(null)}>
           <div
             className="modal-card modal-compact"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="panel-header">
-              <h2>{t("auth.change_password_title", "Change password")}</h2>
+              <h2>{t("common.edit", "Edit")}</h2>
               <button
                 type="button"
                 className="ghost-button"
-                onClick={() => setPasswordModalOpen(false)}
+                onClick={() => setEditTarget(null)}
+              >
+                {t("common.close", "Close")}
+              </button>
+            </div>
+
+            <div className="muted-text">{editTarget.username}</div>
+
+            <div className="form-grid" style={{ marginTop: 16 }}>
+              <label className="field field-span-2">
+                <span>{t("auth.email", "Email")}</span>
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={(event) => setEditEmail(event.target.value)}
+                  placeholder="admin@example.com"
+                />
+              </label>
+
+              <label className="field">
+                <span>{t("settings.login_user_role", "Role")}</span>
+                <select
+                  value={editRole}
+                  onChange={(event) =>
+                    setEditRole(event.target.value as typeof editRole)
+                  }
+                >
+                  <option value="admin">
+                    {t("settings.login_user_role_admin", "Admin")}
+                  </option>
+                  <option value="group_admin">
+                    {t("settings.login_user_role_group_admin", "Group admin")}
+                  </option>
+                </select>
+              </label>
+
+              <label className="field">
+                <span>{t("table.group", "Group")}</span>
+                <select
+                  value={editGroupId}
+                  onChange={(event) => setEditGroupId(event.target.value)}
+                  disabled={editRole !== "group_admin"}
+                >
+                  <option value="">
+                    {editRole === "group_admin"
+                      ? t("settings.login_user_group_placeholder", "Select group")
+                      : t("common.none", "None")}
+                  </option>
+                  {(groupsQuery.data ?? []).map((group) => (
+                    <option key={group.id} value={String(group.id)}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="primary-button"
+                disabled={
+                  updateLoginUserMutation.isPending ||
+                  (editRole === "group_admin" && !editGroupId)
+                }
+                onClick={() => {
+                  if (!editTarget) {
+                    return;
+                  }
+                  updateLoginUserMutation.mutate(
+                    {
+                      loginUserId: editTarget.id,
+                      payload: {
+                        email: editEmail.trim() || null,
+                        role: editRole,
+                        group_id:
+                          editRole === "group_admin" && editGroupId
+                            ? Number(editGroupId)
+                            : null,
+                      },
+                    },
+                    {
+                      onSuccess: () => {
+                        setEditTarget(null);
+                      },
+                    },
+                  );
+                }}
+              >
+                {t("common.save", "Save")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {passwordResetTarget ? (
+        <div className="modal-backdrop" onClick={() => setPasswordResetTarget(null)}>
+          <div
+            className="modal-card modal-compact"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="panel-header">
+              <h2>{t("settings.reset_password", "Reset password")}</h2>
+              <button
+                type="button"
+                className="ghost-button"
+                onClick={() => setPasswordResetTarget(null)}
               >
                 {t("common.close", "Close")}
               </button>
@@ -705,27 +877,20 @@ export function SettingsPage() {
 
             <div className="muted-text">
               {t(
-                "auth.change_password_description",
-                "Verify your current password before updating it.",
+                "settings.reset_password_description",
+                "Set a new password for this login user without requiring their current password.",
               )}
             </div>
 
-            <div className="form-grid" style={{ marginTop: 16 }}>
-              <label className="field field-span-2">
-                <span>{t("auth.current_password", "Current password")}</span>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(event) => setCurrentPassword(event.target.value)}
-                />
-              </label>
+            <div className="muted-text">{passwordResetTarget.username}</div>
 
+            <div className="form-grid" style={{ marginTop: 16 }}>
               <label className="field field-span-2">
                 <span>{t("auth.new_password", "New password")}</span>
                 <input
                   type="password"
-                  value={nextPassword}
-                  onChange={(event) => setNextPassword(event.target.value)}
+                  value={adminResetPassword}
+                  onChange={(event) => setAdminResetPassword(event.target.value)}
                 />
               </label>
 
@@ -733,8 +898,8 @@ export function SettingsPage() {
                 <span>{t("auth.confirm_password", "Confirm password")}</span>
                 <input
                   type="password"
-                  value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  value={adminResetConfirm}
+                  onChange={(event) => setAdminResetConfirm(event.target.value)}
                 />
               </label>
             </div>
@@ -744,14 +909,30 @@ export function SettingsPage() {
                 type="button"
                 className="primary-button"
                 disabled={
-                  !currentPassword ||
-                  !nextPassword ||
-                  nextPassword !== confirmPassword ||
-                  changePasswordMutation.isPending
+                  !adminResetPassword ||
+                  adminResetPassword !== adminResetConfirm ||
+                  updateLoginUserMutation.isPending
                 }
-                onClick={submitPasswordChange}
+                onClick={() => {
+                  if (!passwordResetTarget) {
+                    return;
+                  }
+                  updateLoginUserMutation.mutate(
+                    {
+                      loginUserId: passwordResetTarget.id,
+                      payload: { password: adminResetPassword },
+                    },
+                    {
+                      onSuccess: () => {
+                        setPasswordResetTarget(null);
+                        setAdminResetPassword("");
+                        setAdminResetConfirm("");
+                      },
+                    },
+                  );
+                }}
               >
-                {t("auth.change_password", "Change password")}
+                {t("settings.reset_password", "Reset password")}
               </button>
             </div>
           </div>

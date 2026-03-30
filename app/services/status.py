@@ -79,7 +79,9 @@ def _capture_peer_snapshots(
         session.rollback()
 
 
-def get_wireguard_peer_statuses(session: Session) -> list[PeerStatusRead]:
+def get_wireguard_peer_statuses(
+    session: Session, *, group_id: int | None = None
+) -> list[PeerStatusRead]:
     gui_settings = get_gui_settings(session)
     runtime_by_key = {}
     try:
@@ -90,13 +92,15 @@ def get_wireguard_peer_statuses(session: Session) -> list[PeerStatusRead]:
         runtime_by_key = {
             peer.public_key: peer for peer in runtime_read.peers if peer.public_key
         }
-    peers = list(
-        session.scalars(
-            select(Peer)
-            .options(joinedload(Peer.user).joinedload(User.group))
-            .order_by(Peer.name)
-        )
+    peer_query = (
+        select(Peer)
+        .options(joinedload(Peer.user).joinedload(User.group))
+        .order_by(Peer.name)
     )
+    if group_id is not None:
+        peer_query = peer_query.join(Peer.user).where(User.group_id == group_id)
+
+    peers = list(session.scalars(peer_query))
 
     statuses: list[PeerStatusRead] = []
     for peer in peers:
@@ -244,16 +248,20 @@ def get_wireguard_sync_state(session: Session) -> SyncStateRead:
     )
 
 
-def get_user_traffic_summaries(session: Session) -> list[UserTrafficSummaryRead]:
-    statuses = get_wireguard_peer_statuses(session)
+def get_user_traffic_summaries(
+    session: Session, *, group_id: int | None = None
+) -> list[UserTrafficSummaryRead]:
+    statuses = get_wireguard_peer_statuses(session, group_id=group_id)
     grouped: dict[int, UserTrafficSummaryRead] = {}
-    peer_rows = list(
-        session.scalars(
-            select(Peer)
-            .options(joinedload(Peer.user).joinedload(User.group))
-            .order_by(Peer.name)
-        )
+    peer_query = (
+        select(Peer)
+        .options(joinedload(Peer.user).joinedload(User.group))
+        .order_by(Peer.name)
     )
+    if group_id is not None:
+        peer_query = peer_query.join(Peer.user).where(User.group_id == group_id)
+
+    peer_rows = list(session.scalars(peer_query))
     peers_by_id = {peer.id: peer for peer in peer_rows}
 
     for status in statuses:
@@ -284,15 +292,19 @@ def get_user_traffic_summaries(session: Session) -> list[UserTrafficSummaryRead]
     return sorted(grouped.values(), key=lambda item: (item.group_name, item.user_name))
 
 
-def get_group_traffic_summaries(session: Session) -> list[GroupTrafficSummaryRead]:
-    statuses = get_wireguard_peer_statuses(session)
-    peer_rows = list(
-        session.scalars(
-            select(Peer)
-            .options(joinedload(Peer.user).joinedload(User.group))
-            .order_by(Peer.name)
-        )
+def get_group_traffic_summaries(
+    session: Session, *, group_id: int | None = None
+) -> list[GroupTrafficSummaryRead]:
+    statuses = get_wireguard_peer_statuses(session, group_id=group_id)
+    peer_query = (
+        select(Peer)
+        .options(joinedload(Peer.user).joinedload(User.group))
+        .order_by(Peer.name)
     )
+    if group_id is not None:
+        peer_query = peer_query.join(Peer.user).where(User.group_id == group_id)
+
+    peer_rows = list(session.scalars(peer_query))
     peers_by_id = {peer.id: peer for peer in peer_rows}
     grouped: dict[int, GroupTrafficSummaryRead] = {}
     seen_users: dict[int, set[int]] = {}
@@ -361,16 +373,20 @@ def get_wireguard_overview_history(
     return history
 
 
-def get_wireguard_topology(session: Session) -> list[GroupTopologyNodeRead]:
-    statuses = get_wireguard_peer_statuses(session)
+def get_wireguard_topology(
+    session: Session, *, group_id: int | None = None
+) -> list[GroupTopologyNodeRead]:
+    statuses = get_wireguard_peer_statuses(session, group_id=group_id)
     statuses_by_peer_id = {status.peer_id: status for status in statuses}
-    peer_rows = list(
-        session.scalars(
-            select(Peer)
-            .options(joinedload(Peer.user).joinedload(User.group))
-            .order_by(Peer.user_id, Peer.name)
-        )
+    peer_query = (
+        select(Peer)
+        .options(joinedload(Peer.user).joinedload(User.group))
+        .order_by(Peer.user_id, Peer.name)
     )
+    if group_id is not None:
+        peer_query = peer_query.join(Peer.user).where(User.group_id == group_id)
+
+    peer_rows = list(session.scalars(peer_query))
 
     groups: dict[int, GroupTopologyNodeRead] = {}
     users_by_group: dict[tuple[int, int], UserTopologyNodeRead] = {}

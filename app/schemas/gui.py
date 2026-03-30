@@ -4,6 +4,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.models import LoginUserRole
+
 
 def _normalize_log_level(value: str) -> str:
     normalized = value.strip().lower()
@@ -120,14 +122,70 @@ class GuiSettingsRead(BaseModel):
 class LoginUserCreate(BaseModel):
     username: str = Field(min_length=1, max_length=100)
     password: str = Field(min_length=8, max_length=255)
+    email: str | None = Field(default=None, max_length=255)
+    role: LoginUserRole = LoginUserRole.ADMIN
+    group_id: int | None = None
     description: str = ""
+    preferred_theme_mode: str = "system"
+    preferred_locale: str = "en"
+    preferred_timezone: str = Field(default="UTC", min_length=1, max_length=64)
+    avatar_url: str | None = Field(default=None, max_length=512)
     is_active: bool = True
+
+    @field_validator("preferred_theme_mode")
+    @classmethod
+    def validate_preferred_theme_mode(cls, value: str) -> str:
+        return _normalize_theme_mode(value)
+
+    @field_validator("preferred_locale")
+    @classmethod
+    def validate_preferred_locale(cls, value: str) -> str:
+        return _normalize_locale(value)
+
+    @field_validator("preferred_timezone")
+    @classmethod
+    def validate_preferred_timezone(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("preferred_timezone cannot be empty")
+        return normalized
 
 
 class LoginUserUpdate(BaseModel):
     password: str | None = Field(default=None, min_length=8, max_length=255)
+    email: str | None = Field(default=None, max_length=255)
+    role: LoginUserRole | None = None
+    group_id: int | None = None
     description: str | None = None
+    preferred_theme_mode: str | None = None
+    preferred_locale: str | None = None
+    preferred_timezone: str | None = Field(default=None, min_length=1, max_length=64)
+    avatar_url: str | None = Field(default=None, max_length=512)
     is_active: bool | None = None
+
+    @field_validator("preferred_theme_mode")
+    @classmethod
+    def validate_optional_preferred_theme_mode(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return _normalize_theme_mode(value)
+
+    @field_validator("preferred_locale")
+    @classmethod
+    def validate_optional_preferred_locale(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return _normalize_locale(value)
+
+    @field_validator("preferred_timezone")
+    @classmethod
+    def validate_optional_preferred_timezone(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("preferred_timezone cannot be empty")
+        return normalized
 
 
 class LoginUserRead(BaseModel):
@@ -135,7 +193,14 @@ class LoginUserRead(BaseModel):
 
     id: int
     username: str
+    group_id: int | None
+    email: str | None
+    role: LoginUserRole
     description: str
+    preferred_theme_mode: str
+    locale: str
+    timezone: str
+    avatar_url: str | None
     is_active: bool
     last_login_at: datetime | None
     created_at: datetime

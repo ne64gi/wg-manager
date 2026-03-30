@@ -23,6 +23,18 @@ class GroupScope(StrEnum):
         }[self]
 
 
+class LoginUserRole(StrEnum):
+    ADMIN = "admin"
+    GROUP_ADMIN = "group_admin"
+
+
+login_user_role_enum = Enum(
+    LoginUserRole,
+    values_callable=lambda enum_cls: [member.value for member in enum_cls],
+    name="loginuserrole",
+)
+
+
 class Group(Base):
     __tablename__ = "groups"
 
@@ -93,7 +105,18 @@ class LoginUser(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(100), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(512))
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    role: Mapped[LoginUserRole] = mapped_column(
+        login_user_role_enum,
+        default=LoginUserRole.ADMIN,
+        index=True,
+    )
+    group_id: Mapped[int | None] = mapped_column(ForeignKey("groups.id"), index=True, nullable=True)
     description: Mapped[str] = mapped_column(Text, default="")
+    preferred_theme_mode: Mapped[str] = mapped_column(String(16), default="system")
+    preferred_locale: Mapped[str] = mapped_column(String(16), default="en")
+    preferred_timezone: Mapped[str] = mapped_column(String(64), default="UTC")
+    avatar_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     last_login_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
@@ -112,6 +135,7 @@ class LoginUser(Base):
         back_populates="login_user",
         cascade="all, delete-orphan",
     )
+    group: Mapped["Group | None"] = relationship()
 
 
 class LoginSession(Base):

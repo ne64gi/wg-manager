@@ -10,8 +10,8 @@ export default function App() {
 
   useApplyDocumentPreferences({
     isAuthenticated: auth.isAuthenticated,
-    themeMode: guiSettingsQuery.data?.theme_mode,
-    defaultLocale: guiSettingsQuery.data?.default_locale,
+    themeMode: auth.currentUser?.preferred_theme_mode ?? guiSettingsQuery.data?.theme_mode,
+    defaultLocale: auth.currentUser?.locale ?? guiSettingsQuery.data?.default_locale,
   });
 
   return (

@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core import settings
-from app.models import GuiSettings, LoginUser
+from app.models import Group, GuiSettings, LoginUser, LoginUserRole
 from app.schemas.gui import GuiSettingsUpdate, LoginUserCreate, LoginUserUpdate
 from app.services.audit import log_gui_event, log_operation
 
@@ -131,11 +131,24 @@ def create_login_user(session: Session, payload: LoginUserCreate) -> LoginUser:
     )
     if existing:
         raise ValueError(f"login user '{payload.username}' already exists")
+    if payload.group_id is not None:
+        group = session.get(Group, payload.group_id)
+        if group is None:
+            raise ValueError(f"group id={payload.group_id} does not exist")
+    elif payload.role == LoginUserRole.GROUP_ADMIN:
+        raise ValueError("group_admin requires group_id")
 
     login_user = LoginUser(
         username=payload.username,
         password_hash=hash_password(payload.password),
+        email=payload.email,
+        role=payload.role,
+        group_id=payload.group_id,
         description=payload.description,
+        preferred_theme_mode=payload.preferred_theme_mode,
+        preferred_locale=payload.preferred_locale,
+        preferred_timezone=payload.preferred_timezone,
+        avatar_url=payload.avatar_url,
         is_active=payload.is_active,
     )
     session.add(login_user)
@@ -148,6 +161,8 @@ def create_login_user(session: Session, payload: LoginUserCreate) -> LoginUser:
         source="service",
         details={
             "username": login_user.username,
+            "role": login_user.role,
+            "group_id": login_user.group_id,
             "is_active": login_user.is_active,
         },
     )
@@ -167,11 +182,33 @@ def update_login_user(
     login_user = session.get(LoginUser, login_user_id)
     if login_user is None:
         raise ValueError(f"login user id={login_user_id} does not exist")
+    target_group_id = payload.group_id if payload.group_id is not None else login_user.group_id
+    target_role = payload.role if payload.role is not None else login_user.role
+    if payload.group_id is not None:
+        group = session.get(Group, payload.group_id)
+        if group is None:
+            raise ValueError(f"group id={payload.group_id} does not exist")
+    if target_role == LoginUserRole.GROUP_ADMIN and target_group_id is None:
+        raise ValueError("group_admin requires group_id")
 
     if payload.password is not None:
         login_user.password_hash = hash_password(payload.password)
+    if payload.email is not None:
+        login_user.email = payload.email
+    if payload.role is not None:
+        login_user.role = payload.role
+    if payload.group_id is not None:
+        login_user.group_id = payload.group_id
     if payload.description is not None:
         login_user.description = payload.description
+    if payload.preferred_theme_mode is not None:
+        login_user.preferred_theme_mode = payload.preferred_theme_mode
+    if payload.preferred_locale is not None:
+        login_user.preferred_locale = payload.preferred_locale
+    if payload.preferred_timezone is not None:
+        login_user.preferred_timezone = payload.preferred_timezone
+    if payload.avatar_url is not None:
+        login_user.avatar_url = payload.avatar_url
     if payload.is_active is not None:
         login_user.is_active = payload.is_active
     login_user.updated_at = datetime.now(timezone.utc)
@@ -184,6 +221,8 @@ def update_login_user(
         source="service",
         details={
             "username": login_user.username,
+            "role": login_user.role,
+            "group_id": login_user.group_id,
             "is_active": login_user.is_active,
             "description": login_user.description,
             "password_updated": payload.password is not None,
@@ -232,7 +271,11 @@ def bootstrap_login_user(session: Session) -> LoginUser | None:
     login_user = LoginUser(
         username=username,
         password_hash=hash_password(password),
+        role=LoginUserRole.ADMIN,
         description="Bootstrapped from environment",
+        preferred_theme_mode="system",
+        preferred_locale="en",
+        preferred_timezone="UTC",
         is_active=True,
     )
     session.add(login_user)

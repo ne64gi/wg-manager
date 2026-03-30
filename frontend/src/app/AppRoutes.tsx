@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
 
 import { DashboardPage } from "../pages/DashboardPage";
@@ -6,6 +7,7 @@ import { LoginPage } from "../pages/LoginPage";
 import { LogsPage } from "../pages/LogsPage";
 import { NetworkPage } from "../pages/NetworkPage";
 import { PeersPage } from "../pages/PeersPage";
+import { ProfilePage } from "../pages/ProfilePage";
 import { SettingsPage } from "../pages/SettingsPage";
 import { UsersPage } from "../pages/UsersPage";
 import { useAuth } from "../core/auth/AuthContext";
@@ -29,6 +31,16 @@ function ProtectedLayout() {
   );
 }
 
+function AdminOnlyRoute({ children }: { children: ReactNode }) {
+  const auth = useAuth();
+
+  if (auth.currentUser?.role !== "admin") {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 function LoginRoute() {
   const auth = useAuth();
   const navigate = useNavigate();
@@ -48,10 +60,25 @@ export function AppRoutes() {
         <Route path="/" element={<DashboardPage />} />
         <Route path="/peers" element={<PeersPage />} />
         <Route path="/network" element={<NetworkPage />} />
-        <Route path="/groups" element={<GroupsPage />} />
+        <Route
+          path="/groups"
+          element={
+            <AdminOnlyRoute>
+              <GroupsPage />
+            </AdminOnlyRoute>
+          }
+        />
         <Route path="/users" element={<UsersPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/logs" element={<LogsPage />} />
+        <Route
+          path="/logs"
+          element={
+            <AdminOnlyRoute>
+              <LogsPage />
+            </AdminOnlyRoute>
+          }
+        />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -35,6 +35,10 @@ repo に含まれる [`scripts/deploy.sh`](../../../scripts/deploy.sh) は、次
 3. `docker compose config`
 4. `docker compose up -d --build`
 
+schema 変更を明示的に流したい時は、
+[`scripts/migrate-db.sh`](../../../scripts/migrate-db.sh) で API container 内の
+`alembic upgrade head` も実行できます。
+
 ## 必要な secret
 
 GitHub / Gitea のどちらでも、同じ secret 名を使う前提です。

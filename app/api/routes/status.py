@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import require_authenticated_login_user
 from app.db import get_session
-from app.models import LoginUser
+from app.models import LoginUser, LoginUserRole
 from app.schemas.status import (
     GroupTopologyNodeRead,
     GroupTrafficSummaryRead,
@@ -26,6 +26,12 @@ from app.services import (
 )
 
 router = APIRouter()
+
+
+def _scoped_group_id(current_user: LoginUser) -> int | None:
+    if current_user.role == LoginUserRole.GROUP_ADMIN:
+        return current_user.group_id
+    return None
 
 
 @router.get("/status/overview", response_model=WireGuardOverviewRead)
@@ -71,7 +77,9 @@ def get_wireguard_peer_statuses_endpoint(
     session: Session = Depends(get_session),
 ) -> list[PeerStatusRead]:
     try:
-        return get_wireguard_peer_statuses(session)
+        return get_wireguard_peer_statuses(
+            session, group_id=_scoped_group_id(current_user)
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -82,7 +90,9 @@ def get_user_traffic_summaries_endpoint(
     session: Session = Depends(get_session),
 ) -> list[UserTrafficSummaryRead]:
     try:
-        return get_user_traffic_summaries(session)
+        return get_user_traffic_summaries(
+            session, group_id=_scoped_group_id(current_user)
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -93,7 +103,9 @@ def get_group_traffic_summaries_endpoint(
     session: Session = Depends(get_session),
 ) -> list[GroupTrafficSummaryRead]:
     try:
-        return get_group_traffic_summaries(session)
+        return get_group_traffic_summaries(
+            session, group_id=_scoped_group_id(current_user)
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -104,6 +116,8 @@ def get_wireguard_topology_endpoint(
     session: Session = Depends(get_session),
 ) -> list[GroupTopologyNodeRead]:
     try:
-        return get_wireguard_topology(session)
+        return get_wireguard_topology(
+            session, group_id=_scoped_group_id(current_user)
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

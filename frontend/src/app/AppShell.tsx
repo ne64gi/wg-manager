@@ -34,17 +34,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const isGroupAdmin = auth.currentUser?.role === "group_admin";
 
-  const navigation = appNavItems.map((item) => ({
-    ...item,
-    isActive: isNavItemActive(location.pathname, item.to),
-    onSelect: () => navigate(item.to),
-  }));
+  const navigation = appNavItems
+    .filter((item) => {
+      if (!isGroupAdmin) {
+        return true;
+      }
+      return item.to !== "/groups" && item.to !== "/logs";
+    })
+    .map((item) => ({
+      ...item,
+      isActive: isNavItemActive(location.pathname, item.to),
+      onSelect: () => navigate(item.to),
+    }));
 
   return (
     <AppLayout
+      currentUserEmail={auth.currentUser?.email ?? null}
       currentUsername={auth.currentUser?.username ?? null}
       navigation={navigation}
+      onEditProfile={() => navigate("/profile")}
       onLogout={() => auth.logoutAction()}
     >
       {children}

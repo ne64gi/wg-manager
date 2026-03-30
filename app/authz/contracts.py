@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Protocol
 
+from app.models import LoginUserRole
+
 
 class AuthzDecision(str, Enum):
     ALLOW = "allow"
@@ -15,7 +17,9 @@ class AuthzDecision(str, Enum):
 class AuthzSubject:
     login_user_id: int
     username: str
+    role: LoginUserRole
     is_active: bool
+    group_id: int | None = None
 
 
 @dataclass(slots=True)
@@ -44,4 +48,3 @@ class PolicyPlugin(Protocol):
         context: AuthzContext,
     ) -> AuthzDecision:
         ...
-

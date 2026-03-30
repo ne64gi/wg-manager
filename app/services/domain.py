@@ -350,10 +350,14 @@ def delete_user(session: Session, user_id: int) -> None:
     )
 
 
-def list_peers(session: Session, user_id: int | None = None) -> list[Peer]:
+def list_peers(
+    session: Session, user_id: int | None = None, group_id: int | None = None
+) -> list[Peer]:
     query = select(Peer).order_by(Peer.name)
     if user_id is not None:
         query = query.where(Peer.user_id == user_id)
+    if group_id is not None:
+        query = query.join(Peer.user).where(User.group_id == group_id)
     return list(session.scalars(query))
 
 

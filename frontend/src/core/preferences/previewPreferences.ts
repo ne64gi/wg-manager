@@ -27,6 +27,10 @@ export function setPreviewLocale(locale: "en" | "ja"): void {
   }
 }
 
+export function clearPreviewLocale(): void {
+  removeLocalStorage(PREVIEW_LOCALE_KEY);
+}
+
 export function getPreviewTheme(): "light" | "dark" | null {
   const stored = readLocalStorage(PREVIEW_THEME_KEY);
   return stored === "light" || stored === "dark" ? stored : null;

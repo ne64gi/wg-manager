@@ -12,7 +12,12 @@ from app.authz.decorators import get_authorization_metadata
 from app.authz.engine import evaluate_authorization
 from app.core import settings
 from app.db import SessionLocal
-from app.services import authenticate_access_token
+from app.services import (
+    authenticate_access_token,
+    resolve_login_user_group_id,
+    resolve_login_user_role,
+)
+from app.services.audit import log_gui_event, log_operation
 
 
 class AuthorizationMiddleware(BaseHTTPMiddleware):
@@ -32,20 +37,38 @@ class AuthorizationMiddleware(BaseHTTPMiddleware):
         if metadata is not None and metadata.public:
             return await call_next(request)
 
+        action = metadata.action if metadata is not None else f"{request.method.lower()} {route_path}"
         credentials = request.headers.get("authorization", "")
         if not credentials.lower().startswith("bearer "):
-            return await call_next(request)
+            return _reject_request(
+                request,
+                status_code=401,
+                detail="authentication required",
+                action=action,
+                reason="auth_required",
+            )
         token = credentials.split(" ", 1)[1].strip()
         if not token:
-            return await call_next(request)
+            return _reject_request(
+                request,
+                status_code=401,
+                detail="authentication required",
+                action=action,
+                reason="auth_required",
+            )
 
         try:
             with SessionLocal() as session:
                 login_user = authenticate_access_token(session, token)
         except Exception:
-            return await call_next(request)
+            return _reject_request(
+                request,
+                status_code=401,
+                detail="authentication required",
+                action=action,
+                reason="auth_required",
+            )
 
-        action = metadata.action if metadata is not None else f"{request.method.lower()} {route_path}"
         resource = AuthzResource(
             resource_type=metadata.resource_type if metadata is not None else None,
             resource_id=path_params.get(metadata.resource_id_param) if metadata and metadata.resource_id_param else None,
@@ -62,6 +85,8 @@ class AuthorizationMiddleware(BaseHTTPMiddleware):
         subject = AuthzSubject(
             login_user_id=login_user.id,
             username=login_user.username,
+            role=resolve_login_user_role(login_user),
+            group_id=resolve_login_user_group_id(login_user),
             is_active=login_user.is_active,
         )
         decision = evaluate_authorization(
@@ -71,7 +96,15 @@ class AuthorizationMiddleware(BaseHTTPMiddleware):
             context=context,
         )
         if decision == AuthzDecision.DENY:
-            return JSONResponse(status_code=403, content={"detail": "authorization denied"})
+            return _reject_request(
+                request,
+                status_code=403,
+                detail="authorization denied",
+                action=action,
+                reason=_resolve_deny_reason(action),
+                login_user_id=login_user.id,
+                username=login_user.username,
+            )
         return await call_next(request)
 
 
@@ -85,3 +118,55 @@ def _resolve_route_metadata(request: Request):
         return getattr(route, "path", None), child_scope.get("path_params", {}), metadata
     return None
 
+
+def _reject_request(
+    request: Request,
+    *,
+    status_code: int,
+    detail: str,
+    action: str,
+    reason: str,
+    login_user_id: int | None = None,
+    username: str | None = None,
+) -> JSONResponse:
+    log_operation(
+        action,
+        "authorization",
+        login_user_id,
+        source="middleware",
+        details={
+            "outcome": "deny",
+            "reason": reason,
+            "request_path": str(request.url.path),
+            "request_method": request.method,
+            "status_code": status_code,
+            "username": username,
+        },
+    )
+    log_gui_event(
+        "warning",
+        "authz",
+        detail,
+        login_user_id=login_user_id,
+        username=username,
+        request_path=str(request.url.path),
+        request_method=request.method,
+        status_code=status_code,
+        details={"action": action, "reason": reason},
+    )
+    return JSONResponse(status_code=status_code, content={"detail": detail})
+
+
+def _resolve_deny_reason(action: str) -> str:
+    if action in {
+        "settings.read",
+        "settings.update",
+        "login_user.list",
+        "login_user.read",
+        "login_user.create",
+        "login_user.update",
+        "login_user.delete",
+        "group.create",
+    }:
+        return "admin_only"
+    return "policy_denied"

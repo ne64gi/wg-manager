@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
+from app.authz import authorize
 from app.api.deps import require_authenticated_login_user
 from app.db import get_session
 from app.models import LoginUser
@@ -19,6 +20,7 @@ from app.schemas.gui import (
     SystemVersionRead,
 )
 from app.services import (
+    build_login_user_read,
     create_login_user,
     delete_login_user,
     get_gui_settings,
@@ -76,17 +78,16 @@ def update_gui_settings_endpoint(
 
 
 @router.get("/gui/login-users", response_model=list[LoginUserRead])
+@authorize(action="login_user.list", resource_type="login_user")
 def list_login_users_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> list[LoginUserRead]:
-    return [
-        LoginUserRead.model_validate(login_user)
-        for login_user in list_login_users(session)
-    ]
+    return [build_login_user_read(session, login_user) for login_user in list_login_users(session)]
 
 
 @router.post("/gui/login-users", response_model=LoginUserRead, status_code=201)
+@authorize(action="login_user.create", resource_type="login_user")
 def create_login_user_endpoint(
     payload: LoginUserCreate,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -96,10 +97,11 @@ def create_login_user_endpoint(
         login_user = create_login_user(session, payload)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return LoginUserRead.model_validate(login_user)
+    return build_login_user_read(session, login_user)
 
 
 @router.get("/gui/login-users/{login_user_id}", response_model=LoginUserRead)
+@authorize(action="login_user.read", resource_type="login_user", resource_id_param="login_user_id")
 def get_login_user_endpoint(
     login_user_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),
@@ -108,10 +110,11 @@ def get_login_user_endpoint(
     login_user = get_login_user(session, login_user_id)
     if login_user is None:
         raise HTTPException(status_code=404, detail="login user not found")
-    return LoginUserRead.model_validate(login_user)
+    return build_login_user_read(session, login_user)
 
 
 @router.patch("/gui/login-users/{login_user_id}", response_model=LoginUserRead)
+@authorize(action="login_user.update", resource_type="login_user", resource_id_param="login_user_id")
 def update_login_user_endpoint(
     login_user_id: int,
     payload: LoginUserUpdate,
@@ -122,7 +125,7 @@ def update_login_user_endpoint(
         login_user = update_login_user(session, login_user_id, payload)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    return LoginUserRead.model_validate(login_user)
+    return build_login_user_read(session, login_user)
 
 
 @router.delete(
@@ -131,6 +134,7 @@ def update_login_user_endpoint(
     response_class=Response,
     response_model=None,
 )
+@authorize(action="login_user.delete", resource_type="login_user", resource_id_param="login_user_id")
 def delete_login_user_endpoint(
     login_user_id: int,
     current_user: LoginUser = Depends(require_authenticated_login_user),

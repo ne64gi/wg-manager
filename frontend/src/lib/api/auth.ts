@@ -4,6 +4,7 @@ import type {
   AuthSetupRequest,
   AuthSetupStatus,
   AuthenticatedLoginUser,
+  AuthUpdateProfileRequest,
   TokenPair,
 } from "../../types";
 import { request } from "./client";
@@ -45,6 +46,17 @@ export function changeOwnPassword(
 ): Promise<AuthenticatedLoginUser> {
   return request<AuthenticatedLoginUser>("/auth/change-password", {
     method: "POST",
+    accessToken,
+    body: payload,
+  });
+}
+
+export function updateOwnProfile(
+  accessToken: string,
+  payload: AuthUpdateProfileRequest,
+): Promise<AuthenticatedLoginUser> {
+  return request<AuthenticatedLoginUser>("/auth/me", {
+    method: "PATCH",
     accessToken,
     body: payload,
   });

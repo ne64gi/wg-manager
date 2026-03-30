@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import x25519
@@ -190,6 +191,44 @@ def _migrate_peer_traffic_snapshots_table() -> None:
             )
 
 
+def _run_db_migrations() -> None:
+    try:
+        from alembic import command
+        from alembic.config import Config
+    except ModuleNotFoundError:
+        return
+
+    inspector = inspect(engine)
+    table_names = set(inspector.get_table_names())
+    alembic_ini_path = Path(__file__).resolve().parents[2] / "alembic.ini"
+    config = Config(str(alembic_ini_path))
+    config.set_main_option("sqlalchemy.url", settings.database_url)
+
+    login_user_columns = set()
+    if "login_users" in table_names:
+        login_user_columns = {
+            column["name"] for column in inspector.get_columns("login_users")
+        }
+
+    target_columns = {
+        "email",
+        "role",
+        "group_id",
+        "preferred_theme_mode",
+        "preferred_locale",
+        "preferred_timezone",
+        "avatar_url",
+    }
+
+    if "alembic_version" not in table_names:
+        if "login_users" in table_names and target_columns.issubset(login_user_columns):
+            command.stamp(config, "20260330_0001")
+            return
+        command.stamp(config, "20260330_0000")
+
+    command.upgrade(config, "head")
+
+
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
     _migrate_groups_table()
@@ -198,6 +237,7 @@ def init_db() -> None:
     _migrate_initial_settings_table()
     _migrate_peer_traffic_snapshots_table()
     init_log_db()
+    _run_db_migrations()
 
 
 def _b64key(num_bytes: int = 32) -> str:

@@ -6,6 +6,7 @@ from app.schemas.auth import (
     AuthRefreshRequest,
     AuthSetupRequest,
     AuthSetupStatusRead,
+    AuthUpdateProfileRequest,
     TokenPairRead,
 )
 from app.schemas.config import (
@@ -66,6 +67,7 @@ __all__ = [
     "AuthRefreshRequest",
     "AuthSetupRequest",
     "AuthSetupStatusRead",
+    "AuthUpdateProfileRequest",
     "GeneratedPeerArtifacts",
     "GeneratedServerArtifacts",
     "GroupTrafficSummaryRead",

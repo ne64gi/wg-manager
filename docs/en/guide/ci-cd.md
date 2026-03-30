@@ -33,6 +33,10 @@ The checked-in [`scripts/deploy.sh`](../../../scripts/deploy.sh) then performs:
 3. `docker compose config`
 4. `docker compose up -d --build`
 
+For schema rollouts that need an explicit step, operators can also run
+[`scripts/migrate-db.sh`](../../../scripts/migrate-db.sh), which executes
+`alembic upgrade head` inside the API container.
+
 ## Required Secrets
 
 Use the same secret names in either GitHub or Gitea:

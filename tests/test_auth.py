@@ -1,15 +1,20 @@
 from app.core import settings
 from app.db import AuditBase, Base, SessionLocal, audit_engine, engine
-from app.schemas import AuthLoginRequest, LoginUserCreate
+from app.models import LoginUserRole
+from app.schemas import AuthLoginRequest, AuthUpdateProfileRequest, LoginUserCreate
 from app.services import (
     authenticate_access_token,
     authenticate_login,
+    build_authenticated_login_user_read,
     change_login_user_password,
     create_login_user,
+    get_gui_settings,
     has_login_users,
     logout_login_session,
     refresh_login_tokens,
+    resolve_login_user_role,
     setup_initial_login_user,
+    update_own_login_user_profile,
 )
 from app.services.auth import decode_jwt
 
@@ -111,3 +116,68 @@ def test_initial_setup_and_password_change(monkeypatch) -> None:
             assert "already been created" in str(exc)
         else:
             raise AssertionError("expected setup to reject when users already exist")
+
+
+def test_authenticated_login_user_projection_uses_safe_defaults() -> None:
+    reset_db()
+
+    with SessionLocal() as session:
+        gui_settings = get_gui_settings(session)
+        gui_settings.default_locale = "ja"
+        session.commit()
+
+        login_user = create_login_user(
+            session,
+            LoginUserCreate(
+                username="profile-admin",
+                password="supersecret123",
+                description="profile seed",
+                preferred_locale="ja",
+            ),
+        )
+
+        current_user = build_authenticated_login_user_read(session, login_user)
+
+        assert current_user.id == login_user.id
+        assert current_user.username == "profile-admin"
+        assert current_user.group_id is None
+        assert current_user.email is None
+        assert current_user.role == LoginUserRole.ADMIN
+        assert current_user.preferred_theme_mode == "system"
+        assert current_user.locale == "ja"
+        assert current_user.timezone == "UTC"
+        assert current_user.avatar_url is None
+        assert resolve_login_user_role(login_user) == LoginUserRole.ADMIN
+
+
+def test_update_own_profile_persists_theme_locale_and_timezone() -> None:
+    reset_db()
+
+    with SessionLocal() as session:
+        login_user = create_login_user(
+            session,
+            LoginUserCreate(
+                username="profile-edit",
+                password="supersecret123",
+                description="before",
+            ),
+        )
+
+        updated_user = update_own_login_user_profile(
+            session,
+            login_user,
+            AuthUpdateProfileRequest(
+                email="admin@example.com",
+                description="after",
+                preferred_theme_mode="dark",
+                preferred_locale="ja",
+                preferred_timezone="Asia/Tokyo",
+                avatar_url=None,
+            ),
+        )
+
+        assert updated_user.email == "admin@example.com"
+        assert updated_user.description == "after"
+        assert updated_user.preferred_theme_mode == "dark"
+        assert updated_user.preferred_locale == "ja"
+        assert updated_user.preferred_timezone == "Asia/Tokyo"

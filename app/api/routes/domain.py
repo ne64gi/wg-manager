@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.authz import authorize
 from app.api.deps import require_authenticated_login_user
 from app.db import get_session
-from app.models import LoginUser
+from app.models import LoginUser, LoginUserRole
 from app.schemas.domain import (
     GroupAllocationUpdate,
     GroupCreate,
@@ -49,6 +49,40 @@ from app.services import (
 from app.services.system import get_initial_settings, update_initial_settings
 
 router = APIRouter()
+
+
+def _group_scope_id(current_user: LoginUser) -> int | None:
+    if current_user.role == LoginUserRole.GROUP_ADMIN:
+        return current_user.group_id
+    return None
+
+
+def _require_group_scope(current_user: LoginUser, group_id: int | None) -> None:
+    scoped_group_id = _group_scope_id(current_user)
+    if scoped_group_id is None or group_id is None:
+        return
+    if group_id != scoped_group_id:
+        raise HTTPException(status_code=404, detail="group not found")
+
+
+def _require_user_scope(
+    current_user: LoginUser, session: Session, user_id: int
+):
+    user = get_user(session, user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="user not found")
+    _require_group_scope(current_user, user.group_id)
+    return user
+
+
+def _require_peer_scope(
+    current_user: LoginUser, session: Session, peer_id: int
+):
+    peer = get_peer(session, peer_id)
+    if peer is None:
+        raise HTTPException(status_code=404, detail="peer not found")
+    _require_group_scope(current_user, peer.user.group_id)
+    return peer
 
 
 @router.get("/health")
@@ -133,7 +167,11 @@ def list_groups_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> list[GroupRead]:
-    return [GroupRead.model_validate(group) for group in list_groups(session)]
+    scoped_group_id = _group_scope_id(current_user)
+    groups = list_groups(session)
+    if scoped_group_id is not None:
+        groups = [group for group in groups if group.id == scoped_group_id]
+    return [GroupRead.model_validate(group) for group in groups]
 
 
 @router.get("/groups/{group_id}", response_model=GroupRead)
@@ -146,6 +184,7 @@ def get_group_endpoint(
     group = get_group(session, group_id)
     if group is None:
         raise HTTPException(status_code=404, detail="group not found")
+    _require_group_scope(current_user, group.id)
     return GroupRead.model_validate(group)
 
 
@@ -175,6 +214,7 @@ def create_user_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> UserRead:
+    _require_group_scope(current_user, payload.group_id)
     try:
         user = create_user(session, payload)
     except ValueError as exc:
@@ -190,6 +230,7 @@ def update_user_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> UserRead:
+    _require_user_scope(current_user, session, user_id)
     try:
         user = update_user(session, user_id, payload)
     except ValueError as exc:
@@ -206,6 +247,11 @@ def list_users_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> list[UserRead]:
+    scoped_group_id = _group_scope_id(current_user)
+    if scoped_group_id is not None:
+        if group_id is not None and group_id != scoped_group_id:
+            raise HTTPException(status_code=404, detail="group not found")
+        group_id = scoped_group_id
     return [
         UserRead.model_validate(user)
         for user in list_users(session, group_id=group_id)
@@ -219,9 +265,7 @@ def get_user_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> UserRead:
-    user = get_user(session, user_id)
-    if user is None:
-        raise HTTPException(status_code=404, detail="user not found")
+    user = _require_user_scope(current_user, session, user_id)
     return UserRead.model_validate(user)
 
 
@@ -237,6 +281,7 @@ def delete_user_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ):
+    _require_user_scope(current_user, session, user_id)
     try:
         delete_user(session, user_id)
     except ValueError as exc:
@@ -251,6 +296,10 @@ def create_peer_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> PeerRead:
+    target_user = get_user(session, payload.user_id)
+    if target_user is None:
+        raise HTTPException(status_code=404, detail="user not found")
+    _require_group_scope(current_user, target_user.group_id)
     try:
         peer = create_peer(session, payload)
     except ValueError as exc:
@@ -266,6 +315,7 @@ def update_peer_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> PeerRead:
+    _require_peer_scope(current_user, session, peer_id)
     try:
         peer = update_peer(session, peer_id, payload)
     except ValueError as exc:
@@ -282,6 +332,7 @@ def reissue_peer_keys_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> PeerRead:
+    _require_peer_scope(current_user, session, peer_id)
     try:
         peer = reissue_peer_keys(session, peer_id)
     except ValueError as exc:
@@ -298,9 +349,12 @@ def list_peers_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> list[PeerRead]:
+    scoped_group_id = _group_scope_id(current_user)
+    if user_id is not None:
+        _require_user_scope(current_user, session, user_id)
     return [
         PeerRead.model_validate(peer)
-        for peer in list_peers(session, user_id=user_id)
+        for peer in list_peers(session, user_id=user_id, group_id=scoped_group_id)
     ]
 
 
@@ -311,9 +365,7 @@ def get_peer_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> PeerRead:
-    peer = get_peer(session, peer_id)
-    if peer is None:
-        raise HTTPException(status_code=404, detail="peer not found")
+    peer = _require_peer_scope(current_user, session, peer_id)
     return PeerRead.model_validate(peer)
 
 
@@ -324,6 +376,7 @@ def revoke_peer_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> PeerRead:
+    _require_peer_scope(current_user, session, peer_id)
     try:
         peer = revoke_peer(session, peer_id)
     except ValueError as exc:
@@ -343,6 +396,7 @@ def delete_peer_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ):
+    _require_peer_scope(current_user, session, peer_id)
     try:
         delete_peer(session, peer_id)
     except ValueError as exc:
@@ -357,6 +411,7 @@ def get_peer_resolved_access_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> PeerResolvedAccess:
+    _require_peer_scope(current_user, session, peer_id)
     try:
         return resolve_peer_access(session, peer_id)
     except ValueError as exc:

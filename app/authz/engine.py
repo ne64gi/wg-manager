@@ -3,12 +3,12 @@ from __future__ import annotations
 from typing import Sequence
 
 from app.authz.contracts import AuthzContext, AuthzDecision, AuthzResource, AuthzSubject, PolicyPlugin
+from app.authz.policy import BuiltinPolicyPlugin
 from app.core import settings
 
 
 def load_policy_plugins() -> Sequence[PolicyPlugin]:
-    # v1.0.0 scaffold: no built-in authz plugin is enabled yet.
-    return []
+    return [BuiltinPolicyPlugin()]
 
 
 def evaluate_authorization(
@@ -27,4 +27,3 @@ def evaluate_authorization(
             return decision
 
     return AuthzDecision.ALLOW if settings.authz_default_allow else AuthzDecision.DENY
-

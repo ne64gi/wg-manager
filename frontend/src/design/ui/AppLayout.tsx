@@ -23,11 +23,13 @@ export type AppNavItem = {
 
 export function AppLayout({
   children,
+  currentUserEmail,
   currentUsername,
   navigation,
   onLogout,
   onEditProfile,
 }: PropsWithChildren<{
+  currentUserEmail: string | null;
   currentUsername: string | null;
   navigation: AppNavItem[];
   onLogout: () => Promise<void> | void;
@@ -137,6 +139,12 @@ export function AppLayout({
     setIsMobileNavOpen(false);
   }
 
+  const userPrimaryLabel = currentUsername ?? "-";
+  const userSecondaryLabel =
+    currentUserEmail && currentUserEmail !== currentUsername
+      ? currentUserEmail
+      : null;
+
   return (
     <div
       className={`app-shell${isDesktopNavCollapsed ? " app-shell-sidebar-collapsed" : ""}`}
@@ -236,11 +244,11 @@ export function AppLayout({
               }`}
               data-testid="sidebar-user-trigger"
               onClick={() => setIsUserMenuOpen((current) => !current)}
-              title={isDesktopNavCollapsed ? currentUsername ?? "-" : undefined}
+              title={isDesktopNavCollapsed ? userPrimaryLabel : undefined}
             >
               <span className="sidebar-user-trigger-icon">👤</span>
               <span className={isDesktopNavCollapsed ? "sidebar-collapsed-hidden" : ""}>
-                {currentUsername ?? "-"}
+                {userPrimaryLabel}
               </span>
             </button>
 
@@ -258,8 +266,10 @@ export function AppLayout({
               style={userPopoverStyle}
             >
               <div className="sidebar-user-popover-main">
-                <div className="sidebar-user-popover-name">{currentUsername ?? "-"}</div>
-                <div className="sidebar-user-popover-email">mailaddress（未実装）</div>
+                <div className="sidebar-user-popover-name">{userPrimaryLabel}</div>
+                {userSecondaryLabel ? (
+                  <div className="sidebar-user-popover-email">{userSecondaryLabel}</div>
+                ) : null}
               </div>
 
               <div className="sidebar-user-popover-separator" />

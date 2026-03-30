@@ -1,5 +1,6 @@
 export type ThemeMode = "light" | "dark" | "system";
 export type LocaleCode = "en" | "ja";
+export type LoginUserRole = "admin" | "group_admin";
 
 export type AuthLoginRequest = {
   username: string;
@@ -18,6 +19,15 @@ export type AuthSetupRequest = {
 export type AuthChangePasswordRequest = {
   current_password: string;
   new_password: string;
+};
+
+export type AuthUpdateProfileRequest = {
+  email?: string | null;
+  description?: string | null;
+  preferred_theme_mode: ThemeMode;
+  preferred_locale: LocaleCode;
+  preferred_timezone: string;
+  avatar_url?: string | null;
 };
 
 export type SystemVersion = {
@@ -46,7 +56,14 @@ export type TokenPair = {
 export type AuthenticatedLoginUser = {
   id: number;
   username: string;
+  group_id: number | null;
+  email: string | null;
+  role: LoginUserRole;
   description: string;
+  preferred_theme_mode: ThemeMode;
+  locale: LocaleCode;
+  timezone: string;
+  avatar_url: string | null;
   is_active: boolean;
   last_login_at: string | null;
 };
@@ -277,7 +294,14 @@ export type GuiSettingsUpdate = Partial<
 export type LoginUser = {
   id: number;
   username: string;
+  group_id: number | null;
+  email: string | null;
+  role: LoginUserRole;
   description: string;
+  preferred_theme_mode: ThemeMode;
+  locale: LocaleCode;
+  timezone: string;
+  avatar_url: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -287,11 +311,27 @@ export type LoginUser = {
 export type LoginUserCreate = {
   username: string;
   password: string;
+  email?: string | null;
+  role?: LoginUserRole;
+  group_id?: number | null;
+  preferred_theme_mode?: ThemeMode;
+  preferred_locale?: LocaleCode;
+  preferred_timezone?: string;
+  avatar_url?: string | null;
+  description?: string;
   is_active?: boolean;
 };
 
 export type LoginUserUpdate = {
   password?: string;
+  email?: string | null;
+  role?: LoginUserRole;
+  group_id?: number | null;
+  preferred_theme_mode?: ThemeMode;
+  preferred_locale?: LocaleCode;
+  preferred_timezone?: string;
+  avatar_url?: string | null;
+  description?: string;
   is_active?: boolean;
 };
 

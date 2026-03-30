@@ -11,11 +11,16 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from app.core import settings
-from app.models import LoginSession, LoginUser
-from app.schemas.auth import AuthLoginRequest, TokenPairRead
-from app.schemas.gui import LoginUserCreate, LoginUserUpdate
+from app.models import LoginSession, LoginUser, LoginUserRole
+from app.schemas.auth import (
+    AuthLoginRequest,
+    AuthenticatedLoginUserRead,
+    AuthUpdateProfileRequest,
+    TokenPairRead,
+)
+from app.schemas.gui import LoginUserCreate, LoginUserRead, LoginUserUpdate
 from app.services.audit import log_gui_event, log_operation
-from app.services.gui import create_login_user, update_login_user, verify_password
+from app.services.gui import create_login_user, get_gui_settings, update_login_user, verify_password
 
 
 def _b64url_encode(raw: bytes) -> str:
@@ -75,6 +80,58 @@ def _as_utc(value: datetime | None) -> datetime | None:
     if value.tzinfo is None:
         return value.replace(tzinfo=timezone.utc)
     return value.astimezone(timezone.utc)
+
+
+def resolve_login_user_role(login_user: LoginUser) -> LoginUserRole:
+    return login_user.role
+
+
+def resolve_login_user_group_id(login_user: LoginUser) -> int | None:
+    return login_user.group_id
+
+
+def build_authenticated_login_user_read(
+    session: Session,
+    login_user: LoginUser,
+) -> AuthenticatedLoginUserRead:
+    gui_settings = get_gui_settings(session)
+    return AuthenticatedLoginUserRead(
+        id=login_user.id,
+        username=login_user.username,
+        group_id=login_user.group_id,
+        email=login_user.email,
+        role=resolve_login_user_role(login_user),
+        description=login_user.description,
+        preferred_theme_mode=login_user.preferred_theme_mode or "system",
+        locale=login_user.preferred_locale or gui_settings.default_locale,
+        timezone=login_user.preferred_timezone or "UTC",
+        avatar_url=login_user.avatar_url,
+        is_active=login_user.is_active,
+        last_login_at=login_user.last_login_at,
+    )
+
+
+def build_login_user_read(
+    session: Session,
+    login_user: LoginUser,
+) -> LoginUserRead:
+    gui_settings = get_gui_settings(session)
+    return LoginUserRead(
+        id=login_user.id,
+        username=login_user.username,
+        group_id=login_user.group_id,
+        email=login_user.email,
+        role=resolve_login_user_role(login_user),
+        description=login_user.description,
+        preferred_theme_mode=login_user.preferred_theme_mode or "system",
+        locale=login_user.preferred_locale or gui_settings.default_locale,
+        timezone=login_user.preferred_timezone or "UTC",
+        avatar_url=login_user.avatar_url,
+        is_active=login_user.is_active,
+        last_login_at=login_user.last_login_at,
+        created_at=login_user.created_at,
+        updated_at=login_user.updated_at,
+    )
 
 
 def _issue_access_token(login_user: LoginUser, login_session: LoginSession) -> tuple[str, datetime]:
@@ -297,4 +354,23 @@ def change_login_user_password(
         session,
         current_user.id,
         LoginUserUpdate(password=new_password),
+    )
+
+
+def update_own_login_user_profile(
+    session: Session,
+    current_user: LoginUser,
+    payload: AuthUpdateProfileRequest,
+) -> LoginUser:
+    return update_login_user(
+        session,
+        current_user.id,
+        LoginUserUpdate(
+            email=payload.email,
+            description=payload.description,
+            preferred_theme_mode=payload.preferred_theme_mode,
+            preferred_locale=payload.preferred_locale,
+            preferred_timezone=payload.preferred_timezone,
+            avatar_url=payload.avatar_url,
+        ),
     )

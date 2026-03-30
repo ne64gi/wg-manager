@@ -39,3 +39,6 @@ Use this folder for host-side operator and development helpers.
 - `deploy.sh`
   - run on the deployment server
   - fast-forward pull the target branch, validate compose, then recreate the stack
+- `migrate-db.sh`
+  - run the checked-in Alembic migrations through the API container
+  - useful before or after a profile/auth schema rollout if you want an explicit migration step

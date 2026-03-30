@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
-  changeOwnPassword,
   createLoginUser,
   deleteLoginUser,
   exportState,
@@ -10,12 +9,14 @@ import {
   getInitialSettings,
   getSystemVersion,
   importState,
+  listGroups,
   listLoginUsers,
+  updateLoginUser,
   updateGuiSettings,
   updateInitialSettings,
 } from "../../lib/api";
 import { confirmAction, downloadBlob } from "../../core/browser/actions";
-import { t, translateErrorMessage } from "../../core/i18n";
+import { t } from "../../core/i18n";
 import type { GuiSettingsUpdate, StateExport } from "../../types";
 import { useToast } from "../../design/ui/ToastProvider";
 import { useAuth } from "../../core/auth/AuthContext";
@@ -44,6 +45,10 @@ export function useSettingsPageData() {
     queryKey: queryKeys.loginUsers,
     queryFn: async () => listLoginUsers((await auth.getValidAccessToken()) ?? ""),
   });
+  const groupsQuery = useQuery({
+    queryKey: queryKeys.groups,
+    queryFn: async () => listGroups((await auth.getValidAccessToken()) ?? ""),
+  });
   const versionQuery = useQuery({
     queryKey: ["gui", "version"],
     queryFn: async () => getSystemVersion((await auth.getValidAccessToken()) ?? ""),
@@ -57,10 +62,9 @@ export function useSettingsPageData() {
   const [serverDns, setServerDns] = useState("");
   const [newUsername, setNewUsername] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [nextPassword, setNextPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [newRole, setNewRole] = useState<"admin" | "group_admin">("admin");
+  const [newGroupId, setNewGroupId] = useState("");
+  const [newIsActive, setNewIsActive] = useState(true);
   const effectiveThemeMode =
     getPreviewTheme() ?? formState.theme_mode ?? "system";
   const effectiveLocale = getStoredPreviewLocale() ?? formState.default_locale ?? "en";
@@ -154,10 +158,19 @@ export function useSettingsPageData() {
       createLoginUser((await auth.getValidAccessToken()) ?? "", {
         username: newUsername,
         password: newPassword,
+        role: newRole,
+        group_id:
+          newRole === "group_admin" && newGroupId.trim()
+            ? Number(newGroupId)
+            : null,
+        is_active: newIsActive,
       }),
     onSuccess: async () => {
       setNewUsername("");
       setNewPassword("");
+      setNewRole("admin");
+      setNewGroupId("");
+      setNewIsActive(true);
       pushToast(t("settings.login_user_created", "Login user created."));
       await queryClient.invalidateQueries({ queryKey: queryKeys.loginUsers });
     },
@@ -179,26 +192,30 @@ export function useSettingsPageData() {
     },
   });
 
-  const changePasswordMutation = useMutation({
-    mutationFn: async () =>
-      changeOwnPassword((await auth.getValidAccessToken()) ?? "", {
-        current_password: currentPassword,
-        new_password: nextPassword,
-      }),
+  const updateLoginUserMutation = useMutation({
+    mutationFn: async ({
+      loginUserId,
+      payload,
+    }: {
+      loginUserId: number;
+      payload: {
+        password?: string;
+        email?: string | null;
+        role?: "admin" | "group_admin";
+        group_id?: number | null;
+        is_active?: boolean;
+      };
+    }) =>
+      updateLoginUser((await auth.getValidAccessToken()) ?? "", loginUserId, payload),
     onSuccess: async () => {
-      pushToast(t("auth.password_changed", "Password changed."));
-      setCurrentPassword("");
-      setNextPassword("");
-      setConfirmPassword("");
-      setPasswordModalOpen(false);
-      await queryClient.invalidateQueries({ queryKey: queryKeys.authMe });
+      pushToast(t("common.change_saved", "Changes saved."));
       await queryClient.invalidateQueries({ queryKey: queryKeys.loginUsers });
     },
     onError: (error) => {
       pushToast(
         error instanceof Error
-          ? translateErrorMessage(error.message)
-          : t("auth.password_change_failed", "Failed to change password."),
+          ? error.message
+          : t("settings.login_user_update_failed", "Failed to update login user."),
         "error",
       );
     },
@@ -267,16 +284,9 @@ export function useSettingsPageData() {
     }
   }
 
-  function submitPasswordChange() {
-    if (nextPassword !== confirmPassword) {
-      pushToast(t("auth.password_mismatch", "Passwords do not match"), "error");
-      return;
-    }
-    changePasswordMutation.mutate();
-  }
-
   return {
     auth,
+    groupsQuery,
     settingsQuery,
     initialSettingsQuery,
     loginUsersQuery,
@@ -301,22 +311,19 @@ export function useSettingsPageData() {
     setNewUsername,
     newPassword,
     setNewPassword,
-    passwordModalOpen,
-    setPasswordModalOpen,
-    currentPassword,
-    setCurrentPassword,
-    nextPassword,
-    setNextPassword,
-    confirmPassword,
-    setConfirmPassword,
+    newRole,
+    setNewRole,
+    newGroupId,
+    setNewGroupId,
+    newIsActive,
+    setNewIsActive,
     settingsMutation,
     endpointMutation,
     createLoginUserMutation,
     deleteLoginUserMutation,
-    changePasswordMutation,
+    updateLoginUserMutation,
     exportMutation,
     importMutation,
     handleImportFile,
-    submitPasswordChange,
   };
 }

@@ -11,6 +11,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ApiError, getAuthMe, login, logout, refresh } from "../../lib/api";
 import { readLocalStorage, removeLocalStorage, writeLocalStorage } from "../browser/storage";
+import {
+  clearPreviewLocale,
+  clearPreviewTheme,
+} from "../preferences/previewPreferences";
 import { queryKeys } from "../../modules/queryKeys";
 import type { AuthLoginRequest, AuthenticatedLoginUser, TokenPair } from "../../types";
 
@@ -119,6 +123,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setRefreshToken(null);
     setAccessTokenExpiresAt(null);
     setRefreshTokenExpiresAt(null);
+    clearPreviewLocale();
+    clearPreviewTheme();
     queryClient.removeQueries();
   }
 

@@ -18,6 +18,7 @@ from app.schemas import (
 )
 from app.services import (
     bootstrap_login_user,
+    build_login_user_read,
     create_group,
     create_login_user,
     create_peer,
@@ -97,6 +98,7 @@ def test_login_users_and_gui_settings_are_persisted() -> None:
                 username="admin",
                 password="supersecret",
                 description="main admin",
+                preferred_locale="ja",
             ),
         )
         assert verify_password("supersecret", login_user.password_hash) is True
@@ -145,6 +147,15 @@ def test_login_users_and_gui_settings_are_persisted() -> None:
 
         users = list_login_users(session)
         assert [user.username for user in users] == ["admin"]
+
+        projected = build_login_user_read(session, updated_login_user)
+        assert projected.group_id is None
+        assert projected.email is None
+        assert projected.role == "admin"
+        assert projected.preferred_theme_mode == "system"
+        assert projected.locale == "ja"
+        assert projected.timezone == "UTC"
+        assert projected.avatar_url is None
 
         delete_login_user(session, login_user.id)
         assert list_login_users(session) == []

@@ -15,15 +15,18 @@ from app.schemas.auth import (
     AuthRefreshRequest,
     AuthSetupRequest,
     AuthSetupStatusRead,
+    AuthUpdateProfileRequest,
     TokenPairRead,
 )
 from app.services import (
     authenticate_login,
+    build_authenticated_login_user_read,
     change_login_user_password,
     has_login_users,
     logout_login_session,
     refresh_login_tokens,
     setup_initial_login_user,
+    update_own_login_user_profile,
 )
 
 router = APIRouter()
@@ -94,8 +97,9 @@ def logout_endpoint(
 @authorize(action="auth.me")
 def auth_me_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
 ) -> AuthenticatedLoginUserRead:
-    return AuthenticatedLoginUserRead.model_validate(current_user)
+    return build_authenticated_login_user_read(session, current_user)
 
 
 @router.post("/auth/change-password", response_model=AuthenticatedLoginUserRead)
@@ -114,4 +118,18 @@ def change_password_endpoint(
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return AuthenticatedLoginUserRead.model_validate(updated_user)
+    return build_authenticated_login_user_read(session, updated_user)
+
+
+@router.patch("/auth/me", response_model=AuthenticatedLoginUserRead)
+@authorize(action="auth.update_profile")
+def update_profile_endpoint(
+    payload: AuthUpdateProfileRequest,
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+    session: Session = Depends(get_session),
+) -> AuthenticatedLoginUserRead:
+    try:
+        updated_user = update_own_login_user_profile(session, current_user, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return build_authenticated_login_user_read(session, updated_user)
