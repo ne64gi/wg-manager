@@ -72,12 +72,6 @@ export function DashboardRuntimePanel({
           <strong>{systemVersion?.version ?? "-"}</strong>
         </div>
       </div>
-      <div className="muted-text">
-        {t(
-          "dashboard.runtime_panel_hint",
-          "This side slot is intentionally replaceable so future dashboard panels can swap in here.",
-        )}
-      </div>
     </Panel>
   );
 }
