@@ -3,8 +3,14 @@ set -eu
 
 branch="${1:-main}"
 remote="${WG_STUDIO_DEPLOY_REMOTE:-origin}"
+deploy_root_override="${WG_STUDIO_DEPLOY_ROOT:-}"
 
-repo_root="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+if [ -n "${deploy_root_override}" ]; then
+  repo_root="${deploy_root_override}"
+else
+  repo_root="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+fi
+
 cd "${repo_root}"
 
 if [ ! -f ./.env ]; then

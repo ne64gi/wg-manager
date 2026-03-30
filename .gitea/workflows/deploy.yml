@@ -17,4 +17,6 @@ jobs:
         run: ./scripts/pytest-safe.sh /app/tests -q
 
       - name: Deploy locally on runner host
+        env:
+          WG_STUDIO_DEPLOY_ROOT: /home/fuyumori/Docker/wg-studio
         run: ./scripts/deploy.sh main
