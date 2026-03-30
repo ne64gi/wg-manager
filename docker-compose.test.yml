@@ -57,7 +57,6 @@ services:
     volumes:
       - ./app:/app/app:ro
       - ./tests:/app/tests:ro
-      - ./VERSION:/app/VERSION:ro
     entrypoint: ["python", "-m", "pytest"]
     networks:
       - wg-studio-test-internal
