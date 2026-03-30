@@ -8,6 +8,7 @@ services:
       POSTGRES_USER: wgstudio
       POSTGRES_PASSWORD: wgstudio
       POSTGRES_DB: wg_studio_e2e
+      POSTGRES_AUDIT_DB: wg_studio_audit_e2e
     volumes:
       - postgres_data_e2e:/var/lib/postgresql/data
       - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
@@ -40,7 +41,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql+psycopg://wgstudio:wgstudio@postgres:5432/wg_studio_e2e
-      LOG_DATABASE_URL: postgresql+psycopg://wgstudio:wgstudio@postgres:5432/wg_studio_audit
+      LOG_DATABASE_URL: postgresql+psycopg://wgstudio:wgstudio@postgres:5432/wg_studio_audit_e2e
       ARTIFACT_ROOT: /wg/config
       WG_RUNTIME_ADAPTER: docker_container
       WG_CONTAINER_NAME: wg-studio-e2e-wireguard

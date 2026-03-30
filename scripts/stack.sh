@@ -31,6 +31,21 @@ e2e_compose() {
   docker compose -f docker-compose.e2e.yml -p wg-studio-e2e "$@"
 }
 
+assert_e2e_uses_isolated_databases() {
+  e2e_compose exec -T wg-studio-api python -c "
+from app.core.config import settings
+from urllib.parse import urlparse
+main_db = urlparse(settings.database_url).path.rsplit('/', 1)[-1]
+audit_db = urlparse(settings.log_database_url).path.rsplit('/', 1)[-1]
+disallowed = {'wg_studio', 'wg_studio_audit'}
+if main_db in disallowed or audit_db in disallowed:
+    raise SystemExit(
+        f'E2E refused to run against protected database names: main={main_db}, audit={audit_db}'
+    )
+print(f'E2E database guard passed: main={main_db}, audit={audit_db}')
+"
+}
+
 wait_for_api_health() {
   attempts="${1:-30}"
   delay_seconds="${2:-2}"
@@ -89,6 +104,7 @@ run_isolated_e2e() {
   trap cleanup EXIT INT TERM
 
   wait_for_e2e_api_health "${WG_STACK_HEALTH_ATTEMPTS:-30}" "${WG_STACK_HEALTH_DELAY_SECONDS:-2}"
+  assert_e2e_uses_isolated_databases
   if ! check_e2e_web_reachable; then
     echo "Isolated wg-studio-web is not reachable from the API container; aborting E2E run." >&2
     exit 1

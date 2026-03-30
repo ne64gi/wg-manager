@@ -1,0 +1,70 @@
+name: wg-studio-test
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: wg-studio-test-postgres
+    environment:
+      POSTGRES_USER: wgstudio
+      POSTGRES_PASSWORD: wgstudio
+      POSTGRES_DB: postgres
+      POSTGRES_AUDIT_DB: wg_studio_audit_test
+    volumes:
+      - postgres_data_test:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - wg-studio-test-internal
+
+  wg-studio-pgtools:
+    image: postgres:17
+    container_name: wg-studio-test-pgtools
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_USER: wgstudio
+      POSTGRES_PASSWORD: wgstudio
+      POSTGRES_DB: postgres
+      POSTGRES_AUDIT_DB: wg_studio_audit_test
+    entrypoint: ["sh", "-lc"]
+    networks:
+      - wg-studio-test-internal
+
+  wg-studio-pytest:
+    image: ${WG_STUDIO_TEST_IMAGE:-wg-studio-wg-studio-api:latest}
+    container_name: wg-studio-test-pytest
+    working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://wgstudio:wgstudio@postgres:5432/wg_studio_test
+      LOG_DATABASE_URL: postgresql+psycopg://wgstudio:wgstudio@postgres:5432/wg_studio_audit_test
+      ARTIFACT_ROOT: /tmp/wg-test-config
+      WG_RUNTIME_ADAPTER: docker_container
+      WG_CONTAINER_NAME: wg-studio-test-wireguard
+      WG_CONTAINER_CONFIG_PATH: /tmp/wg-test-config/wg_confs/wg0.conf
+      WG_JWT_SECRET_KEY: test-only-secret
+      WG_SERVER_ENDPOINT: 127.0.0.1
+      WG_SERVER_LISTEN_PORT: 51820
+      WG_SERVER_ADDRESS: 10.255.255.1/32
+      WG_SERVER_DNS: 1.1.1.1
+    volumes:
+      - ./app:/app/app:ro
+      - ./tests:/app/tests:ro
+      - ./VERSION:/app/VERSION:ro
+    entrypoint: ["python", "-m", "pytest"]
+    networks:
+      - wg-studio-test-internal
+
+volumes:
+  postgres_data_test:
+
+networks:
+  wg-studio-test-internal:
+    internal: true

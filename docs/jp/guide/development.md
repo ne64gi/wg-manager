@@ -37,7 +37,8 @@
 profile 付きの補助サービス:
 
 - `wg-studio-cli`（`tools`）
-- `wg-studio-e2e`（隔離 compose）
+- browser E2E は隔離された `docker-compose.e2e.yml` を使います
+- pytest は隔離された `docker-compose.test.yml` を使います
 
 主な実行時の特徴:
 
@@ -120,15 +121,10 @@ pwsh ./scripts/push-and-sync.ps1
 テスト実行:
 
 ```bash
-docker compose --profile tools run --rm \
-  -e DATABASE_URL=sqlite:////tmp/wg-studio-test.db \
-  -e LOG_DATABASE_URL=sqlite:////tmp/wg-studio-log-test.db \
-  -e ARTIFACT_ROOT=/tmp/generated \
-  --entrypoint pytest \
-  wg-studio-cli /app/tests -q
+./scripts/pytest-safe.sh -q
 ```
 
-テストでは速度と分離のために一時 SQLite を使います。通常運用のスタックでは PostgreSQL を使います。
+`pytest-safe.sh` は隔離された `docker-compose.test.yml` を起動し、専用 test DB を作成した上で、本番向け DB 名では起動しないようにしています。
 
 ## ブラウザ E2E の方針
 

@@ -35,7 +35,8 @@ Default services:
 Profile-scoped helper services:
 
 - `wg-studio-cli` (`tools`)
-- `wg-studio-e2e` (isolated compose)
+- browser E2E uses the isolated `docker-compose.e2e.yml` stack
+- pytest uses the isolated `docker-compose.test.yml` stack
 
 Notable runtime behavior:
 
@@ -118,15 +119,10 @@ still looks stale locally until a later `git fetch`.
 Run tests:
 
 ```bash
-docker compose --profile tools run --rm \
-  -e DATABASE_URL=sqlite:////tmp/wg-studio-test.db \
-  -e LOG_DATABASE_URL=sqlite:////tmp/wg-studio-log-test.db \
-  -e ARTIFACT_ROOT=/tmp/generated \
-  --entrypoint pytest \
-  wg-studio-cli /app/tests -q
+./scripts/pytest-safe.sh -q
 ```
 
-Tests currently override database URLs to temporary SQLite files for speed and isolation, while the normal runtime stack uses PostgreSQL.
+`pytest-safe.sh` boots the isolated `docker-compose.test.yml` stack, creates dedicated test databases, and refuses to run against non-test database names.
 
 ## Browser E2E Direction
 

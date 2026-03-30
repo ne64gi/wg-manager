@@ -106,7 +106,8 @@ This starts only the normal runtime services:
 Tooling services are profile-scoped and do not start by default:
 
 - `wg-studio-cli` -> `tools`
-- `wg-studio-e2e` -> `test`
+- browser E2E runs through `docker-compose.e2e.yml`
+- pytest runs through `docker-compose.test.yml`
 
 Open the GUI:
 

@@ -94,7 +94,7 @@ export function formatDeleteConfirm(name: string) {
 export function getBundleWarningText(peerCount: number) {
   return `${t(
     "groups.bundle_warning",
-    "This bundle will reissue keys for eligible peers, package the new configs into a ZIP, and invalidate older peer files. Apply before distributing the new files.",
+    "This bundle reissues keys for eligible peers, packages the new configs into a ZIP, and invalidates older peer files. Apply before distributing the new files.",
   )}\n\n${t("groups.bundle_peer_count", "Peer count")}: ${peerCount}`;
 }
 
