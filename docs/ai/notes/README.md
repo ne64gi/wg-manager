@@ -35,3 +35,8 @@ Placement rule:
 - if a document is mostly about design seams or abstractions, put it in `architecture/`
 
 These files may discuss intended changes and do not automatically override current implementation.
+
+Current `1.4` planning entry:
+
+- read [`1.4.md`](1.4.md) for the concrete implementation boundary, dependency order, and merge checklist
+- read [`../../jp/planning/policy.md`](../../jp/planning/policy.md) and [`../../jp/planning/middleware-design.md`](../../jp/planning/middleware-design.md) as temporary AI-facing design inputs until they are relocated

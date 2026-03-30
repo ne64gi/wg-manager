@@ -29,7 +29,8 @@ Recommended read order:
 11. [`notes/architecture/frontend-modernization-prep.md`](notes/architecture/frontend-modernization-prep.md) when working on `1.2.x` frontend seams
 12. [`notes/architecture/v1.1-authorization-notes.md`](notes/architecture/v1.1-authorization-notes.md) when planning post-`v1.0.0` access control work
 13. [`notes/architecture/audit-model.md`](notes/architecture/audit-model.md) when planning stronger traceability or audit/authz integration
-14. [`notes/strategy/post-v1-major-version-strategy.md`](notes/strategy/post-v1-major-version-strategy.md) when deciding whether work belongs in `1.x`, `2.x`, or `3.x`
+14. [`notes/1.4.md`](notes/1.4.md) when planning the concrete `1.4` implementation order and dependencies
+15. [`notes/strategy/post-v1-major-version-strategy.md`](notes/strategy/post-v1-major-version-strategy.md) when deciding whether work belongs in `1.x`, `2.x`, or `3.x`
 
 Rules:
 
