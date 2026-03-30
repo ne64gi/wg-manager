@@ -22,6 +22,7 @@ if [ ! -f ./docker-compose.override.yml ]; then
   echo "Warning: docker-compose.override.yml not found. Continuing with base compose only." >&2
 fi
 
+git config --global --add safe.directory "${repo_root}"
 git fetch "${remote}" "${branch}"
 git pull --ff-only "${remote}" "${branch}"
 
