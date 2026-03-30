@@ -8,7 +8,7 @@ This document is the naming dictionary and naming-rule baseline for `wg-studio v
 - replace code after that
 - do not drift halfway through the cleanup
 
-The AI-facing source of truth is [docs/ai/spec/naming.md](/home/fuyumori/Docker/wg-studio/docs/ai/spec/naming.md). This file remains a human-facing reference.
+The AI-facing source of truth is [`../../ai/spec/naming.md`](../../ai/spec/naming.md). This file remains a human-facing reference.
 
 ## Core Rules
 

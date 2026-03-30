@@ -8,7 +8,7 @@
 - そのあとでコードを置換する
 - 途中でルールをぶらさない
 
-AI が参照する基準は [docs/ai/spec/naming.md](/home/fuyumori/Docker/wg-studio/docs/ai/spec/naming.md) とし、この文書は人向けの補助参照とします。
+AI が参照する基準は [`../../ai/spec/naming.md`](../../ai/spec/naming.md) とし、この文書は人向けの補助参照とします。
 
 ## 基本ルール
 
