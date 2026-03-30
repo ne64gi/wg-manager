@@ -30,7 +30,7 @@ How to use these docs:
 
 Current project state:
 
-- stable release documentation through `v1.2.0`
+- stable release documentation through `v1.3.3`
 - PostgreSQL-backed runtime
 - internal-only API network by default
 - bundled React/Vite GUI served through `nginx` on port `3900`

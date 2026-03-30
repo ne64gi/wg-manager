@@ -36,11 +36,15 @@ Current product capabilities:
 - peer config and QR generation with one-time reveal semantics
 - direct config and QR downloads from the reveal modal
 - warning-confirmed group and user bundle download with key reissue
+- full DB backup / restore scripts for recovery workflows
 - JSON export and import for current control-plane state
 - server config generation and apply flow
+- apply-before-change diff preview before runtime update confirmation
 - drift and apply-state visibility on the dashboard
 - direct dashboard apply action when runtime drift is detected
 - informational visibility for peer configs that have not been revealed or downloaded yet
+- operational `/network` graph with relationship focus, traffic visibility, endpoint details, and persisted filters
+- dangerous-operation confirmations around reissue and import flows
 - Docker-based deployment path
 - live peer traffic and handshake status
 - bundled React/Vite GUI through `nginx`

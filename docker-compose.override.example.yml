@@ -1,0 +1,47 @@
+services:
+  wg-studio-api:
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.rt-wg-studio-api.rule=Host(`wg.example.com`) && PathPrefix(`/api`)
+      - traefik.http.routers.rt-wg-studio-api.entrypoints=websecure
+      - traefik.http.routers.rt-wg-studio-api.tls.certresolver=cf
+      - traefik.http.routers.rt-wg-studio-api.service=svc-wg-studio-api
+      - traefik.http.services.svc-wg-studio-api.loadbalancer.server.port=8000
+      - traefik.http.middlewares.wg-studio-api-strip.stripprefix.prefixes=/api
+      - traefik.http.routers.rt-wg-studio-api.middlewares=wg-studio-api-strip
+      - traefik.docker.network=external_network
+    networks:
+      - wg-studio-internal
+      - external_network
+
+  wg-studio-cli:
+    volumes:
+      - ./app:/app/app
+      - wg_config:/wg/config
+      - ./backups:/backups
+      - ./tests:/app/tests
+
+  wg-studio-pgtools:
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./backups:/backups
+    command: ["sleep", "infinity"]
+
+  wg-studio-web:
+    ports: !reset []
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.rt-wg-studio.rule=Host(`wg.example.com`)
+      - traefik.http.routers.rt-wg-studio.entrypoints=websecure
+      - traefik.http.routers.rt-wg-studio.tls.certresolver=cf
+      - traefik.http.services.svc-wg-studio.loadbalancer.server.port=80
+      - traefik.http.routers.rt-wg-studio.service=svc-wg-studio
+      - traefik.docker.network=external_network
+    networks:
+      - wg-studio-internal
+      - external_network
+
+networks:
+  external_network:
+    external: true

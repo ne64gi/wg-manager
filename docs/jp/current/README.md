@@ -5,6 +5,7 @@
 - アーキテクチャ
 - ドメインモデル
 - config / apply
+- backup / restore
 - API
 - auth / reveal ルール
 - 命名規則

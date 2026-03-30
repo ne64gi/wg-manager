@@ -6,3 +6,5 @@ frontend/dist/
 frontend/playwright-report/
 frontend/test-results/
 backups/
+
+docker-compose.override.yml
