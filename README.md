@@ -56,6 +56,24 @@ Version source of truth:
 - [`VERSION`](VERSION) is the canonical project version
 - frontend `package.json` version is auto-synced from `VERSION` during build/dev workflows and should not be treated as an independent version source
 
+## Repository Layout
+
+- [`app/`](app): FastAPI routes, service layer, runtime integration, domain models, and CLI entrypoints
+- [`frontend/`](frontend): React/Vite GUI, Playwright config, and frontend build helpers
+- [`tests/`](tests): backend-focused pytest suite
+- [`docker/`](docker): image-specific Dockerfiles and PostgreSQL init assets
+- [`scripts/`](scripts): operator and development wrapper scripts for stack, backup/restore, state transfer, and safe test execution
+- [`docs/`](docs): human-facing docs in English and Japanese plus AI-oriented low-ambiguity notes
+- [`backups/`](backups): local-only output area for DB dumps and state exports
+
+## Compose Files
+
+- [`docker-compose.yml`](docker-compose.yml): default runtime stack for normal operator or development use
+- [`docker-compose.e2e.yml`](docker-compose.e2e.yml): isolated browser E2E stack
+- [`docker-compose.test.yml`](docker-compose.test.yml): isolated pytest stack
+- [`docker-compose.override.example.yml`](docker-compose.override.example.yml): example local override for Traefik, external networks, and host-specific mounts
+- `docker-compose.override.yml`: local-only override file; ignored by git and intended for environment-specific wiring
+
 ## Icon Sources
 
 - navigation, settings, menu, and globe icons are repo-local inline SVG components defined in [`frontend/src/ui/Icons.tsx`](frontend/src/ui/Icons.tsx)
@@ -108,6 +126,7 @@ Tooling services are profile-scoped and do not start by default:
 - `wg-studio-cli` -> `tools`
 - browser E2E runs through `docker-compose.e2e.yml`
 - pytest runs through `docker-compose.test.yml`
+- host-specific routing or reverse-proxy wiring should live in a local `docker-compose.override.yml`
 
 Open the GUI:
 
