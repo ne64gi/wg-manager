@@ -421,6 +421,8 @@ const JA_TRANSLATIONS: Record<string, string> = {
   "settings.status_active": "有効",
   "settings.status_disabled": "無効",
   "logs.title": "操作ログ",
+  "logs.operation_tab": "操作ログ",
+  "logs.audit_tab": "監査ログ",
   "logs.current_level": "現在のエラーログレベル",
   "logs.recent": "最近のログ",
   "logs.system": "システム",

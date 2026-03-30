@@ -10,6 +10,8 @@ from app.models import LoginUser
 from app.core import get_system_version, settings
 from app.runtime import get_runtime_service
 from app.schemas.gui import (
+    AuditLogListRead,
+    AuditLogRead,
     GuiLogListRead,
     GuiLogRead,
     GuiSettingsRead,
@@ -17,6 +19,8 @@ from app.schemas.gui import (
     LoginUserCreate,
     LoginUserRead,
     LoginUserUpdate,
+    OperationLogListRead,
+    OperationLogRead,
     SystemVersionRead,
 )
 from app.services import (
@@ -26,9 +30,12 @@ from app.services import (
     get_gui_settings,
     get_login_user,
     get_server_state,
+    log_audit_event,
+    list_audit_logs_page,
     list_gui_logs,
     list_gui_logs_page,
     list_login_users,
+    list_operation_logs_page,
     update_gui_settings,
     update_login_user,
 )
@@ -74,7 +81,19 @@ def update_gui_settings_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ) -> GuiSettingsRead:
-    return GuiSettingsRead.model_validate(update_gui_settings(session, payload))
+    settings_read = GuiSettingsRead.model_validate(update_gui_settings(session, payload))
+    log_audit_event(
+        "settings.update",
+        "settings",
+        login_user_id=current_user.id,
+        username=current_user.username,
+        target_entity_type="gui_settings",
+        target_entity_id=settings_read.id,
+        request_path="/gui/settings",
+        request_method="PUT",
+        status_code=200,
+    )
+    return settings_read
 
 
 @router.get("/gui/login-users", response_model=list[LoginUserRead])
@@ -97,6 +116,18 @@ def create_login_user_endpoint(
         login_user = create_login_user(session, payload)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    log_audit_event(
+        "login_user.create",
+        "login_user",
+        login_user_id=current_user.id,
+        username=current_user.username,
+        target_entity_type="login_user",
+        target_entity_id=login_user.id,
+        request_path="/gui/login-users",
+        request_method="POST",
+        status_code=201,
+        details={"target_username": login_user.username},
+    )
     return build_login_user_read(session, login_user)
 
 
@@ -125,6 +156,18 @@ def update_login_user_endpoint(
         login_user = update_login_user(session, login_user_id, payload)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    log_audit_event(
+        "login_user.update",
+        "login_user",
+        login_user_id=current_user.id,
+        username=current_user.username,
+        target_entity_type="login_user",
+        target_entity_id=login_user.id,
+        request_path=f"/gui/login-users/{login_user_id}",
+        request_method="PATCH",
+        status_code=200,
+        details={"target_username": login_user.username},
+    )
     return build_login_user_read(session, login_user)
 
 
@@ -140,10 +183,24 @@ def delete_login_user_endpoint(
     current_user: LoginUser = Depends(require_authenticated_login_user),
     session: Session = Depends(get_session),
 ):
+    target_login_user = get_login_user(session, login_user_id)
+    target_username = target_login_user.username if target_login_user is not None else None
     try:
         delete_login_user(session, login_user_id)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    log_audit_event(
+        "login_user.delete",
+        "login_user",
+        login_user_id=current_user.id,
+        username=current_user.username,
+        target_entity_type="login_user",
+        target_entity_id=login_user_id,
+        request_path=f"/gui/login-users/{login_user_id}",
+        request_method="DELETE",
+        status_code=204,
+        details={"target_username": target_username},
+    )
     return Response(status_code=204)
 
 
@@ -165,6 +222,54 @@ def list_gui_logs_endpoint(
     )
     return GuiLogListRead(
         items=[GuiLogRead.model_validate(entry) for entry in entries],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@router.get("/gui/operation-logs", response_model=OperationLogListRead)
+def list_operation_logs_endpoint(
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    action: str | None = Query(default=None),
+    entity_type: str | None = Query(default=None),
+    search: str | None = Query(default=None),
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+) -> OperationLogListRead:
+    entries, total = list_operation_logs_page(
+        limit=limit,
+        offset=offset,
+        action=action,
+        entity_type=entity_type,
+        search=search,
+    )
+    return OperationLogListRead(
+        items=[OperationLogRead.model_validate(entry) for entry in entries],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@router.get("/gui/audit-logs", response_model=AuditLogListRead)
+def list_audit_logs_endpoint(
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    category: str | None = Query(default=None),
+    outcome: str | None = Query(default=None),
+    search: str | None = Query(default=None),
+    current_user: LoginUser = Depends(require_authenticated_login_user),
+) -> AuditLogListRead:
+    entries, total = list_audit_logs_page(
+        limit=limit,
+        offset=offset,
+        category=category,
+        outcome=outcome,
+        search=search,
+    )
+    return AuditLogListRead(
+        items=[AuditLogRead.model_validate(entry) for entry in entries],
         total=total,
         limit=limit,
         offset=offset,

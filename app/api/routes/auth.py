@@ -23,6 +23,7 @@ from app.services import (
     build_authenticated_login_user_read,
     change_login_user_password,
     has_login_users,
+    log_audit_event,
     logout_login_session,
     refresh_login_tokens,
     setup_initial_login_user,
@@ -90,6 +91,17 @@ def logout_endpoint(
         logout_login_session(session, payload.refresh_token)
     except ValueError as exc:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
+    log_audit_event(
+        "auth.logout",
+        "auth",
+        login_user_id=current_user.id,
+        username=current_user.username,
+        target_entity_type="login_user",
+        target_entity_id=current_user.id,
+        request_path="/auth/logout",
+        request_method="POST",
+        status_code=204,
+    )
     return None
 
 
@@ -118,6 +130,17 @@ def change_password_endpoint(
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    log_audit_event(
+        "auth.change_password",
+        "auth",
+        login_user_id=current_user.id,
+        username=current_user.username,
+        target_entity_type="login_user",
+        target_entity_id=current_user.id,
+        request_path="/auth/change-password",
+        request_method="POST",
+        status_code=200,
+    )
     return build_authenticated_login_user_read(session, updated_user)
 
 
@@ -132,4 +155,15 @@ def update_profile_endpoint(
         updated_user = update_own_login_user_profile(session, current_user, payload)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    log_audit_event(
+        "auth.update_profile",
+        "auth",
+        login_user_id=current_user.id,
+        username=current_user.username,
+        target_entity_type="login_user",
+        target_entity_id=current_user.id,
+        request_path="/auth/me",
+        request_method="PATCH",
+        status_code=200,
+    )
     return build_authenticated_login_user_read(session, updated_user)

@@ -1,10 +1,12 @@
 import type {
+  AuditLogList,
   GuiLogList,
   GuiSettings,
   GuiSettingsUpdate,
   LoginUser,
   LoginUserCreate,
   LoginUserUpdate,
+  OperationLogList,
   SystemVersion,
 } from "../../types";
 import { request } from "./client";
@@ -85,4 +87,58 @@ export function listGuiLogs(
     params.set("search", options.search);
   }
   return request<GuiLogList>(`/gui/logs?${params.toString()}`, { accessToken });
+}
+
+export function listOperationLogs(
+  accessToken: string,
+  options: {
+    limit?: number;
+    offset?: number;
+    action?: string;
+    entity_type?: string;
+    search?: string;
+  } = {},
+): Promise<OperationLogList> {
+  const params = new URLSearchParams();
+  params.set("limit", String(options.limit ?? 50));
+  params.set("offset", String(options.offset ?? 0));
+  if (options.action) {
+    params.set("action", options.action);
+  }
+  if (options.entity_type) {
+    params.set("entity_type", options.entity_type);
+  }
+  if (options.search) {
+    params.set("search", options.search);
+  }
+  return request<OperationLogList>(`/gui/operation-logs?${params.toString()}`, {
+    accessToken,
+  });
+}
+
+export function listAuditLogs(
+  accessToken: string,
+  options: {
+    limit?: number;
+    offset?: number;
+    category?: string;
+    outcome?: string;
+    search?: string;
+  } = {},
+): Promise<AuditLogList> {
+  const params = new URLSearchParams();
+  params.set("limit", String(options.limit ?? 50));
+  params.set("offset", String(options.offset ?? 0));
+  if (options.category) {
+    params.set("category", options.category);
+  }
+  if (options.outcome) {
+    params.set("outcome", options.outcome);
+  }
+  if (options.search) {
+    params.set("search", options.search);
+  }
+  return request<AuditLogList>(`/gui/audit-logs?${params.toString()}`, {
+    accessToken,
+  });
 }

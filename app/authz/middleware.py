@@ -14,6 +14,7 @@ from app.core import settings
 from app.db import SessionLocal
 from app.services import (
     authenticate_access_token,
+    log_audit_event,
     resolve_login_user_group_id,
     resolve_login_user_role,
 )
@@ -149,6 +150,19 @@ def _reject_request(
         detail,
         login_user_id=login_user_id,
         username=username,
+        request_path=str(request.url.path),
+        request_method=request.method,
+        status_code=status_code,
+        details={"action": action, "reason": reason},
+    )
+    log_audit_event(
+        "authz.reject",
+        "authz",
+        outcome="denied",
+        login_user_id=login_user_id,
+        username=username,
+        target_entity_type="authorization",
+        target_entity_id=login_user_id,
         request_path=str(request.url.path),
         request_method=request.method,
         status_code=status_code,

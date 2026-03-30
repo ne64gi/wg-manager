@@ -356,6 +356,46 @@ export type GuiLogList = {
   offset: number;
 };
 
+export type OperationLog = {
+  id: number;
+  occurred_at: string;
+  action: string;
+  entity_type: string;
+  entity_id: number | null;
+  source: string;
+  details: Record<string, unknown>;
+};
+
+export type OperationLogList = {
+  items: OperationLog[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
+export type AuditLog = {
+  id: number;
+  occurred_at: string;
+  action: string;
+  category: string;
+  outcome: string;
+  login_user_id: number | null;
+  username: string | null;
+  target_entity_type: string | null;
+  target_entity_id: number | null;
+  request_path: string | null;
+  request_method: string | null;
+  status_code: number | null;
+  details: Record<string, unknown>;
+};
+
+export type AuditLogList = {
+  items: AuditLog[];
+  total: number;
+  limit: number;
+  offset: number;
+};
+
 export type InitialSettings = {
   id: number;
   endpoint_address: string;

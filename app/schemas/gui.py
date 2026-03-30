@@ -230,6 +230,50 @@ class GuiLogListRead(BaseModel):
     offset: int
 
 
+class OperationLogRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    occurred_at: datetime
+    action: str
+    entity_type: str
+    entity_id: int | None
+    source: str
+    details: dict
+
+
+class OperationLogListRead(BaseModel):
+    items: list[OperationLogRead]
+    total: int
+    limit: int
+    offset: int
+
+
+class AuditLogRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    occurred_at: datetime
+    action: str
+    category: str
+    outcome: str
+    login_user_id: int | None
+    username: str | None
+    target_entity_type: str | None
+    target_entity_id: int | None
+    request_path: str | None
+    request_method: str | None
+    status_code: int | None
+    details: dict
+
+
+class AuditLogListRead(BaseModel):
+    items: list[AuditLogRead]
+    total: int
+    limit: int
+    offset: int
+
+
 class SystemVersionRead(BaseModel):
     version: str
     frontend_version: str

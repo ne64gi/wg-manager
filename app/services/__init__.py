@@ -16,8 +16,11 @@ from app.services.auth import (
 )
 from app.services.audit import (
     init_log_db,
+    list_audit_logs_page,
     list_gui_logs,
     list_gui_logs_page,
+    list_operation_logs_page,
+    log_audit_event,
     log_gui_event,
     log_operation,
 )
@@ -133,12 +136,15 @@ __all__ = [
     "has_login_users",
     "init_db",
     "init_log_db",
+    "list_audit_logs_page",
     "list_gui_logs",
     "list_gui_logs_page",
+    "list_operation_logs_page",
     "list_groups",
     "list_login_users",
     "list_peers",
     "list_users",
+    "log_audit_event",
     "log_gui_event",
     "log_operation",
     "logout_login_session",

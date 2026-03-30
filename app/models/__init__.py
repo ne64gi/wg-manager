@@ -1,4 +1,4 @@
-from app.models.audit import GuiLog, OperationLog
+from app.models.audit import AuditLog, GuiLog, OperationLog
 from app.models.domain import (
     Group,
     GroupScope,
@@ -14,6 +14,7 @@ from app.models.domain import (
 )
 
 __all__ = [
+    "AuditLog",
     "Group",
     "GroupScope",
     "GuiLog",
